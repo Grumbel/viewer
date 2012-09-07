@@ -12,6 +12,8 @@
 
 int g_screen_w = 1600;
 int g_screen_h = 1000;
+float g_fov = 70.0f;
+bool g_draw_look_at = true;
 
 inline void assert_gl(const char* message)
 { // FIXME: OpenGL stuff should go into display/
@@ -387,7 +389,8 @@ public:
 };
 
 
-Vector g_eye;
+Vector g_eye(0.0f, 0.0f, 15.0f);
+Vector g_look_at(0.0f, 0.0f, -100.0f);
 
 Model* the_model;
 
@@ -408,7 +411,6 @@ void reshape(int w, int h)
 float x_angle = -90.0f;
 float y_angle = 0.0f;
 float z_angle = 0.0f;
-float zoom = -15.0;
 
 bool wiggle = false;
 float wiggle_int = 0;
@@ -468,7 +470,9 @@ void draw_scene()
 
   glMatrixMode(GL_PROJECTION);
   glLoadIdentity();
-  gluPerspective(60.0, static_cast<GLfloat>(g_screen_w)/static_cast<GLfloat>(g_screen_h), 1.0, 150.0f);
+
+  const float aspect_ratio = static_cast<GLfloat>(g_screen_w)/static_cast<GLfloat>(g_screen_h);
+  gluPerspective(g_fov * aspect_ratio, aspect_ratio, 0.1f, 150.0f);
   
   glMatrixMode(GL_MODELVIEW);
   glLoadIdentity();
@@ -489,41 +493,81 @@ void draw_scene()
     //glTranslatef(wiggle_offset, 0.0f, 0.0f);
     gluLookAt(
       wiggle_offset + g_eye.x, g_eye.y, g_eye.z, // eye
-      /*wiggle_offset + */g_eye.x, g_eye.y, g_eye.z-100.0f, // look-at
+      /*wiggle_offset + */g_eye.x + g_look_at.x, g_eye.y + g_look_at.y, g_eye.z + g_look_at.z, // look-at
       //0.0, 0.0, -100.0, // look-at
       0.0, 1.0, 0.0   // up
       );
   }
 
+  if (g_draw_look_at)
+  { // draw look-at sphere
+    auto target = g_eye + g_look_at;
+    glColor4f(1.0f, 1.0f, 1.0f, 0.5f);
+    glPushMatrix();
+    glTranslatef(target.x, target.y, target.z);
+    glutSolidSphere(2.5, 12, 12);
+    glPopMatrix();
+  }
+
   GLfloat light_pos[] = {0.0f, 0.0f, 20.0f, 1.0f};
   glLightfv(GL_LIGHT0, GL_POSITION, light_pos);
-
-  glTranslatef(0.0, 0.0, zoom);
 
   glRotatef (x_angle, 1.0f, 0.0f, 0.0f);
   glRotatef (y_angle, 0.0f, 1.0f, 0.0f);
   glRotatef (z_angle, 0.0f, 0.0f, 1.0f);
 
-  //glRotatef (angle, 0.0f, 0.0f, 1.0f);
-  //glRotatef (angle/6, 0.0f, 1.0f, 1.0f);
-  //glRotatef (angle/3, 1.0f, 0.0f, 0.0f);
-
+  // draw the model
   the_model->draw ();
 
-  srand(0);
-  int box = 50;
-  for(int i = 0; i < 200; ++i)
-  {
-    glPushMatrix ();  
-    glTranslatef (rand()%box - box/2, 
-                  rand()%box - box/2, 
-                  rand()%box - box/2);
-    glutSolidSphere(0.5, 12, 12);
+  if (false)
+  { // draw starfield
+    srand(0);
+    int box = 50;
+    for(int i = 0; i < 200; ++i)
+    {
+      glPushMatrix ();  
+      glTranslatef (rand()%box - box/2, 
+                    rand()%box - box/2, 
+                    rand()%box - box/2);
+      glutSolidSphere(0.5, 12, 12);
+      glPopMatrix ();
+    }
     glPopMatrix ();
   }
+}
 
-  //glutSolidSphere(5.0, 10, 10);
-  glPopMatrix ();
+void special(int key, int x, int y)
+{
+  switch(key)
+  {
+    case GLUT_KEY_UP:
+      g_look_at.z -= 1.0f;
+      break;
+
+    case GLUT_KEY_DOWN:
+      g_look_at.z += 1.0f;
+      break;
+
+    case GLUT_KEY_LEFT:
+      g_look_at.x += 1.0f;
+      break;
+
+    case GLUT_KEY_RIGHT:
+      g_look_at.x -= 1.0f;
+      break;
+
+    case GLUT_KEY_PAGE_UP:
+      g_look_at.y -= 1.0f;
+      break;
+
+    case GLUT_KEY_PAGE_DOWN:
+      g_look_at.y += 1.0f;
+      break;
+
+    default:
+      std::cout << "unknown key: " << static_cast<int>(key) << std::endl;
+      break;
+  };
 }
 
 void keyboard (unsigned char key, int x, int y)
@@ -552,6 +596,10 @@ void keyboard (unsigned char key, int x, int y)
 
     case 't':
       g_wiggle_offset -= 0.1f;
+      break;
+
+    case ' ':
+      g_draw_look_at = !g_draw_look_at;
       break;
 
     case 'c':
@@ -598,6 +646,14 @@ void keyboard (unsigned char key, int x, int y)
 
     case 51: // kp_lower
       g_eye.y -= 0.1;
+      break;
+
+    case 55: // kp_pos1
+      g_fov += 1.0f;
+      break;
+
+    case 49: // kp_end
+      g_fov -= 1.0f;
       break;
 
     default:
@@ -692,15 +748,6 @@ void mouse (int button, int button_state, int x, int y)
   x_angle = x - 400;
   y_angle = y - 300;
   //display ();
-  
-  if (button == 3 && button_state)
-  {
-    zoom -= 1.0f;
-  }
-  else if (button == 4 && button_state)
-  {
-    zoom += 1.0f;
-  }
 }
 
 void idle_func ()
@@ -738,7 +785,7 @@ int main (int argc, char** argv)
     glutInit(&argc, argv);
     glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGB | GLUT_DEPTH);
     glutInitWindowSize(g_screen_w, g_screen_h);
-    glutInitWindowPosition(100, 100);
+    //glutInitWindowPosition(100, 100);
     glutCreateWindow(argv[0]);
     glewInit();
     init();
@@ -750,6 +797,7 @@ int main (int argc, char** argv)
 
     glutIdleFunc (idle_func);
     glutKeyboardFunc(keyboard);
+    glutSpecialFunc(special);
     glutMainLoop();
 
     delete model;
