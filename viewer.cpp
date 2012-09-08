@@ -1,413 +1,42 @@
+#include <memory>
 #include <unistd.h>
-#include <math.h>
+#include <cmath>
 #include <GL/glew.h>
 #include <GL/freeglut.h>
-#include <stdio.h>
-#include <stdlib.h>
 #include <vector>
 #include <fstream>
 #include <iostream>
 #include <sstream>
 #include <stdexcept>
 
+#include "log.hpp"
+#include "assert_gl.hpp"
+#include "mesh.hpp"
+#include "model.hpp"
+#include "opengl_state.hpp"
+#include "framebuffer.hpp"
+#include "vector.hpp"
+
+// global variables
+namespace {
+
+float g_ipd = 0.0f;
 int g_screen_w = 1600;
 int g_screen_h = 1000;
 float g_fov = 70.0f;
 bool g_draw_look_at = true;
-
-inline void assert_gl(const char* message)
-{ // FIXME: OpenGL stuff should go into display/
-  GLenum error = glGetError();
-  if(error != GL_NO_ERROR) 
-  {
-    std::ostringstream msg;
-    msg << "OpenGLError while '" << message << "': "
-        << gluErrorString(error);
-    throw std::runtime_error(msg.str());
-  }
-}
-
-class OpenGLState
-{
-public:
-  OpenGLState()
-  {
-    glPushAttrib(GL_ALL_ATTRIB_BITS);
-    glPushClientAttrib(GL_CLIENT_ALL_ATTRIB_BITS);
-  }
-
-  ~OpenGLState()
-  {
-    glPopClientAttrib();
-    glPopAttrib();
-  }
-};
-
-class Framebuffer
-{
-public:
-  Framebuffer(int width, int height) :
-    m_fbo(0),
-    m_color_buffer(0),
-    m_depth_buffer(0)
-  {
-    OpenGLState state;
-
-    // create the framebuffer
-    glGenFramebuffers(1, &m_fbo);
-    assert_gl("framebuffer");
-    glBindFramebuffer(GL_FRAMEBUFFER, m_fbo);
-    assert_gl("framebuffer");
-
-    // create color buffer texture
-    glGenTextures(1, &m_color_buffer);
-    glBindTexture(GL_TEXTURE_2D, m_color_buffer);
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB,  width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, NULL);
-    glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-    glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-    glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-    glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-    assert_gl("framebuffer");
-
-    // create depth buffer texture
-    glGenTextures(1, &m_depth_buffer);
-    glBindTexture(GL_TEXTURE_2D, m_depth_buffer);
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT,  width, height, 0, GL_DEPTH_COMPONENT, GL_UNSIGNED_BYTE, NULL);
-    glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-    glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-    glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-    glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-    assert_gl("framebuffer");
-    
-    // attach color and depth buffer
-    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, m_color_buffer, 0);
-    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT,  GL_TEXTURE_2D, m_depth_buffer, 0);
-     assert_gl("framebuffer");
-
-    GLenum complete = glCheckFramebufferStatus(GL_FRAMEBUFFER);
-    if (complete != GL_FRAMEBUFFER_COMPLETE)
-    {
-      std::cout << "Framebuffer incomplete: " << complete << std::endl;
-    }
-    assert_gl("framebuffer");
-
-    std::cout << "FBO: " << m_fbo << std::endl;
-    std::cout << "Depth Buffer: " << m_depth_buffer << std::endl;
-    std::cout << "Color Buffer: " << m_color_buffer << std::endl;
-
-    glBindFramebuffer(GL_FRAMEBUFFER, 0);
-  }
-  
-  ~Framebuffer()
-  {
-    glDeleteFramebuffers(1, &m_fbo);
-    glDeleteTextures(1, &m_depth_buffer);
-    glDeleteTextures(1, &m_color_buffer);
-  }
-
-  void draw(float x, float y, float w, float h, float z)
-  {
-    OpenGLState state;
-    
-    glEnable(GL_TEXTURE_2D);
-
-    glBindTexture(GL_TEXTURE_2D, m_color_buffer);
-    glBegin(GL_QUADS);
-    {
-      glTexCoord2f(0.0f, 0.0f);
-      glVertex3f(x, y, z);
-
-      glTexCoord2f(1.0f, 0.0f);
-      glVertex3f(x+w, y, z);
-
-      glTexCoord2f(1.0f, 1.0f);
-      glVertex3f(x+w, y+h, z); // FIXME
-
-      glTexCoord2f(0.0f, 1.0f);
-      glVertex3f(x, y+h, z);
-    }
-    glEnd();  
-  }
-
-  void bind()
-  {
-    glBindFramebuffer(GL_FRAMEBUFFER, m_fbo);
-  }
-
-  void unbind()
-  {
-    glBindFramebuffer(GL_FRAMEBUFFER, 0);
-  }
-
-private:
-  GLuint m_fbo;
-  GLuint m_color_buffer;
-  GLuint m_depth_buffer;
-
-private:
-  Framebuffer(const Framebuffer&) = delete;
-  Framebuffer& operator=(const Framebuffer&) = delete;
-};
-
-struct Face
-{
-  int vertex1;
-  int vertex2;
-  int vertex3;
-};
-
-struct Vector
-{
-  float x;
-  float y;
-  float z;
-
-  Vector () : x(0), y(0), z(0) {}
-  
-  Vector (float x_, float y_, float z_) :
-    x(x_),
-    y(y_),
-    z(z_)
-  {}
-
-  float norm ()
-  {
-    return sqrt(x*x + y*y + z*z);
-  }
-
-  void normalize ()
-  {
-    float f = norm ();
-    x /= f;
-    y /= f;
-    z /= f;
-  }
-};
-
-Vector operator*(float f, const Vector& a)
-{
-  return Vector (a.x * f,
-                 a.y * f,
-                 a.z * f);
-}
-
-Vector operator*(const Vector& a, float f)
-{
-  return Vector (a.x * f,
-                 a.y * f,
-                 a.z * f);
-}
-
-Vector operator-(const Vector& a, const Vector& b)
-{
-  return Vector (a.x - b.x,
-                 a.y - b.y,
-                 a.z - b.z);
-}
-
-Vector operator+(const Vector& a, const Vector& b)
-{
-  return Vector (a.x + b.x,
-                 a.y + b.y,
-                 a.z + b.z);
-}
-
-typedef Vector Vertex;
-
-class Mesh
-{
-private:
-  typedef std::vector<Vertex> VertexLst;
-  typedef std::vector<Face>   FaceLst;
-
-  VertexLst vertices;
-  FaceLst   faces;
-
-public:
-  Mesh (std::istream& in) :
-    vertices(),
-    faces()
-  {
-    int number_of_vertixes;
-    in >> number_of_vertixes;
-    //std::cout << "Number_Of_Vertixes: " << number_of_vertixes << std::endl;
-    for (int i = 0; i < number_of_vertixes; ++i)
-    {
-      Vertex vertex;
-      in >> vertex.x >> vertex.y >> vertex.z;
-      vertices.push_back(vertex);
-    }
-
-    int number_of_faces;
-    in >> number_of_faces;
-    for (int i = 0; i < number_of_faces; ++i)
-    {
-      Face face;
-      in >> face.vertex1 >> face.vertex2 >> face.vertex3;
-      faces.push_back (face);
-    }
-
-    //std::cout << "read " << number_of_faces << " faces, " << number_of_vertixes << " vertices" << std::endl;
-  }
-
-  void display ()
-  {
-    for (FaceLst::iterator i = faces.begin (); i != faces.end (); ++i)
-    {
-      std::cout << "Face: " << std::endl;
-      std::cout << vertices[i->vertex1].x << " "
-                << vertices[i->vertex1].y << " "
-                << vertices[i->vertex1].z << std::endl;
-      std::cout << vertices[i->vertex2].x << " "
-                << vertices[i->vertex2].y << " "
-                << vertices[i->vertex2].z << std::endl;
-      std::cout << vertices[i->vertex3].x << " "
-                << vertices[i->vertex3].y << " "
-                << vertices[i->vertex3].z << std::endl;
-    }    
-  }
-
-  void draw () 
-  {
-    for (FaceLst::iterator i = faces.begin (); i != faces.end (); ++i)
-    {
-      glEnable(GL_COLOR_MATERIAL);
-      //glColorMaterial(GL_FRONT_AND_BACK, GL_AMBIENT);
-      //glColorMaterial(GL_FRONT_AND_BACK, GL_DIFFUSE);
-
-      glColor3f (1.0, 1.0, 1.0);
-
-      glBegin (GL_TRIANGLES);
-
-      glTexCoord2f(0.0f, 0.0f);
-      set_face_normal (*i);
-      glVertex3f (vertices[i->vertex1].x,
-                  vertices[i->vertex1].y,
-                  vertices[i->vertex1].z);
-        
-
-      glTexCoord2f(1.0f, 0.0f);
-      set_face_normal (*i);
-      glVertex3f (vertices[i->vertex2].x,
-                  vertices[i->vertex2].y,
-                  vertices[i->vertex2].z);
-
-      glTexCoord2f(1.0f, 1.0f);
-      set_face_normal (*i);
-      glVertex3f (vertices[i->vertex3].x,
-                  vertices[i->vertex3].y,
-                  vertices[i->vertex3].z);
-      glEnd ();
-        
-      //draw_face_normal (*i);
-      glDisable (GL_COLOR_MATERIAL);
-    }
-  }
-
-  void draw_face_normal (const Face& face)
-  {
-    Vector normal = calc_face_normal (face);
-    
-    Vector pos(vertices[face.vertex1]
-               + vertices[face.vertex2]
-               + vertices[face.vertex3]);
-    pos = pos * (1.0f/3.0f);
-
-    glDisable (GL_LIGHTING);
-    glColor3f (0, 1.0f, 1.0f);
-    glBegin (GL_LINES);
-    glVertex3f (pos.x, pos.y, pos.z);
-    pos = pos + (0.5* normal);
-    glVertex3f (pos.x, pos.y, pos.z);
-    glEnd ();
-    glEnable (GL_LIGHTING);
-  }
-
-  Vector calc_face_normal (const Face& face)
-  {
-    Vector u (vertices[face.vertex2].x - vertices[face.vertex1].x,
-              vertices[face.vertex2].y - vertices[face.vertex1].y,
-              vertices[face.vertex2].z - vertices[face.vertex1].z);
-
-    Vector v (vertices[face.vertex3].x - vertices[face.vertex2].x,
-              vertices[face.vertex3].y - vertices[face.vertex2].y,
-              vertices[face.vertex3].z - vertices[face.vertex2].z);
-
-    Vector normal (u.y*v.z - u.z*v.y,
-                   u.z*v.x - u.x*v.z,
-                   u.x*v.y - u.y*v.x);
-
-    normal.normalize ();
-
-    return normal;
-  }
-
-  void set_face_normal (const Face& face)
-  {
-    const Vector& normal = calc_face_normal (face);
-    glNormal3f (normal.x, normal.y, normal.y);
-  }
-};
-
-class Model
-{
-private:
-  typedef std::vector<Mesh> MeshLst;
-  MeshLst meshes;
-
-public:
-  Model(const std::string& filename) :
-    meshes()
-  {
-    std::ifstream in(filename.c_str());
-    
-    if (!in)
-    {
-      std::cout << filename << ": File not found" << std::endl;
-      exit(EXIT_FAILURE);
-    }
-
-    int number_of_meshes;
-    in >> number_of_meshes;
-    std::cout << "number_of_meshes: " << number_of_meshes << std::endl;
-    for (int i = 0; i < number_of_meshes; ++i)   
-    {
-      Mesh mesh(in);
-      //mesh.display ();
-      meshes.push_back(mesh);
-    }
-  }
-
-  void draw () 
-  {
-    for (MeshLst::iterator i = meshes.begin (); i != meshes.end (); ++i)
-    {
-      i->draw ();
-    }
-  }
-  
-};
-
+GLuint g_noise_texture = 0;
+bool g_draw_3d = true;
 
 Vector g_eye(0.0f, 0.0f, 15.0f);
 Vector g_look_at(0.0f, 0.0f, -100.0f);
 
-Model* the_model;
+Model* g_model;
 
 Framebuffer* g_framebuffer1 = 0;
 Framebuffer* g_framebuffer2 = 0;
 
-void reshape(int w, int h)
-{
-  g_screen_w = w;
-  g_screen_h = h;
-
-  glViewport (0,0, g_screen_w, g_screen_h);
-
-  //g_framebuffer1 = new Framebuffer(g_screen_w, g_screen_h);
-  //g_framebuffer2 = new Framebuffer(g_screen_w, g_screen_h);
-}
-
+float g_scale = 1.0f;
 float x_angle = -90.0f;
 float y_angle = 0.0f;
 float z_angle = 0.0f;
@@ -416,75 +45,97 @@ bool wiggle = false;
 float wiggle_int = 0;
 float g_wiggle_offset = 0.3f;
 
-void draw_scene();
+} // namespace
 
-void display()
+void reshape(int w, int h)
 {
-  OpenGLState state;
+  log_info("reshape(%d, %d)\n", w, h);
+  g_screen_w = w;
+  g_screen_h = h;
 
-  wiggle = true;
+  assert_gl("reshape1");
+  glViewport(0,0, g_screen_w, g_screen_h);
+  assert_gl("reshape2");
 
-  g_framebuffer1->bind();
-  wiggle_int = 0;
-  draw_scene();
-  g_framebuffer1->unbind();
+  delete g_framebuffer1;
+  delete g_framebuffer2;
 
-  g_framebuffer2->bind();
-  wiggle_int = 1;
-  draw_scene();
-  g_framebuffer2->unbind();
+  g_framebuffer1 = new Framebuffer(g_screen_w, g_screen_h);
+  g_framebuffer2 = new Framebuffer(g_screen_w, g_screen_h);
 
-  if (true)
-  {
-    // 2d screen access
-    glMatrixMode(GL_PROJECTION);
-    glLoadIdentity();
-    glOrtho(0, g_screen_w, 0, g_screen_h, 0.1f, 10000.0f);
-
-    glMatrixMode(GL_MODELVIEW);
-    glLoadIdentity();
-
-    glClearColor(0.0, 0.0, 0.0, 1.0);
-    glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
-
-    glEnable(GL_BLEND);
-
-    glBlendFunc(GL_SRC_ALPHA, GL_ONE);
-
-    glColor3f(0.0f, 1.0f, 0.0f);
-    g_framebuffer1->draw(0.0f, 0.0f, g_screen_w, g_screen_h, -20.0f);
-
-    glColor3f(1.0f, 0.0f, 0.0f);
-    g_framebuffer2->draw(0.0f, 0.0f, g_screen_w, g_screen_h, -20.0f);
-  }
-
-  glutSwapBuffers();
+  assert_gl("reshape");
 }
 
 void draw_scene()
 {
   OpenGLState state;
 
+  // clear the screen
   glClearColor(0.0, 0.0, 0.0, 0.1);
   glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
 
+  // setup projection
   glMatrixMode(GL_PROJECTION);
   glLoadIdentity();
-
   const float aspect_ratio = static_cast<GLfloat>(g_screen_w)/static_cast<GLfloat>(g_screen_h);
   gluPerspective(g_fov * aspect_ratio, aspect_ratio, 0.1f, 150.0f);
-  
+
+  // setup modelview
   glMatrixMode(GL_MODELVIEW);
   glLoadIdentity();
 
-  glEnable(GL_LIGHTING);
-  glEnable(GL_LIGHT0);
-  glEnable(GL_LIGHT1);
-
   glEnable(GL_DEPTH_TEST);
-  glEnable(GL_NORMALIZE);
+  glDisable(GL_CULL_FACE);
 
-  glEnable(GL_TEXTURE_2D);
+  glEnable(GL_LIGHTING);
+
+  //GLfloat light_pos[] = {0.0f, 0.0f, 20.0f, 1.0f};
+  //glLightfv(GL_LIGHT0, GL_POSITION, light_pos);
+
+  GLfloat mat_specular[] = { 0.0, 0.0, 0.0, 0.0 };
+  GLfloat mat_shininess[] = {  0.0 };
+  GLfloat mat_ambient[] = { 0.0, 0.0, 0.0, 1.0 };
+  GLfloat mat_diffuse[] = { 1.0, 1.0, 1.0, 1.0 };
+
+  glMaterialfv(GL_FRONT, GL_AMBIENT,   mat_ambient);
+  glMaterialfv(GL_FRONT, GL_SPECULAR,  mat_specular);
+  glMaterialfv(GL_FRONT, GL_SHININESS, mat_shininess);
+  glMaterialfv(GL_FRONT, GL_EMISSION,  mat_specular);
+  glMaterialfv(GL_FRONT, GL_DIFFUSE,   mat_diffuse);
+  
+  if (true)
+  {
+    glEnable(GL_LIGHT0);
+
+    GLfloat light_pos[] = {20.0f, 10.0f, 20.0f, 1.0f};
+    glLightfv(GL_LIGHT0, GL_POSITION, light_pos);
+    
+    GLfloat light_ambient[] = {0.0f, 0.0f, 0.0f, 1.0f};
+    glLightfv(GL_LIGHT0, GL_AMBIENT, light_ambient);
+
+    GLfloat light_diffuse[] = {1.0f, 1.0f, 1.0f, 1.0f};
+    glLightfv(GL_LIGHT0, GL_DIFFUSE, light_diffuse);
+
+    GLfloat light_specular[] = {1.0f, 1.0f, 1.0f, 1.0f};
+    glLightfv(GL_LIGHT0, GL_SPECULAR, light_specular);
+  }
+
+  if (true)
+  {
+    glEnable(GL_LIGHT1);
+
+    GLfloat light_pos[] = {-20.0f, -10.0f, -20.0f, 1.0f};
+    glLightfv(GL_LIGHT1, GL_POSITION, light_pos);
+    
+    GLfloat light_ambient[] = {0.0f, 0.0f, 0.0f, 1.0f};
+    glLightfv(GL_LIGHT1, GL_AMBIENT, light_ambient);
+
+    GLfloat light_diffuse[] = {1.0f, 1.0f, 1.0f, 1.0f};
+    glLightfv(GL_LIGHT1, GL_DIFFUSE, light_diffuse);
+
+    GLfloat light_specular[] = {1.0f, 1.0f, 1.0f, 1.0f};
+    glLightfv(GL_LIGHT1, GL_SPECULAR, light_specular);
+  }
 
   if (wiggle)
   {
@@ -504,42 +155,124 @@ void draw_scene()
     auto target = g_eye + g_look_at;
     glColor4f(1.0f, 1.0f, 1.0f, 0.5f);
     glPushMatrix();
-    glTranslatef(target.x, target.y, target.z);
-    glutSolidSphere(2.5, 12, 12);
+    {
+      glTranslatef(target.x, target.y, target.z);
+      glutSolidSphere(2.5, 12, 12);
+    }
     glPopMatrix();
   }
 
-  GLfloat light_pos[] = {0.0f, 0.0f, 20.0f, 1.0f};
-  glLightfv(GL_LIGHT0, GL_POSITION, light_pos);
+  glPushMatrix();
+  {
+    glRotatef(x_angle, 1.0f, 0.0f, 0.0f);
+    glRotatef(y_angle, 0.0f, 1.0f, 0.0f);
+    glRotatef(z_angle, 0.0f, 0.0f, 1.0f);
 
-  glRotatef (x_angle, 1.0f, 0.0f, 0.0f);
-  glRotatef (y_angle, 0.0f, 1.0f, 0.0f);
-  glRotatef (z_angle, 0.0f, 0.0f, 1.0f);
-
-  // draw the model
-  the_model->draw ();
-
-  if (false)
-  { // draw starfield
-    srand(0);
-    int box = 50;
-    for(int i = 0; i < 200; ++i)
+    // draw the model
     {
-      glPushMatrix ();  
-      glTranslatef (rand()%box - box/2, 
-                    rand()%box - box/2, 
-                    rand()%box - box/2);
-      glutSolidSphere(0.5, 12, 12);
-      glPopMatrix ();
+      glEnable(GL_TEXTURE_2D);
+      glBindTexture(GL_TEXTURE_2D, g_noise_texture);
+
+      glColor3f(1.0, 1.0, 1.0);
+
+      // normalizes normals to unit length 
+      glEnable(GL_NORMALIZE);
+
+      glPushMatrix();
+      glScalef(g_scale, g_scale, g_scale);
+      g_model->draw();
+      glPopMatrix();
     }
-    glPopMatrix ();
+
+    if (true)
+    { // draw starfield
+      srand(0);
+      int box = 50;
+      for(int i = 0; i < 200; ++i)
+      {
+        glPushMatrix();  
+        glTranslatef(rand()%box - box/2, 
+                     rand()%box - box/2, 
+                     rand()%box - box/2);
+        glutSolidSphere(0.5, 12, 12);
+        glPopMatrix();
+      }
+    }
   }
+  glPopMatrix();
+
+  assert_gl("draw_scene:exit()");
+}
+
+void display()
+{
+  //log_info("display()\n");
+
+  OpenGLState state;
+
+  wiggle = true;
+
+  g_framebuffer1->bind();
+  wiggle_int = 0;
+  draw_scene();
+  g_framebuffer1->unbind();
+
+  g_framebuffer2->bind();
+  wiggle_int = 1;
+  draw_scene();
+  g_framebuffer2->unbind();
+
+  // composit the final image
+  if (true)
+  {
+    // 2d screen access
+    glMatrixMode(GL_PROJECTION);
+    glLoadIdentity();
+    glOrtho(0, g_screen_w, 0, g_screen_h, 0.1f, 10000.0f);
+
+    glMatrixMode(GL_MODELVIEW);
+    glLoadIdentity();
+
+    glClearColor(0.0, 0.0, 0.0, 1.0);
+    glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
+
+    glEnable(GL_BLEND);
+
+    if (g_draw_3d)
+    {
+      glBlendFunc(GL_SRC_ALPHA, GL_ONE);
+
+      glColor3f(0.0f, 1.0f, 0.0f);
+      g_framebuffer1->draw(0.0f, 0.0f, g_screen_w, g_screen_h, -20.0f);
+
+      glColor3f(1.0f, 0.0f, 0.0f);
+      g_framebuffer2->draw(g_ipd, 0.0f, g_screen_w, g_screen_h, -20.0f);
+    }
+    else
+    {
+      glBlendFunc(GL_ONE, GL_ZERO);
+
+      glColor3f(1.0f, 1.0f, 1.0f);
+      g_framebuffer1->draw(0.0f, 0.0f, g_screen_w, g_screen_h, -20.0f);
+    }
+  }
+
+  glutSwapBuffers();
+  assert_gl("display:exit()");
 }
 
 void special(int key, int x, int y)
 {
   switch(key)
   {
+    case GLUT_KEY_F10:
+      glutReshapeWindow(1600, 1000);
+      break;
+
+    case GLUT_KEY_F11:
+      glutFullScreen();
+      break;
+
     case GLUT_KEY_UP:
       g_look_at.z -= 1.0f;
       break;
@@ -570,18 +303,12 @@ void special(int key, int x, int y)
   };
 }
 
-void keyboard (unsigned char key, int x, int y)
+void keyboard(unsigned char key, int x, int y)
 {
-  puts ("keyboard");
-
   switch (key) {
     case 27:
     case 'q':
       exit(EXIT_SUCCESS);
-      break;
-    case 'd':
-      //angle += 3.0f;
-      display();
       break;
     case 'a':
       z_angle += 5.0f;
@@ -603,6 +330,22 @@ void keyboard (unsigned char key, int x, int y)
       break;
 
     case 'c':
+      g_ipd += 1;
+      break;
+
+    case 'r':
+      g_ipd -= 1;
+      break;
+
+    case '+':
+      g_scale *= 1.05f;
+      break;
+
+    case '-':
+      g_scale /= 1.05f;
+      break;
+
+    case 'z':
       {
         GLdouble clip_plane[] = { 0.0, 0.0, 1.0, 1.0 };
 
@@ -622,6 +365,10 @@ void keyboard (unsigned char key, int x, int y)
         glClipPlane(GL_CLIP_PLANE0, clip_plane);
         glEnable(GL_CLIP_PLANE0);
       }
+      break;
+
+    case 'd':
+      g_draw_3d = !g_draw_3d;
       break;
 
     case 56: // kp_up
@@ -664,60 +411,19 @@ void keyboard (unsigned char key, int x, int y)
 
 void init()
 {
-  g_framebuffer1 = new Framebuffer(g_screen_w, g_screen_h);
-  g_framebuffer2 = new Framebuffer(g_screen_w, g_screen_h);
-
-  glShadeModel(GL_SMOOTH);
-
-  GLfloat mat_specular[] = { 0.0, 0.0, 0.0, 0.0 };
-  GLfloat mat_shininess[] = {  0.0 };
-  GLfloat mat_ambient[] = { 0.0, 0.0, 0.0, 1.0 };
-  GLfloat mat_diffuse[] = { 1.0, 1.0, 1.0, 1.0 };
-
-  glMaterialfv(GL_FRONT, GL_AMBIENT,   mat_ambient);
-  glMaterialfv(GL_FRONT, GL_SPECULAR,  mat_specular);
-  glMaterialfv(GL_FRONT, GL_SHININESS, mat_shininess);
-  glMaterialfv(GL_FRONT, GL_EMISSION,  mat_specular);
-  glMaterialfv(GL_FRONT, GL_DIFFUSE,   mat_diffuse);
-  
-  {
-    GLfloat light_pos[] = {20.0f, 0.0f, 30.0f, 1.0f};
-    glLightfv(GL_LIGHT0, GL_POSITION, light_pos);
-    
-    GLfloat light_ambient[] = {0.0f, 0.0f, 0.0f, 1.0f};
-    glLightfv(GL_LIGHT0, GL_AMBIENT, light_ambient);
-
-    GLfloat light_diffuse[] = {1.0f, 1.0f, 1.0f, 1.0f};
-    glLightfv(GL_LIGHT0, GL_DIFFUSE, light_diffuse);
-
-    GLfloat light_specular[] = {1.0f, 1.0f, 1.0f, 1.0f};
-    glLightfv(GL_LIGHT0, GL_SPECULAR, light_specular);
-  }
-
-  {
-    GLfloat light_pos[] = {-20.0f, 0.0f, 0.0f, 1.0f};
-    glLightfv(GL_LIGHT1, GL_POSITION, light_pos);
-   
-    GLfloat light_ambient[] = {0.0f, 0.0f, 0.0f, 1.0f};
-    glLightfv(GL_LIGHT1, GL_AMBIENT, light_ambient);
-
-    GLfloat light_diffuse[] = {0.0f, 0.0f, 0.0f, 1.0f};
-    glLightfv(GL_LIGHT1, GL_DIFFUSE, light_diffuse);
-
-    GLfloat light_specular[] = {1.0f, 1.0f, 1.0f, 1.0f};
-    glLightfv(GL_LIGHT1, GL_SPECULAR, light_specular);
-  }
+  assert_gl("init()");
+  // g_framebuffer1 = new Framebuffer(g_screen_w, g_screen_h);
+  // g_framebuffer2 = new Framebuffer(g_screen_w, g_screen_h);
+  assert_gl("init()");
 
   { // upload noise texture
-    GLuint texture;
-    glGenTextures(1, &texture);
-    
-    const int width = 32;
-    const int height = 32;
+    glGenTextures(1, &g_noise_texture);
+    glBindTexture(GL_TEXTURE_2D, g_noise_texture);
+   
+    const int width = 64;
+    const int height = 64;
     glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
     glPixelStorei(GL_UNPACK_ROW_LENGTH, width);
-
-    glBindTexture(GL_TEXTURE_2D, texture);
 
     unsigned char data[width*height*3];
 
@@ -730,77 +436,86 @@ void init()
       (GL_TEXTURE_2D, GL_RGB,
        width, height,
        GL_RGB, GL_UNSIGNED_BYTE, data);
+    assert_gl("texture0()");
     
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+    assert_gl("texture-0()");
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    assert_gl("texture-1()");
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    assert_gl("texture-2()");
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+    assert_gl("texture1()");
 
     glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAX_ANISOTROPY_EXT, 8.0f);
+    assert_gl("texture2()");
   }
+
+  assert_gl("init()");
 }
 
-void mouse (int button, int button_state, int x, int y)
+void mouse(int button, int button_state, int x, int y)
 {
   std::cout << x << " " << y << " " 
             << button_state << " " << button << std::endl;
   
   x_angle = x - 400;
   y_angle = y - 300;
-  //display ();
+  //display();
 }
 
-void idle_func ()
+void idle_func()
 {
   display();
   usleep(30000);
-  glutForceJoystickFunc ();
+  glutForceJoystickFunc();
 }
 
-void joystick_callback (unsigned int buttonMask, int x, int y, int z)
+void joystick_callback(unsigned int buttonMask, int x, int y, int z)
 {
   std::cout << "BM: " << buttonMask << " " << x << " " << y << " " << z << std::endl;
 }
 
-void mouse_motion (int x, int y)
+void mouse_motion(int x, int y)
 {
   //std::cout << "Motion: " << x << " " << y << std::endl;
   x_angle = x - 400;
   y_angle = y - 300;
-  //display ();
+  //display();
 }
 
-int main (int argc, char** argv)
+int main(int argc, char** argv)
 {
   if (argc != 2)
   {
-    puts ("Usage: viewer [MODELFILE]");
+    puts("Usage: viewer [MODELFILE]");
     return EXIT_FAILURE;
   }
   else
   {
-    Model* model = new Model(argv[1]);
-    the_model = model;
-      
+    std::unique_ptr<Model> model{new Model(argv[1])};
+    g_model = model.get();
+
+    log_info("glutInit()\n");
     glutInit(&argc, argv);
     glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGB | GLUT_DEPTH);
     glutInitWindowSize(g_screen_w, g_screen_h);
     //glutInitWindowPosition(100, 100);
+    log_info("glutCreateWindow()\n");
     glutCreateWindow(argv[0]);
+    log_info("glewInit\n");
     glewInit();
     init();
     glutDisplayFunc(display);
     glutReshapeFunc(reshape);
     glutMouseFunc(mouse);
-    glutMotionFunc (mouse_motion);      
-    glutJoystickFunc (joystick_callback, 1);
+    glutMotionFunc(mouse_motion);      
+    glutJoystickFunc(joystick_callback, 1);
 
-    glutIdleFunc (idle_func);
+    glutIdleFunc(idle_func);
     glutKeyboardFunc(keyboard);
     glutSpecialFunc(special);
     glutMainLoop();
-
-    delete model;
 
     return 0; 
   }
