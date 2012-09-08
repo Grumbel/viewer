@@ -10,6 +10,11 @@ def writeVertices(vertices, location):
         outfile.write("%d\n" % len(vertices))
         for i in vertices:
                 outfile.write("%f %f %f\n"
+                              % (i.normal.x,
+                                 i.normal.y,
+                                 i.normal.z))
+
+                outfile.write("%f %f %f\n"
                               % (i.co.x + location.x,
                                  i.co.y + location.y,
                                  i.co.z + location.z))
@@ -17,8 +22,6 @@ def writeVertices(vertices, location):
 def writeFaces(faces):
         outfile.write("%d\n" % (len(faces)))
         for i in faces:
-                #print "Face: ", i
-                #print i.v[0], i.v[1], i.v[2]
                 outfile.write("%d %d %d\n" % (i.vertices[0], i.vertices[1], i.vertices[2]))
 
 

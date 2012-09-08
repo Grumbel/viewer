@@ -1,6 +1,8 @@
 #ifndef HEADER_VECTOR_HPP
 #define HEADER_VECTOR_HPP
 
+#include <cmath>
+
 struct Vector
 {
   float x;
@@ -17,7 +19,7 @@ struct Vector
 
   float norm()
   {
-    return sqrt(x*x + y*y + z*z);
+    return std::sqrt(x*x + y*y + z*z);
   }
 
   void normalize()
@@ -29,28 +31,28 @@ struct Vector
   }
 };
 
-Vector operator*(float f, const Vector& a)
+inline Vector operator*(float f, const Vector& a)
 {
   return Vector(a.x * f,
                 a.y * f,
                 a.z * f);
 }
 
-Vector operator*(const Vector& a, float f)
+inline Vector operator*(const Vector& a, float f)
 {
   return Vector(a.x * f,
                 a.y * f,
                 a.z * f);
 }
 
-Vector operator-(const Vector& a, const Vector& b)
+inline Vector operator-(const Vector& a, const Vector& b)
 {
   return Vector(a.x - b.x,
                 a.y - b.y,
                 a.z - b.z);
 }
 
-Vector operator+(const Vector& a, const Vector& b)
+inline Vector operator+(const Vector& a, const Vector& b)
 {
   return Vector(a.x + b.x,
                 a.y + b.y,

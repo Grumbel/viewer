@@ -6,7 +6,7 @@
 
 namespace logging {
 
-void unpack(boost::format& fmt)
+inline void unpack(boost::format& fmt)
 {
 }
 
@@ -61,7 +61,8 @@ void print(Out& out, const Head& head, Arg... arg)
 
 } // namespace logging
 
-#define log_info(...) logging::print(std::cout, __VA_ARGS__)
+#define log_info(...)  logging::print(std::cout, "[INFO] " __VA_ARGS__)
+#define log_debug(...) logging::print(std::cout, "[DEBUG]" __VA_ARGS__)
 
 #endif
 
