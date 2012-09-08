@@ -1,35 +1,32 @@
-import Blender
+import bpy
 
 def writeObject(object):
-        if object.getType() == "Mesh":
-                mesh = object.getData()
-                print dir(mesh)
-                writeVertices(mesh.verts, object.loc)
+        if object.type == 'MESH':
+                mesh = object.data
+                writeVertices(mesh.vertices, object.location)
                 writeFaces(mesh.faces)
 
 def writeVertices(vertices, location):
         outfile.write("%d\n" % len(vertices))
         for i in vertices:
                 outfile.write("%f %f %f\n"
-                              % (i[0] + location.x,
-                                 i[1] + location.y,
-                                 i[2] + location.z))
+                              % (i.co.x + location.x,
+                                 i.co.y + location.y,
+                                 i.co.z + location.z))
 
 def writeFaces(faces):
-        #print "Faces: ", faces
         outfile.write("%d\n" % (len(faces)))
         for i in faces:
                 #print "Face: ", i
                 #print i.v[0], i.v[1], i.v[2]
-                outfile.write("%d %d %d\n" % (i.v[0].index, i.v[1].index, i.v[2].index))
+                outfile.write("%d %d %d\n" % (i.vertices[0], i.vertices[1], i.vertices[2]))
 
 
 outfile = open("/tmp/blender.mod", "w")
-scene = Blender.Scene.getCurrent()
 
-outfile.write ("%d\n" % (len(scene.getChildren())))
-for child in scene.getChildren():
-        writeObject(child)
+outfile.write("%d\n" % (len(bpy.data.objects)))
+for child in bpy.data.objects:
+    writeObject(child)
         
 outfile.close()
 

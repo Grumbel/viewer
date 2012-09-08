@@ -19,6 +19,6 @@ env = Environment(ENV=os.environ,
                               "-Wno-unused-parameter"])
 env.Append(LIBS=["glut"])
 env.ParseConfig("pkg-config --libs --cflags  gl glu glew | sed 's/-I/-isystem/'")
-env.Program("viewer", ["viewer.cpp"])
+env.Program("viewer", ["src/viewer.cpp"])
 
 # EOF #
