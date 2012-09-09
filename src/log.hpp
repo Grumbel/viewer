@@ -44,6 +44,7 @@ void print(const std::string& str, Arg... arg)
   boost::format fmt(str);
   unpack(fmt, arg...);
   std::cout << fmt;
+  std::cout << std::endl;
 }
 
 template<typename Out, typename ...Arg>
@@ -52,12 +53,13 @@ void print(Out& out, const std::string& str, Arg... arg)
   boost::format fmt(str);
   unpack(fmt, arg...);
   out << fmt;
+  out << std::endl;
 }
 
 template<typename Out, typename Head>
 void print(Out& out, const Head& head)
 {
-  out << head;
+  out << head << std::endl;
 }
 
 /*
