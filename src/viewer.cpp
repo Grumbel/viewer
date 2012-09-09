@@ -14,6 +14,7 @@
 //  You should have received a copy of the GNU General Public License
 //  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+#include <cmath>
 #include <memory>
 #include <unistd.h>
 #include <cmath>
@@ -281,6 +282,18 @@ void special(int key, int x, int y)
 {
   switch(key)
   {
+    case GLUT_KEY_F1:
+      g_eye.z += 0.1f;
+      g_fov = std::atan(1.0f / g_eye.z) * 400.0f;
+      log_info("fov: %f", g_fov);
+      break;
+
+    case GLUT_KEY_F2:
+      g_eye.z -= 0.1f;
+      g_fov = std::atan(1.0f / g_eye.z) * 400.0f;
+      log_info("fov: %f", g_fov);
+      break;
+
     case GLUT_KEY_F10:
       glutReshapeWindow(1600, 1000);
       break;
@@ -326,6 +339,7 @@ void keyboard(unsigned char key, int x, int y)
     case 'q':
       exit(EXIT_SUCCESS);
       break;
+
     case 'a':
       z_angle += 5.0f;
       break;
