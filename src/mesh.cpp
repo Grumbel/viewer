@@ -31,11 +31,11 @@ Mesh::Mesh(std::istream& in) :
 
   for (int i = 0; i < num_vertices; ++i)
   {
-    Vector normal;
+    glm::vec3 normal;
     in >> normal.x >> normal.y >> normal.z;
     normals.push_back(normal);
 
-    Vector vertex;
+    glm::vec3 vertex;
     in >> vertex.x >> vertex.y >> vertex.z;
     vertices.push_back(vertex);
   }

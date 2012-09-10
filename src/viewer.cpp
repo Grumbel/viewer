@@ -25,6 +25,7 @@
 #include <iostream>
 #include <sstream>
 #include <stdexcept>
+#include <glm/glm.hpp>
 
 #include "log.hpp"
 #include "assert_gl.hpp"
@@ -32,7 +33,6 @@
 #include "model.hpp"
 #include "opengl_state.hpp"
 #include "framebuffer.hpp"
-#include "vector.hpp"
 
 // global variables
 namespace {
@@ -45,8 +45,8 @@ bool g_draw_look_at = true;
 GLuint g_noise_texture = 0;
 bool g_draw_3d = true;
 
-Vector g_eye(0.0f, 0.0f, 15.0f);
-Vector g_look_at(0.0f, 0.0f, -100.0f);
+glm::vec3 g_eye(0.0f, 0.0f, 15.0f);
+glm::vec3 g_look_at(0.0f, 0.0f, -100.0f);
 
 Model* g_model;
 
@@ -58,7 +58,6 @@ float x_angle = -90.0f;
 float y_angle = 0.0f;
 float z_angle = 0.0f;
 
-bool wiggle = false;
 float wiggle_int = 0;
 float g_wiggle_offset = 0.3f;
 
@@ -95,7 +94,7 @@ void draw_scene()
   glMatrixMode(GL_PROJECTION);
   glLoadIdentity();
   const float aspect_ratio = static_cast<GLfloat>(g_screen_w)/static_cast<GLfloat>(g_screen_h);
-  gluPerspective(g_fov * aspect_ratio, aspect_ratio, 0.1f, 150.0f);
+  gluPerspective(g_fov /** aspect_ratio*/, aspect_ratio, 0.1f, 150.0f);
 
   // setup modelview
   glMatrixMode(GL_MODELVIEW);
@@ -154,7 +153,6 @@ void draw_scene()
     glLightfv(GL_LIGHT1, GL_SPECULAR, light_specular);
   }
 
-  if (wiggle)
   {
     float wiggle_offset = wiggle_int * g_wiggle_offset;
 
@@ -166,6 +164,9 @@ void draw_scene()
       0.0, 1.0, 0.0   // up
       );
   }
+
+  // sphere at 0,0,0
+  glutSolidSphere(1.25, 12, 12);
 
   if (g_draw_look_at)
   { // draw look-at sphere
@@ -227,8 +228,6 @@ void display()
 
   OpenGLState state;
 
-  wiggle = true;
-
   g_framebuffer1->bind();
   wiggle_int = 0;
   draw_scene();
@@ -283,15 +282,51 @@ void special(int key, int x, int y)
   switch(key)
   {
     case GLUT_KEY_F1:
-      g_eye.z += 0.1f;
-      g_fov = std::atan(1.0f / g_eye.z) * 400.0f;
-      log_info("fov: %f", g_fov);
+      {
+        // Hitchcock zoom in
+        //float old_eye_z = g_eye.z;
+        //g_eye.z *= 1.005f;
+        //g_fov = g_fov / std::atan(1.0f / old_eye_z) * std::atan(1.0f / g_eye.z);
+
+        float old_fov = g_fov;
+        g_fov += 1.0f;
+        if (g_fov < 160.0f)
+        {
+          g_eye.z = g_eye.z 
+            * (2.0*tan(0.5 * old_fov / 180.0 * M_PI))
+            / (2.0*tan(0.5 * g_fov   / 180.0 * M_PI));
+        }
+        else
+        {
+          g_fov = 160.0f;
+        }
+        log_info("fov: %5.2f %f", g_fov, g_eye.z);
+        log_info("w: %f", tan(g_fov /2.0f /180.0*M_PI) * g_eye.z);
+      }
       break;
 
     case GLUT_KEY_F2:
-      g_eye.z -= 0.1f;
-      g_fov = std::atan(1.0f / g_eye.z) * 400.0f;
-      log_info("fov: %f", g_fov);
+      // Hitchcock zoom out
+      {
+        //float old_eye_z = g_eye.z;
+        //g_eye.z /= 1.005f;
+        //g_fov = g_fov / std::atan(1.0f / old_eye_z) * std::atan(1.0f / g_eye.z);
+        
+        float old_fov = g_fov;
+        g_fov -= 1.0f;
+        if (g_fov >= 7.0f)
+        {
+          g_eye.z = g_eye.z 
+            * (2.0*tan(0.5 * old_fov / 180.0 * M_PI))
+            / (2.0*tan(0.5 * g_fov / 180.0 * M_PI));
+        }
+        else
+        {
+          g_fov = 7.0f;
+        }
+        log_info("fov: %5.2f %f", g_fov, g_eye.z);
+        log_info("w: %f", tan(g_fov/2.0f /180.0*M_PI) * g_eye.z);
+      }
       break;
 
     case GLUT_KEY_F10:

@@ -18,9 +18,9 @@
 #define HEADER_MESH_HPP
 
 #include <vector>
+#include <glm/glm.hpp>
 
 #include "opengl_state.hpp"
-#include "vector.hpp"
 
 struct Face
 {
@@ -32,8 +32,8 @@ struct Face
 class Mesh
 {
 private:
-  typedef std::vector<Vector> NormalLst;
-  typedef std::vector<Vector> VertexLst;
+  typedef std::vector<glm::vec3> NormalLst;
+  typedef std::vector<glm::vec3> VertexLst;
   typedef std::vector<Face>   FaceLst;
 
   NormalLst normals;
@@ -46,7 +46,7 @@ public:
   void display();
   void draw();
   void draw_face_normal(const Face& face);
-  Vector calc_face_normal(const Face& face);
+  glm::vec3 calc_face_normal(const Face& face);
   void set_face_normal(const Face& face);
 };
 
