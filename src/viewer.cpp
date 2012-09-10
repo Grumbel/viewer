@@ -63,6 +63,7 @@ bool g_arcball_active = false;
 glm::ivec2 g_mouse;
 glm::ivec2 g_last_mouse;
 glm::mat4 g_object2world;
+glm::mat4 g_last_object2world;
 
 } // namespace
 
@@ -524,6 +525,7 @@ void mouse(int button, int button_pressed, int x, int y)
       log_info("mouse: arcball: %d %d", x, y);
       g_arcball_active = true;
       g_mouse = g_last_mouse = glm::ivec2(x, y);
+      g_last_object2world = g_object2world;
     }
     else
     {
@@ -534,15 +536,22 @@ void mouse(int button, int button_pressed, int x, int y)
 
 glm::vec3 get_arcball_vector(glm::ivec2 mouse)
 {
-  glm::vec3 P = glm::vec3(1.0 * mouse.x / std::max(g_screen_w, g_screen_w)*2 - 1.0,
-                          1.0 * mouse.y / std::max(g_screen_w, g_screen_h)*2 - 1.0,
+  float radius = std::min(g_screen_w, g_screen_h) / 2.0f;
+  glm::vec3 P = glm::vec3(static_cast<float>(mouse.x - g_screen_w/2) / radius,
+                          static_cast<float>(mouse.y - g_screen_h/2) / radius,
                           0);
+
+  log_info("arcball: %f %f", P.x, P.y);
   P.y = -P.y;
   float OP_squared = P.x * P.x + P.y * P.y;
-  if (OP_squared <= 1*1)
+  if (glm::length(P) <= 1)
+  {
     P.z = sqrt(1*1 - OP_squared);  // Pythagore
+  }
   else
+  {
     P = glm::normalize(P);  // nearest point
+  }
   return P;
 }
 
@@ -558,10 +567,10 @@ void idle_func()
     glm::vec3 vb = get_arcball_vector(g_mouse);
     float angle = acos(std::min(1.0f, glm::dot(va, vb)));
     glm::vec3 axis_in_camera_coord = glm::cross(va, vb);
-    glm::mat3 camera2object = glm::inverse(glm::mat3(camera_matrix) * glm::mat3(g_object2world));
+    glm::mat3 camera2object = glm::inverse(glm::mat3(camera_matrix) * glm::mat3(g_last_object2world));
     glm::vec3 axis_in_object_coord = camera2object * axis_in_camera_coord;
-    g_object2world = glm::rotate(g_object2world, glm::degrees(angle), axis_in_object_coord);
-    g_last_mouse = g_mouse;
+    g_object2world = glm::rotate(g_last_object2world, glm::degrees(angle), axis_in_object_coord);
+    //g_last_mouse = g_mouse;
   }
 
   display();
@@ -578,7 +587,7 @@ void mouse_motion(int x, int y)
 {
   if (g_arcball_active)
   {
-    log_info("mouse motion: arcball: %d %d", x, y);
+    //log_info("mouse motion: arcball: %d %d", x, y);
     g_mouse.x = x;
     g_mouse.y = y;
     auto v = get_arcball_vector(g_mouse);
