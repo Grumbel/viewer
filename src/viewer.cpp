@@ -516,13 +516,13 @@ void init()
 
 void mouse(int button, int button_pressed, int x, int y)
 {
-  log_info("mouse: %d %d - %d %d", x, y, button, button_pressed);
+  //log_info("mouse: %d %d - %d %d", x, y, button, button_pressed);
 
   if (button == 0)
   {
     if (!button_pressed)
     {
-      log_info("mouse: arcball: %d %d", x, y);
+      //log_info("mouse: arcball: %d %d", x, y);
       g_arcball_active = true;
       g_mouse = g_last_mouse = glm::ivec2(x, y);
       g_last_object2world = g_object2world;
@@ -541,7 +541,7 @@ glm::vec3 get_arcball_vector(glm::ivec2 mouse)
                           static_cast<float>(mouse.y - g_screen_h/2) / radius,
                           0);
 
-  log_info("arcball: %f %f", P.x, P.y);
+  //log_info("arcball: %f %f", P.x, P.y);
   P.y = -P.y;
   float OP_squared = P.x * P.x + P.y * P.y;
   if (glm::length(P) <= 1)
@@ -590,8 +590,6 @@ void mouse_motion(int x, int y)
     //log_info("mouse motion: arcball: %d %d", x, y);
     g_mouse.x = x;
     g_mouse.y = y;
-    auto v = get_arcball_vector(g_mouse);
-    log_info("vec: %f %f", v.x, v.y);
   }
 }
 
