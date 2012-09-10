@@ -27,7 +27,7 @@ public:
     m_color_buffer(0),
     m_depth_buffer(0)
   {
-    log_info("Framebuffer(%d, %d)\n", width, height);
+    log_info("Framebuffer(%d, %d)", width, height);
     OpenGLState state;
 
     // create the framebuffer
@@ -80,7 +80,7 @@ public:
   {
     assert_gl("~Framebuffer-enter()");
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
-    log_info("~Framebuffer()\n");
+    log_info("~Framebuffer()");
     glDeleteFramebuffers(1, &m_fbo);
     glDeleteTextures(1, &m_depth_buffer);
     glDeleteTextures(1, &m_color_buffer);
