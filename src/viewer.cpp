@@ -14,6 +14,7 @@
 //  You should have received a copy of the GNU General Public License
 //  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+#include <SDL.h>
 #include <cmath>
 #include <memory>
 #include <unistd.h>
@@ -48,6 +49,7 @@ bool g_draw_3d = true;
 
 glm::vec3 g_eye(0.0f, 0.0f, 15.0f);
 glm::vec3 g_look_at(0.0f, 0.0f, -100.0f);
+glm::vec3 g_up(0.0f, 1.0f, 0.0f);
 
 std::string g_model_filename;
 Model* g_model;
@@ -67,6 +69,15 @@ glm::mat4 g_object2world;
 glm::mat4 g_last_object2world;
 
 } // namespace
+
+struct Stick
+{
+  Stick() : dir(), rot() {}
+  glm::vec3 dir;
+  glm::vec3 rot;
+};
+
+Stick g_stick;
 
 void reshape(int w, int h)
 {
@@ -99,7 +110,7 @@ void draw_scene()
   glMatrixMode(GL_PROJECTION);
   glLoadIdentity();
   const float aspect_ratio = static_cast<GLfloat>(g_screen_w)/static_cast<GLfloat>(g_screen_h);
-  gluPerspective(g_fov /** aspect_ratio*/, aspect_ratio, 0.1f, 150.0f);
+  gluPerspective(g_fov /** aspect_ratio*/, aspect_ratio, 0.1f, 1000.0f);
 
   // setup modelview
   glMatrixMode(GL_MODELVIEW);
@@ -161,13 +172,16 @@ void draw_scene()
   {
     float wiggle_offset = wiggle_int * g_wiggle_offset;
 
+    glm::vec3 sideways = glm::normalize(glm::cross(g_look_at, g_up));
+
     //glTranslatef(wiggle_offset, 0.0f, 0.0f);
     gluLookAt(
-      wiggle_offset + g_eye.x, g_eye.y, g_eye.z, // eye
+      sideways.x * wiggle_offset + g_eye.x, 
+      sideways.y * wiggle_offset + g_eye.y, 
+      sideways.z * wiggle_offset + g_eye.z, // eye
       /*wiggle_offset + */g_eye.x + g_look_at.x, g_eye.y + g_look_at.y, g_eye.z + g_look_at.z, // look-at
       //0.0, 0.0, -100.0, // look-at
-      0.0, 1.0, 0.0   // up
-      );
+      g_up.x, g_up.y, g_up.z);
   }
 
   // sphere at 0,0,0
@@ -199,12 +213,13 @@ void draw_scene()
       // normalizes normals to unit length 
       glEnable(GL_NORMALIZE);
 
-      for(int y = -5; y <= 5; ++y)
-        for(int x = -5; x <= 5; ++x)
+      int dim = 5;
+      for(int y = -dim; y <= dim; ++y)
+        for(int x = -dim; x <= dim; ++x)
         {
           glPushMatrix();
           glScalef(g_scale, g_scale, g_scale);
-          glTranslatef(10*x, 0, 10*y);
+          glTranslatef(20*x, 0, 20*y);
           g_model->draw();
           glPopMatrix();
         }
@@ -438,34 +453,50 @@ void keyboard(unsigned char key, int x, int y)
       break;
 
     case 56: // kp_up
-      g_eye.z -= 0.1;
+      g_eye += glm::normalize(g_look_at);
       break;
 
     case 50: // kp_down
-      g_eye.z += 0.1;
+      g_eye -= glm::normalize(g_look_at);
       break;
 
     case 52: // kp_left
-      g_eye.x -= 0.1;
+      {
+        glm::vec3 dir = glm::normalize(g_look_at);
+        dir = glm::rotate(dir, 90.0f, g_up);
+        g_eye += dir;
+      }
       break;
 
     case 54: // kp_right
-      g_eye.x += 0.1;
-      break;
-
-    case 57: // kp_raise
-      g_eye.y += 0.1;
-      break;
-
-    case 51: // kp_lower
-      g_eye.y -= 0.1;
+      {
+        glm::vec3 dir = glm::normalize(g_look_at);
+        dir = glm::rotate(dir, 90.0f, g_up);
+        g_eye -= dir;
+      }
       break;
 
     case 55: // kp_pos1
-      g_fov += 1.0f;
+      g_look_at = glm::rotate(g_look_at, 5.0f, g_up);
+      break;
+
+    case 57: // kp_raise
+      g_look_at = glm::rotate(g_look_at, -5.0f, g_up);
       break;
 
     case 49: // kp_end
+      g_eye -= glm::normalize(g_up);
+      break;
+
+    case 51: // kp_pgdown
+      g_eye += glm::normalize(g_up);
+      break;
+
+    case 42: // kp_mult
+      g_fov += 1.0f;
+      break;
+
+    case 47: // kp_div
       g_fov -= 1.0f;
       break;
 
@@ -582,13 +613,100 @@ void idle_func()
   }
 
   display();
-  usleep(30000);
-  //glutForceJoystickFunc();
-}
+  usleep(10000);
 
-void joystick_callback(unsigned int buttonMask, int x, int y, int z)
-{
-  std::cout << "BM: " << buttonMask << " " << x << " " << y << " " << z << std::endl;
+  SDL_Event ev;
+  while(SDL_PollEvent(&ev))
+  {
+    switch(ev.type)
+    {
+      case SDL_QUIT:
+        exit(EXIT_SUCCESS);
+        break;
+
+      case SDL_JOYAXISMOTION:
+        //log_debug("joystick axis: %d %d", static_cast<int>(ev.jaxis.axis), ev.jaxis.value);
+        switch(ev.jaxis.axis)
+        {
+          case 0: // x1
+            g_stick.dir.x = -ev.jaxis.value / 32768.0f;
+            break;
+
+          case 1: // y1
+            g_stick.dir.z = -ev.jaxis.value / 32768.0f;
+            break;
+
+          case 2: // z
+            g_stick.rot.z = ev.jaxis.value / 32768.0f;
+            break;
+
+          case 3: // x2
+            g_stick.rot.y = -ev.jaxis.value / 32768.0f;
+            break;
+
+          case 4: // y2
+            g_stick.rot.x = ev.jaxis.value / 32768.0f;
+            break;
+        }
+        break;
+
+      case SDL_JOYBUTTONDOWN:
+      case SDL_JOYBUTTONUP:
+        //log_debug("joystick button: %d %d", static_cast<int>(ev.jbutton.button), static_cast<int>(ev.jbutton.state));
+        switch(ev.jbutton.button)
+        {
+          case 4:
+            g_stick.dir.y = -ev.jbutton.state;
+            break;
+            
+          case 5:
+            g_stick.dir.y = +ev.jbutton.state;
+            break;
+        }
+        break;
+
+      default:
+        break;
+    }
+  }
+
+  float deadzone = 0.1f;
+  if (fabs(g_stick.dir.x) < deadzone) g_stick.dir.x = 0.0f;
+  if (fabs(g_stick.dir.y) < deadzone) g_stick.dir.y = 0.0f;
+  if (fabs(g_stick.dir.z) < deadzone) g_stick.dir.z = 0.0f;
+
+  if (fabs(g_stick.rot.x) < deadzone) g_stick.rot.x = 0.0f;
+  if (fabs(g_stick.rot.y) < deadzone) g_stick.rot.y = 0.0f;
+  if (fabs(g_stick.rot.z) < deadzone) g_stick.rot.z = 0.0f;
+
+  if (false)
+    log_debug("stick: %2.2f %2.2f %2.2f  -  %2.2f %2.2f %2.2f", 
+              g_stick.dir.x, g_stick.dir.y, g_stick.dir.z,
+              g_stick.rot.x, g_stick.rot.y, g_stick.rot.z);
+
+  float delta = 0.5f;
+
+  {
+    // forward/backward
+    g_eye += glm::normalize(g_look_at) * g_stick.dir.z * delta;
+
+    // up/down
+    g_eye += glm::normalize(g_up) * g_stick.dir.y * delta;
+
+    // left/right
+    glm::vec3 dir = glm::normalize(g_look_at);
+    dir = glm::rotate(dir, 90.0f, g_up);
+    g_eye += glm::normalize(dir) * g_stick.dir.x * delta;
+  }
+
+  { // handle rotation
+    g_look_at = glm::rotate(g_look_at, 10.0f * g_stick.rot.y * delta, g_up);
+    g_up = glm::rotate(g_up, 10.0f * g_stick.rot.z * delta, g_look_at);
+    
+    glm::vec3 cross = glm::cross(g_look_at, g_up);
+    g_up = glm::rotate(g_up, 10.0f * g_stick.rot.x * delta, cross);
+    g_look_at = glm::rotate(g_look_at, 10.0f * g_stick.rot.x * delta, cross);
+  }
 }
 
 void mouse_motion(int x, int y)
@@ -610,6 +728,24 @@ int main(int argc, char** argv)
   }
   else
   {
+    if (SDL_Init(SDL_INIT_TIMER | SDL_INIT_VIDEO | SDL_INIT_JOYSTICK) < 0)
+    {
+      std::ostringstream msg;
+      msg << "Couldn't initialize SDL: " << SDL_GetError();
+      throw std::runtime_error(msg.str());
+    }
+    else
+    {
+      atexit(SDL_Quit);
+    }
+
+    SDL_Joystick* joystick = nullptr;
+    log_info("SDL_NumJoysticks: %d", SDL_NumJoysticks());
+    if (SDL_NumJoysticks() > 0)
+    {
+      joystick = SDLCALL SDL_JoystickOpen(0);
+    }
+
     g_model_filename = argv[1];
 
     log_info("glutInit()\n");
@@ -626,12 +762,16 @@ int main(int argc, char** argv)
     glutReshapeFunc(reshape);
     glutMouseFunc(mouse);
     glutMotionFunc(mouse_motion);      
-    glutJoystickFunc(joystick_callback, 1);
 
     glutIdleFunc(idle_func);
     glutKeyboardFunc(keyboard);
     glutSpecialFunc(special);
     glutMainLoop();
+
+    if (joystick)
+    {
+      SDL_JoystickClose(joystick);
+    }
 
     return 0; 
   }
