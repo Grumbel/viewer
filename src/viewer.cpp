@@ -26,6 +26,7 @@
 #include <sstream>
 #include <stdexcept>
 #include <glm/glm.hpp>
+#include <glm/ext.hpp>
 
 #include "log.hpp"
 #include "assert_gl.hpp"
@@ -54,12 +55,14 @@ Framebuffer* g_framebuffer1 = 0;
 Framebuffer* g_framebuffer2 = 0;
 
 float g_scale = 1.0f;
-float x_angle = -90.0f;
-float y_angle = 0.0f;
-float z_angle = 0.0f;
 
 float wiggle_int = 0;
 float g_wiggle_offset = 0.3f;
+
+bool g_arcball_active = false;
+glm::ivec2 g_mouse;
+glm::ivec2 g_last_mouse;
+glm::mat4 g_object2world;
 
 } // namespace
 
@@ -182,9 +185,7 @@ void draw_scene()
 
   glPushMatrix();
   {
-    glRotatef(x_angle, 1.0f, 0.0f, 0.0f);
-    glRotatef(y_angle, 0.0f, 1.0f, 0.0f);
-    glRotatef(z_angle, 0.0f, 0.0f, 1.0f);
+    glMultMatrixf(glm::value_ptr(g_object2world));
 
     // draw the model
     {
@@ -375,13 +376,6 @@ void keyboard(unsigned char key, int x, int y)
       exit(EXIT_SUCCESS);
       break;
 
-    case 'a':
-      z_angle += 5.0f;
-      break;
-    case 'o':
-      z_angle -= 5.0f;
-      break;
-
     case 'n':
       g_wiggle_offset += 0.1f;
       break;
@@ -519,18 +513,57 @@ void init()
   assert_gl("init()");
 }
 
-void mouse(int button, int button_state, int x, int y)
+void mouse(int button, int button_pressed, int x, int y)
 {
-  std::cout << x << " " << y << " " 
-            << button_state << " " << button << std::endl;
-  
-  x_angle = x - 400;
-  y_angle = y - 300;
-  //display();
+  log_info("mouse: %d %d - %d %d", x, y, button, button_pressed);
+
+  if (button == 0)
+  {
+    if (!button_pressed)
+    {
+      log_info("mouse: arcball: %d %d", x, y);
+      g_arcball_active = true;
+      g_mouse = g_last_mouse = glm::ivec2(x, y);
+    }
+    else
+    {
+      g_arcball_active = false;
+    }
+  }
+}
+
+glm::vec3 get_arcball_vector(glm::ivec2 mouse)
+{
+  glm::vec3 P = glm::vec3(1.0 * mouse.x / std::max(g_screen_w, g_screen_w)*2 - 1.0,
+                          1.0 * mouse.y / std::max(g_screen_w, g_screen_h)*2 - 1.0,
+                          0);
+  P.y = -P.y;
+  float OP_squared = P.x * P.x + P.y * P.y;
+  if (OP_squared <= 1*1)
+    P.z = sqrt(1*1 - OP_squared);  // Pythagore
+  else
+    P = glm::normalize(P);  // nearest point
+  return P;
 }
 
 void idle_func()
 {
+  if (g_arcball_active && g_mouse != g_last_mouse)
+  {
+    glm::mat4 camera_matrix;
+
+    glGetFloatv(GL_MODELVIEW_MATRIX, glm::value_ptr(camera_matrix));
+
+    glm::vec3 va = get_arcball_vector(g_last_mouse);
+    glm::vec3 vb = get_arcball_vector(g_mouse);
+    float angle = acos(std::min(1.0f, glm::dot(va, vb)));
+    glm::vec3 axis_in_camera_coord = glm::cross(va, vb);
+    glm::mat3 camera2object = glm::inverse(glm::mat3(camera_matrix) * glm::mat3(g_object2world));
+    glm::vec3 axis_in_object_coord = camera2object * axis_in_camera_coord;
+    g_object2world = glm::rotate(g_object2world, glm::degrees(angle), axis_in_object_coord);
+    g_last_mouse = g_mouse;
+  }
+
   display();
   usleep(30000);
   glutForceJoystickFunc();
@@ -543,10 +576,14 @@ void joystick_callback(unsigned int buttonMask, int x, int y, int z)
 
 void mouse_motion(int x, int y)
 {
-  //std::cout << "Motion: " << x << " " << y << std::endl;
-  x_angle = x - 400;
-  y_angle = y - 300;
-  //display();
+  if (g_arcball_active)
+  {
+    log_info("mouse motion: arcball: %d %d", x, y);
+    g_mouse.x = x;
+    g_mouse.y = y;
+    auto v = get_arcball_vector(g_mouse);
+    log_info("vec: %f %f", v.x, v.y);
+  }
 }
 
 int main(int argc, char** argv)
