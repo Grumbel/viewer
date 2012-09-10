@@ -49,6 +49,7 @@ bool g_draw_3d = true;
 glm::vec3 g_eye(0.0f, 0.0f, 15.0f);
 glm::vec3 g_look_at(0.0f, 0.0f, -100.0f);
 
+std::string g_model_filename;
 Model* g_model;
 
 Framebuffer* g_framebuffer1 = 0;
@@ -69,7 +70,7 @@ glm::mat4 g_last_object2world;
 
 void reshape(int w, int h)
 {
-  log_info("reshape(%d, %d)\n", w, h);
+  log_info("reshape(%d, %d)", w, h);
   g_screen_w = w;
   g_screen_h = h;
 
@@ -198,13 +199,18 @@ void draw_scene()
       // normalizes normals to unit length 
       glEnable(GL_NORMALIZE);
 
-      glPushMatrix();
-      glScalef(g_scale, g_scale, g_scale);
-      g_model->draw();
-      glPopMatrix();
+      for(int y = -5; y <= 5; ++y)
+        for(int x = -5; x <= 5; ++x)
+        {
+          glPushMatrix();
+          glScalef(g_scale, g_scale, g_scale);
+          glTranslatef(10*x, 0, 10*y);
+          g_model->draw();
+          glPopMatrix();
+        }
     }
 
-    if (true)
+    if (false)
     { // draw starfield
       srand(0);
       int box = 50;
@@ -476,6 +482,8 @@ void init()
   // g_framebuffer2 = new Framebuffer(g_screen_w, g_screen_h);
   assert_gl("init()");
 
+  g_model = new Model(g_model_filename);
+
   { // upload noise texture
     glGenTextures(1, &g_noise_texture);
     glBindTexture(GL_TEXTURE_2D, g_noise_texture);
@@ -559,9 +567,9 @@ void idle_func()
 {
   if (g_arcball_active && g_mouse != g_last_mouse)
   {
-    glm::mat4 camera_matrix;
+    glm::mat4 camera_matrix;// = g_object2world;
 
-    glGetFloatv(GL_MODELVIEW_MATRIX, glm::value_ptr(camera_matrix));
+    //glGetFloatv(GL_MODELVIEW_MATRIX, glm::value_ptr(camera_matrix));
 
     glm::vec3 va = get_arcball_vector(g_last_mouse);
     glm::vec3 vb = get_arcball_vector(g_mouse);
@@ -575,7 +583,7 @@ void idle_func()
 
   display();
   usleep(30000);
-  glutForceJoystickFunc();
+  //glutForceJoystickFunc();
 }
 
 void joystick_callback(unsigned int buttonMask, int x, int y, int z)
@@ -602,8 +610,7 @@ int main(int argc, char** argv)
   }
   else
   {
-    std::unique_ptr<Model> model{new Model(argv[1])};
-    g_model = model.get();
+    g_model_filename = argv[1];
 
     log_info("glutInit()\n");
     glutInit(&argc, argv);
