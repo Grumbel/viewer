@@ -19,6 +19,7 @@
 
 #include <vector>
 #include <glm/glm.hpp>
+#include <memory>
 
 #include "opengl_state.hpp"
 
@@ -36,18 +37,30 @@ private:
   typedef std::vector<glm::vec3> VertexLst;
   typedef std::vector<Face>   FaceLst;
 
-  NormalLst normals;
-  VertexLst vertices;
-  FaceLst   faces;
+  NormalLst m_normals;
+  VertexLst m_vertices;
+  FaceLst   m_faces;
+  
+  GLuint m_normals_vbo;
+  GLuint m_vertices_vbo;
+  GLuint m_faces_vbo;
 
 public:
-  Mesh(std::istream& in);
+  static std::unique_ptr<Mesh> from_istream(std::istream& in);
+  Mesh(const NormalLst& normals,
+       const VertexLst& vertices,
+       const FaceLst&   faces);
+  ~Mesh();
 
   void display();
   void draw();
   void draw_face_normal(const Face& face);
   glm::vec3 calc_face_normal(const Face& face);
   void set_face_normal(const Face& face);
+
+private:
+  Mesh(const Mesh&) = delete;
+  Mesh& operator=(const Mesh&) = delete;
 };
 
 #endif

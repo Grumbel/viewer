@@ -22,7 +22,7 @@
 class Model
 {
 private:
-  typedef std::vector<Mesh> MeshLst;
+  typedef std::vector<std::unique_ptr<Mesh> > MeshLst;
   MeshLst meshes;
 
 public:
@@ -42,9 +42,9 @@ public:
     std::cout << "number_of_meshes: " << number_of_meshes << std::endl;
     for (int i = 0; i < number_of_meshes; ++i)   
     {
-      Mesh mesh(in);
+      std::unique_ptr<Mesh> mesh = Mesh::from_istream(in);
       //mesh.display();
-      meshes.push_back(mesh);
+      meshes.push_back(std::move(mesh));
     }
   }
 
@@ -52,7 +52,7 @@ public:
   {
     for (MeshLst::iterator i = meshes.begin(); i != meshes.end(); ++i)
     {
-      i->draw();
+      (*i)->draw();
     }
   }
   
