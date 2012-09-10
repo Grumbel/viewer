@@ -17,40 +17,39 @@
 import bpy
 
 def writeObject(obj):
-        if obj.type == 'MESH':
-                mesh = obj.data
-        writeVertices(mesh.vertices, obj.location)
-        writeFaces(mesh.faces)
+    mesh = obj.data
+    writeVertices(mesh.vertices, obj.location)
+    writeFaces(mesh.faces)
 
 def writeVertices(vertices, location):
-        outfile.write("%d\n" % len(vertices))
-        for i in vertices:
-                outfile.write("%f %f %f\n"
-                              % (i.normal.x,
-                                 i.normal.y,
-                                 i.normal.z))
+    outfile.write("%d\n" % len(vertices))
+    for i in vertices:
+        outfile.write("%f %f %f\n"
+                      % (i.normal.x,
+                         i.normal.y,
+                         i.normal.z))
 
-                outfile.write("%f %f %f\n"
-                              % (i.co.x + location.x,
-                                 i.co.y + location.y,
-                                 i.co.z + location.z))
+        outfile.write("%f %f %f\n"
+                      % (i.co.x + location.x,
+                         i.co.y + location.y,
+                         i.co.z + location.z))
 
 def writeFaces(faces_data):       
-        # collect data from Blender and triangulate it
-        faces = []
-        for i in faces_data:
-                if len(i.vertices) == 3:
-                        faces.append((i.vertices[0], i.vertices[1], i.vertices[2]))
-                elif len(i.vertices) == 4:
-                        faces.append((i.vertices[0], i.vertices[1], i.vertices[2]))
-                        faces.append((i.vertices[0], i.vertices[3], i.vertices[2]))
-                else: 
-                        print("unhandled number of faces: %d" % len(i.vertices))
-
-        # write data to file
-        outfile.write("%d\n" % len(faces))
-        for face in faces:
-                outfile.write("%d %d %d\n" % face)
+    # collect data from Blender and triangulate it
+    faces = []
+    for i in faces_data:
+        if len(i.vertices) == 3:
+            faces.append((i.vertices[0], i.vertices[1], i.vertices[2]))
+        elif len(i.vertices) == 4:
+            faces.append((i.vertices[0], i.vertices[1], i.vertices[2]))
+            faces.append((i.vertices[0], i.vertices[3], i.vertices[2]))
+        else: 
+            print("unhandled number of faces: %d" % len(i.vertices))
+    
+    # write data to file
+    outfile.write("%d\n" % len(faces))
+    for face in faces:
+        outfile.write("%d %d %d\n" % face)
 
 
 outfile = open("/tmp/blender.mod", "w")
@@ -58,8 +57,8 @@ outfile = open("/tmp/blender.mod", "w")
 outfile.write("%d\n" % (len(bpy.data.objects)))
 objects = [obj for obj in bpy.data.objects if obj.type == 'MESH']
 for child in objects:
-        writeObject(child)
-        
+    writeObject(child)
+    
 outfile.close()
 print("-- export complete --")
 
