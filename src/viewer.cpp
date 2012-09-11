@@ -110,7 +110,7 @@ void draw_scene()
   glMatrixMode(GL_PROJECTION);
   glLoadIdentity();
   const float aspect_ratio = static_cast<GLfloat>(g_screen_w)/static_cast<GLfloat>(g_screen_h);
-  gluPerspective(g_fov /** aspect_ratio*/, aspect_ratio, 0.1f, 1000.0f);
+  gluPerspective(g_fov /** aspect_ratio*/, aspect_ratio, 0.1f, 100000.0f);
 
   // setup modelview
   glMatrixMode(GL_MODELVIEW);
@@ -118,8 +118,6 @@ void draw_scene()
 
   glEnable(GL_DEPTH_TEST);
   glDisable(GL_CULL_FACE);
-
-  glEnable(GL_LIGHTING);
 
   //GLfloat light_pos[] = {0.0f, 0.0f, 20.0f, 1.0f};
   //glLightfv(GL_LIGHT0, GL_POSITION, light_pos);
@@ -135,24 +133,7 @@ void draw_scene()
   glMaterialfv(GL_FRONT, GL_EMISSION,  mat_specular);
   glMaterialfv(GL_FRONT, GL_DIFFUSE,   mat_diffuse);
   
-  if (true)
-  {
-    glEnable(GL_LIGHT0);
-
-    GLfloat light_pos[] = {20.0f, 10.0f, 20.0f, 1.0f};
-    glLightfv(GL_LIGHT0, GL_POSITION, light_pos);
-    
-    GLfloat light_ambient[] = {0.0f, 0.0f, 0.0f, 1.0f};
-    glLightfv(GL_LIGHT0, GL_AMBIENT, light_ambient);
-
-    GLfloat light_diffuse[] = {1.0f, 1.0f, 1.0f, 1.0f};
-    glLightfv(GL_LIGHT0, GL_DIFFUSE, light_diffuse);
-
-    GLfloat light_specular[] = {1.0f, 1.0f, 1.0f, 1.0f};
-    glLightfv(GL_LIGHT0, GL_SPECULAR, light_specular);
-  }
-
-  if (true)
+  if (false)
   {
     glEnable(GL_LIGHT1);
 
@@ -170,22 +151,44 @@ void draw_scene()
   }
 
   {
-    float wiggle_offset = wiggle_int * g_wiggle_offset;
-
-    glm::vec3 sideways = glm::normalize(glm::cross(g_look_at, g_up));
+    glm::vec3 sideways = glm::normalize(glm::cross(g_look_at, g_up)) * g_wiggle_offset;
+    sideways = wiggle_int ? sideways : -sideways;
 
     //glTranslatef(wiggle_offset, 0.0f, 0.0f);
     gluLookAt(
-      sideways.x * wiggle_offset + g_eye.x, 
-      sideways.y * wiggle_offset + g_eye.y, 
-      sideways.z * wiggle_offset + g_eye.z, // eye
+      g_eye.x + sideways.x, 
+      g_eye.y + sideways.y, 
+      g_eye.z + sideways.z, // eye
       /*wiggle_offset + */g_eye.x + g_look_at.x, g_eye.y + g_look_at.y, g_eye.z + g_look_at.z, // look-at
       //0.0, 0.0, -100.0, // look-at
       g_up.x, g_up.y, g_up.z);
   }
 
-  // sphere at 0,0,0
-  glutSolidSphere(1.25, 12, 12);
+  if (true)
+  {
+
+    GLfloat light_pos[] = {20.0f, 10.0f, 20.0f, 0.0f};
+    {
+      glPushMatrix();
+      glTranslatef(light_pos[0], light_pos[1], light_pos[2]);
+      glColor3f(1.0f, 1.0f, 1.0f);
+      glutSolidSphere(1, 12, 12);
+      glPopMatrix();
+    }
+    glEnable(GL_LIGHTING);
+
+    glEnable(GL_LIGHT0);
+    glLightfv(GL_LIGHT0, GL_POSITION, light_pos);
+    
+    GLfloat light_ambient[] = {0.0f, 0.0f, 0.0f, 1.0f};
+    glLightfv(GL_LIGHT0, GL_AMBIENT, light_ambient);
+
+    GLfloat light_diffuse[] = {1.0f, 1.0f, 1.0f, 1.0f};
+    glLightfv(GL_LIGHT0, GL_DIFFUSE, light_diffuse);
+
+    GLfloat light_specular[] = {1.0f, 1.0f, 1.0f, 1.0f};
+    glLightfv(GL_LIGHT0, GL_SPECULAR, light_specular);
+  }
 
   if (g_draw_look_at)
   { // draw look-at sphere
@@ -213,7 +216,7 @@ void draw_scene()
       // normalizes normals to unit length 
       glEnable(GL_NORMALIZE);
 
-      int dim = 5;
+      int dim = 0;
       for(int y = -dim; y <= dim; ++y)
         for(int x = -dim; x <= dim; ++x)
         {
@@ -361,27 +364,27 @@ void special(int key, int x, int y)
       break;
 
     case GLUT_KEY_UP:
-      g_look_at.z -= 1.0f;
+      g_look_at += glm::normalize(g_look_at);
       break;
 
     case GLUT_KEY_DOWN:
-      g_look_at.z += 1.0f;
+      g_look_at -= glm::normalize(g_look_at);
       break;
 
     case GLUT_KEY_LEFT:
-      g_look_at.x += 1.0f;
+      //g_look_at.x += 1.0f;
       break;
 
     case GLUT_KEY_RIGHT:
-      g_look_at.x -= 1.0f;
+      //g_look_at.x -= 1.0f;
       break;
 
     case GLUT_KEY_PAGE_UP:
-      g_look_at.y -= 1.0f;
+      //g_look_at.y -= 1.0f;
       break;
 
     case GLUT_KEY_PAGE_DOWN:
-      g_look_at.y += 1.0f;
+      //g_look_at.y += 1.0f;
       break;
 
     default:
@@ -670,7 +673,7 @@ void idle_func()
     }
   }
 
-  float deadzone = 0.1f;
+  float deadzone = 0.2f;
   if (fabs(g_stick.dir.x) < deadzone) g_stick.dir.x = 0.0f;
   if (fabs(g_stick.dir.y) < deadzone) g_stick.dir.y = 0.0f;
   if (fabs(g_stick.dir.z) < deadzone) g_stick.dir.z = 0.0f;
@@ -684,7 +687,7 @@ void idle_func()
               g_stick.dir.x, g_stick.dir.y, g_stick.dir.z,
               g_stick.rot.x, g_stick.rot.y, g_stick.rot.z);
 
-  float delta = 0.5f;
+  float delta = 0.2f;
 
   {
     // forward/backward
@@ -701,7 +704,7 @@ void idle_func()
 
   { // handle rotation
     g_look_at = glm::rotate(g_look_at, 10.0f * g_stick.rot.y * delta, g_up);
-    g_up = glm::rotate(g_up, 10.0f * g_stick.rot.z * delta, g_look_at);
+    g_up = glm::rotate(g_up, 2.0f * g_stick.rot.z * delta, g_look_at);
     
     glm::vec3 cross = glm::cross(g_look_at, g_up);
     g_up = glm::rotate(g_up, 10.0f * g_stick.rot.x * delta, cross);
