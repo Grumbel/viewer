@@ -54,8 +54,8 @@ glm::vec3 g_up(0.0f, 1.0f, 0.0f);
 std::string g_model_filename;
 Model* g_model;
 
-Framebuffer* g_framebuffer1 = 0;
-Framebuffer* g_framebuffer2 = 0;
+std::unique_ptr<Framebuffer> g_framebuffer1;
+std::unique_ptr<Framebuffer> g_framebuffer2;
 
 float g_scale = 1.0f;
 
@@ -89,11 +89,8 @@ void reshape(int w, int h)
   glViewport(0,0, g_screen_w, g_screen_h);
   assert_gl("reshape2");
 
-  delete g_framebuffer1;
-  delete g_framebuffer2;
-
-  g_framebuffer1 = new Framebuffer(g_screen_w, g_screen_h);
-  g_framebuffer2 = new Framebuffer(g_screen_w, g_screen_h);
+  g_framebuffer1.reset(new Framebuffer(g_screen_w, g_screen_h));
+  g_framebuffer2.reset(new Framebuffer(g_screen_w, g_screen_h));
 
   assert_gl("reshape");
 }
@@ -105,6 +102,8 @@ void draw_scene()
   // clear the screen
   glClearColor(0.0, 0.0, 0.0, 0.1);
   glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
+
+  glEnable(GL_NORMALIZE);
 
   // setup projection
   glMatrixMode(GL_PROJECTION);
@@ -214,7 +213,6 @@ void draw_scene()
       glColor3f(1.0, 1.0, 1.0);
 
       // normalizes normals to unit length 
-      glEnable(GL_NORMALIZE);
 
       int dim = 0;
       for(int y = -dim; y <= dim; ++y)
@@ -284,7 +282,7 @@ void display()
     {
       glBlendFunc(GL_SRC_ALPHA, GL_ONE);
 
-      glColor3f(0.0f, 1.0f, 0.0f);
+      glColor3f(0.0f, 0.5f, 1.0f);
       g_framebuffer1->draw(0.0f, 0.0f, g_screen_w, g_screen_h, -20.0f);
 
       glColor3f(1.0f, 0.0f, 0.0f);
@@ -512,8 +510,8 @@ void keyboard(unsigned char key, int x, int y)
 void init()
 {
   assert_gl("init()");
-  // g_framebuffer1 = new Framebuffer(g_screen_w, g_screen_h);
-  // g_framebuffer2 = new Framebuffer(g_screen_w, g_screen_h);
+  g_framebuffer1.reset(new Framebuffer(g_screen_w, g_screen_h));
+  g_framebuffer2.reset(new Framebuffer(g_screen_w, g_screen_h));
   assert_gl("init()");
 
   g_model = new Model(g_model_filename);
