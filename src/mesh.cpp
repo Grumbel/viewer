@@ -27,6 +27,7 @@ Mesh::from_istream(std::istream& in)
   NormalLst normals;
   VertexLst vertices;
   FaceLst   faces;
+  TexCoordLst texcoords;
 
   int num_vertices;
   in >> num_vertices;
@@ -64,16 +65,37 @@ Mesh::from_istream(std::istream& in)
     }
   }
 
-  return std::unique_ptr<Mesh>(new Mesh(normals, vertices, faces));
+  // generate some texcoords
+  texcoords.resize(faces.size() * 3);
+  for(FaceLst::size_type i = 0; i < faces.size(); ++i)
+  {
+    if (false)
+    {
+      texcoords[faces[i].vertex1] = glm::vec2(0.0f, 0.0f);
+      texcoords[faces[i].vertex2] = glm::vec2(1.0f, 0.0f);
+      texcoords[faces[i].vertex3] = glm::vec2(0.0f, 1.0f);
+    }
+    else
+    {
+      texcoords[3*i+0] = glm::vec2(0.0f, 0.0f);
+      texcoords[3*i+1] = glm::vec2(1.0f, 0.0f);
+      texcoords[3*i+2] = glm::vec2(0.0f, 1.0f);
+    }
+  }
+
+  return std::unique_ptr<Mesh>(new Mesh(normals, texcoords, vertices, faces));
 }
 
 Mesh::Mesh(const NormalLst& normals,
+           const TexCoordLst& texcoords,
            const VertexLst& vertices,
            const FaceLst&   faces) :
   m_normals(normals),
+  m_texcoords(texcoords),
   m_vertices(vertices),
   m_faces(faces),
   m_normals_vbo(0),
+  m_texcoords_vbo(0),
   m_vertices_vbo(0),
   m_faces_vbo(0)
 {
@@ -83,6 +105,11 @@ Mesh::Mesh(const NormalLst& normals,
   glGenBuffers(1, &m_normals_vbo);
   glBindBuffer(GL_ARRAY_BUFFER, m_normals_vbo);
   glBufferData(GL_ARRAY_BUFFER, sizeof(m_normals[0]) * m_normals.size(), m_normals.data(), GL_STATIC_DRAW);
+
+  log_debug("Texcoords");
+  glGenBuffers(1, &m_texcoords_vbo);
+  glBindBuffer(GL_ARRAY_BUFFER, m_texcoords_vbo);
+  glBufferData(GL_ARRAY_BUFFER, sizeof(m_texcoords[0]) * m_texcoords.size(), m_texcoords.data(), GL_STATIC_DRAW);
 
   log_debug("Vertices");
   glGenBuffers(1, &m_vertices_vbo);
@@ -132,11 +159,15 @@ Mesh::draw()
     glBindBuffer(GL_ARRAY_BUFFER, m_normals_vbo);
     glNormalPointer(GL_FLOAT, 0, 0);
 
+    glBindBuffer(GL_ARRAY_BUFFER, m_texcoords_vbo);
+    glTexCoordPointer(2, GL_FLOAT, 0, 0);
+
     glBindBuffer(GL_ARRAY_BUFFER, m_vertices_vbo);
     glVertexPointer(3, GL_FLOAT, 0, 0);
    
-    glEnableClientState(GL_VERTEX_ARRAY);
     glEnableClientState(GL_NORMAL_ARRAY);
+    glEnableClientState(GL_TEXTURE_COORD_ARRAY);
+    glEnableClientState(GL_VERTEX_ARRAY);
 
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_faces_vbo);
     glDrawElements(GL_TRIANGLES, 3*m_faces.size(), GL_UNSIGNED_INT, 0);

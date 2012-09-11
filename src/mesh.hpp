@@ -35,19 +35,23 @@ class Mesh
 private:
   typedef std::vector<glm::vec3> NormalLst;
   typedef std::vector<glm::vec3> VertexLst;
+  typedef std::vector<glm::vec2> TexCoordLst;
   typedef std::vector<Face>   FaceLst;
 
-  NormalLst m_normals;
-  VertexLst m_vertices;
-  FaceLst   m_faces;
+  NormalLst   m_normals;
+  TexCoordLst m_texcoords;
+  VertexLst   m_vertices;
+  FaceLst     m_faces;
   
   GLuint m_normals_vbo;
+  GLuint m_texcoords_vbo;
   GLuint m_vertices_vbo;
   GLuint m_faces_vbo;
 
 public:
   static std::unique_ptr<Mesh> from_istream(std::istream& in);
   Mesh(const NormalLst& normals,
+       const TexCoordLst& texcoords,
        const VertexLst& vertices,
        const FaceLst&   faces);
   ~Mesh();
