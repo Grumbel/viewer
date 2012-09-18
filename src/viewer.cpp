@@ -45,6 +45,8 @@ int g_screen_h = 1000;
 float g_fov = 70.0f;
 bool g_draw_look_at = true;
 GLuint g_noise_texture = 0;
+GLuint g_light_texture = 0;
+float g_light_angle = 0.0f;
 bool g_draw_3d = true;
 
 glm::vec3 g_eye(0.0f, 0.0f, 15.0f);
@@ -72,9 +74,10 @@ glm::mat4 g_last_object2world;
 
 struct Stick
 {
-  Stick() : dir(), rot() {}
+  Stick() : dir(), rot(), light_rotation() {}
   glm::vec3 dir;
   glm::vec3 rot;
+  bool light_rotation;
 };
 
 Stick g_stick;
@@ -100,10 +103,28 @@ void draw_scene()
   OpenGLState state;
 
   // clear the screen
-  glClearColor(0.0, 0.0, 0.0, 0.1);
+  glClearColor(0.0, 0.0, 0.0, 1.0);
   glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
 
   glEnable(GL_NORMALIZE);
+
+  if (true)
+  {
+    glEnable(GL_LIGHTING);
+    glEnable(GL_LIGHT1);
+
+    GLfloat light_pos[] = {0.0f, 0.0f, 0.0f, 1.0f};
+    glLightfv(GL_LIGHT1, GL_POSITION, light_pos);
+    
+    GLfloat light_ambient[] = {0.0f, 0.0f, 0.45f, 1.0f};
+    glLightfv(GL_LIGHT1, GL_AMBIENT, light_ambient);
+
+    GLfloat light_diffuse[] = {0.0f, 0.0f, 0.0f, 1.0f};
+    glLightfv(GL_LIGHT1, GL_DIFFUSE, light_diffuse);
+
+    GLfloat light_specular[] = {0.0f, 0.0f, 0.0f, 1.0f};
+    glLightfv(GL_LIGHT1, GL_SPECULAR, light_specular);
+  }
 
   // setup projection
   glMatrixMode(GL_PROJECTION);
@@ -115,39 +136,6 @@ void draw_scene()
   glMatrixMode(GL_MODELVIEW);
   glLoadIdentity();
 
-  glEnable(GL_DEPTH_TEST);
-  glDisable(GL_CULL_FACE);
-
-  //GLfloat light_pos[] = {0.0f, 0.0f, 20.0f, 1.0f};
-  //glLightfv(GL_LIGHT0, GL_POSITION, light_pos);
-
-  GLfloat mat_specular[] = { 0.0, 0.0, 0.0, 0.0 };
-  GLfloat mat_shininess[] = {  0.0 };
-  GLfloat mat_ambient[] = { 0.0, 0.0, 0.0, 1.0 };
-  GLfloat mat_diffuse[] = { 1.0, 1.0, 1.0, 1.0 };
-
-  glMaterialfv(GL_FRONT, GL_AMBIENT,   mat_ambient);
-  glMaterialfv(GL_FRONT, GL_SPECULAR,  mat_specular);
-  glMaterialfv(GL_FRONT, GL_SHININESS, mat_shininess);
-  glMaterialfv(GL_FRONT, GL_EMISSION,  mat_specular);
-  glMaterialfv(GL_FRONT, GL_DIFFUSE,   mat_diffuse);
-  
-  if (false)
-  {
-    glEnable(GL_LIGHT1);
-
-    GLfloat light_pos[] = {-20.0f, -10.0f, -20.0f, 1.0f};
-    glLightfv(GL_LIGHT1, GL_POSITION, light_pos);
-    
-    GLfloat light_ambient[] = {0.0f, 0.0f, 0.0f, 1.0f};
-    glLightfv(GL_LIGHT1, GL_AMBIENT, light_ambient);
-
-    GLfloat light_diffuse[] = {1.0f, 1.0f, 1.0f, 1.0f};
-    glLightfv(GL_LIGHT1, GL_DIFFUSE, light_diffuse);
-
-    GLfloat light_specular[] = {1.0f, 1.0f, 1.0f, 1.0f};
-    glLightfv(GL_LIGHT1, GL_SPECULAR, light_specular);
-  }
 
   {
     glm::vec3 sideways = glm::normalize(glm::cross(g_look_at, g_up)) * g_wiggle_offset;
@@ -163,10 +151,20 @@ void draw_scene()
       g_up.x, g_up.y, g_up.z);
   }
 
+  glEnable(GL_DEPTH_TEST);
+
+  // light after gluLookAt() put it in worldspace, light before gluLookAt() puts it in eye space
   if (true)
   {
+    GLfloat light_pos[] = {0.0f, 0.0f, 0.0f, 1.0f};
+    glDisable(GL_LIGHTING);
 
-    GLfloat light_pos[] = {20.0f, 10.0f, 20.0f, 0.0f};
+    glPushMatrix();
+
+    glRotatef(g_light_angle, 0.0f, 1.0f, 0.0f);
+    glTranslatef(10.0f,0,0.0f);
+
+    if (true)
     {
       glPushMatrix();
       glTranslatef(light_pos[0], light_pos[1], light_pos[2]);
@@ -174,21 +172,49 @@ void draw_scene()
       glutSolidSphere(1, 12, 12);
       glPopMatrix();
     }
-    glEnable(GL_LIGHTING);
 
+    glEnable(GL_LIGHTING);
     glEnable(GL_LIGHT0);
+
+    //glLightf(GL_LIGHT0, GL_CONSTANT_ATTENUATION,  0.0f);
+    //glLightf(GL_LIGHT0, GL_LINEAR_ATTENUATION,    0.0f);
+    //glLightf(GL_LIGHT0, GL_QUADRATIC_ATTENUATION, 0.05f);
+
+    glLightf(GL_LIGHT0, GL_CONSTANT_ATTENUATION,  0.0f);
+    glLightf(GL_LIGHT0, GL_LINEAR_ATTENUATION,    0.2f);
+    glLightf(GL_LIGHT0, GL_QUADRATIC_ATTENUATION, 0.0f);
+
     glLightfv(GL_LIGHT0, GL_POSITION, light_pos);
     
     GLfloat light_ambient[] = {0.0f, 0.0f, 0.0f, 1.0f};
     glLightfv(GL_LIGHT0, GL_AMBIENT, light_ambient);
 
-    GLfloat light_diffuse[] = {1.0f, 1.0f, 1.0f, 1.0f};
+    GLfloat light_diffuse[] = {2.0f, 2.0f, 2.0f, 1.0f};
     glLightfv(GL_LIGHT0, GL_DIFFUSE, light_diffuse);
 
     GLfloat light_specular[] = {1.0f, 1.0f, 1.0f, 1.0f};
     glLightfv(GL_LIGHT0, GL_SPECULAR, light_specular);
+    
+    glPopMatrix();
   }
 
+  glDisable(GL_CULL_FACE);
+
+  //GLfloat light_pos[] = {0.0f, 0.0f, 20.0f, 1.0f};
+  //glLightfv(GL_LIGHT0, GL_POSITION, light_pos);
+
+  /*
+    GLfloat mat_specular[] = { 0.0, 0.0, 0.0, 0.0 };
+    GLfloat mat_shininess[] = {  0.0 };
+    GLfloat mat_ambient[] = { 0.0, 0.0, 0.0, 1.0 };
+    GLfloat mat_diffuse[] = { 1.0, 1.0, 1.0, 1.0 };
+
+    glMaterialfv(GL_FRONT, GL_AMBIENT,   mat_ambient);
+    glMaterialfv(GL_FRONT, GL_SPECULAR,  mat_specular);
+    glMaterialfv(GL_FRONT, GL_SHININESS, mat_shininess);
+    glMaterialfv(GL_FRONT, GL_EMISSION,  mat_specular);
+    glMaterialfv(GL_FRONT, GL_DIFFUSE,   mat_diffuse);
+  */
   if (g_draw_look_at)
   { // draw look-at sphere
     auto target = g_eye + g_look_at;
@@ -243,6 +269,156 @@ void draw_scene()
   }
   glPopMatrix();
 
+  {
+    glPushMatrix();
+
+    //GLfloat fSizes[2];
+    //glGetFloatv(GL_ALIASED_POINT_SIZE_RANGE, fSizes);
+    //log_debug("point size: %f %f", fSizes[0], fSizes[1]);
+    // 1.000000 8192.000000
+
+    OpenGLState save_state;
+    glDisable(GL_LIGHTING);
+    //glDisable(GL_DEPTH_TEST);
+    glDepthMask(GL_FALSE);
+    glEnable(GL_BLEND);
+    glEnable(GL_POINT_SPRITE);
+ 
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE);
+
+    glEnable(GL_TEXTURE_2D);
+    glBindTexture(GL_TEXTURE_2D, g_light_texture);
+
+
+    glTexEnvi(GL_POINT_SPRITE, GL_COORD_REPLACE, GL_TRUE);
+
+    glTranslatef(0.0f, 0.0f, 1.0f);
+
+    float quadratic[] =  { 0.0f, 0.0f, 1.0f };
+    glPointParameterfv( GL_POINT_DISTANCE_ATTENUATION, quadratic );
+
+    glPointParameterf(GL_POINT_SIZE_MIN, 16.0f);
+    glPointParameterf(GL_POINT_SIZE_MAX, 1000.0f);
+    
+    glPointSize(200.0f);
+
+    //glPointParameterfARB( GL_POINT_FADE_THRESHOLD_SIZE, 200.0f );
+
+    glColor4f(1.0, 1.0, 1.0, 0.1f);
+    glBegin(GL_POINTS);
+    for(int i = 0; i < 60; ++i)
+    {
+      glVertex3f(i/60.0f,  1.0f, 0.0f);
+    }
+    glEnd();
+    
+    glEnable(GL_LIGHTING);
+
+    glPopMatrix();
+  }
+
+  {
+    OpenGLState gl_state;
+    glDisable(GL_LIGHTING);
+
+    glPushMatrix();
+    {
+      glm::mat4 mat;
+      glGetFloatv(GL_MODELVIEW_MATRIX, glm::value_ptr(mat));
+
+      //glm::mat3 rot = glm::mat3(mat);
+      //mat = mat * 
+      
+      glTranslatef(0.0f, 0.0f, -3.0f);
+      
+      glDisable(GL_TEXTURE_2D);
+
+      glColor3f(1.0f, 1.0f, 1.0f);
+      glPushMatrix();
+      glutSolidSphere(0.25, 16, 16);
+      glPopMatrix();
+
+      if (true)
+      {
+        glEnable(GL_TEXTURE_2D);
+        glEnable(GL_BLEND);
+        glBlendFunc(GL_SRC_ALPHA, GL_ONE);
+
+        // billboard
+        glMultMatrixf(glm::value_ptr(glm::mat4(glm::transpose(glm::mat3(mat)))));
+
+        glBindTexture(GL_TEXTURE_2D, g_light_texture);
+
+        glBegin(GL_QUADS);
+        {
+          glTexCoord2f(0.0f, 0.0f);
+          glVertex3f(-1.0f, -1.0f, 0.0f);
+
+          glTexCoord2f(1.0f, 0.0f);
+          glVertex3f(1.0f, -1.0f, 0.0f);
+
+          glTexCoord2f(1.0f, 1.0f);
+          glVertex3f(1.0f, 1.0f, 0.0f);
+
+          glTexCoord2f(0.0f, 1.0f);
+          glVertex3f(-1.0f, 1.0f, 0.0f);
+        }
+        glEnd();
+      }
+    }
+    glPopMatrix();
+  }
+
+  if (true)
+  {
+    glm::mat4 mat;
+
+    glDisable(GL_LIGHTING);
+    glEnable(GL_TEXTURE_2D);
+    glDepthMask(GL_FALSE);
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE);
+    
+    int n = 100;
+    for(int i = 0; i < n; ++i)
+    {
+      float p = static_cast<float>(i) / static_cast<float>(n-1);
+
+      glPushMatrix();
+      {
+        glGetFloatv(GL_MODELVIEW_MATRIX, glm::value_ptr(mat));
+
+        glScalef(0.1f + 1.0f * p * p,
+                 0.1f + 1.0f * p * p,
+                 0.1f + 1.0f * p * p);
+        glTranslatef(0.0f, 0.0f, 0.05f * i);
+
+        // billboard
+        glMultMatrixf(glm::value_ptr(glm::mat4(glm::transpose(glm::mat3(mat)))));
+
+        glBindTexture(GL_TEXTURE_2D, g_light_texture);
+
+        glColor4f(1.0f, 1.0f, 1.0f, 0.25f * (1.0f-p));
+        glBegin(GL_QUADS);
+        {
+          glTexCoord2f(0.0f, 0.0f);
+          glVertex3f(-1.0f, -1.0f, 0.0f);
+
+          glTexCoord2f(1.0f, 0.0f);
+          glVertex3f(1.0f, -1.0f, 0.0f);
+
+          glTexCoord2f(1.0f, 1.0f);
+          glVertex3f(1.0f, 1.0f, 0.0f);
+
+          glTexCoord2f(0.0f, 1.0f);
+          glVertex3f(-1.0f, 1.0f, 0.0f);
+        }
+        glEnd();
+      }
+      glPopMatrix();
+    }
+  }
+
   assert_gl("draw_scene:exit()");
 }
 
@@ -282,7 +458,7 @@ void display()
     {
       glBlendFunc(GL_SRC_ALPHA, GL_ONE);
 
-      glColor3f(0.0f, 0.5f, 1.0f);
+      glColor3f(0.0f, 0.7f, 0.0f);
       g_framebuffer1->draw(0.0f, 0.0f, g_screen_w, g_screen_h, -20.0f);
 
       glColor3f(1.0f, 0.0f, 0.0f);
@@ -551,6 +727,44 @@ void init()
     assert_gl("texture2()");
   }
 
+  {
+    glGenTextures(1, &g_light_texture);
+    glBindTexture(GL_TEXTURE_2D, g_light_texture);
+
+    const int width = 64;
+    const int height = 64;
+    const int pitch = width * 3;
+    glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
+    glPixelStorei(GL_UNPACK_ROW_LENGTH, width);
+
+    unsigned char data[width*height*3];
+    for(int y = 0; y < height; ++y)
+      for(int x = 0; x < width; ++x)
+      {
+        float xf = (static_cast<float>(x) / static_cast<float>(width)  - 0.5f) * 2.0f;
+        float yf = (static_cast<float>(y) / static_cast<float>(height) - 0.5f) * 2.0f;
+        
+        float f = 1.0f - sqrtf(xf*xf + yf*yf);
+
+        data[y * pitch + 3*x+0] = static_cast<uint8_t>(std::max(0.0f, std::min(f * 255.0f, 255.0f)));
+        data[y * pitch + 3*x+1] = static_cast<uint8_t>(std::max(0.0f, std::min(f * 255.0f, 255.0f)));
+        data[y * pitch + 3*x+2] = static_cast<uint8_t>(std::max(0.0f, std::min(f * 255.0f, 255.0f)));
+      }
+
+    gluBuild2DMipmaps
+      (GL_TEXTURE_2D, GL_RGB,
+       width, height,
+       GL_RGB, GL_UNSIGNED_BYTE, data);
+    assert_gl("texture0()");
+    
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+
+    glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAX_ANISOTROPY_EXT, 8.0f);
+  }
+
   assert_gl("init()");
 }
 
@@ -663,6 +877,11 @@ void idle_func()
           case 5:
             g_stick.dir.y = +ev.jbutton.state;
             break;
+
+          case 1:
+            //g_light_angle += 1.0f;
+            g_stick.light_rotation = ev.jbutton.state;
+            break;
         }
         break;
 
@@ -685,7 +904,13 @@ void idle_func()
               g_stick.dir.x, g_stick.dir.y, g_stick.dir.z,
               g_stick.rot.x, g_stick.rot.y, g_stick.rot.z);
 
-  float delta = 0.2f;
+  float delta = 0.1f;
+
+  if (g_stick.light_rotation)
+  {
+    log_debug("light angle: %f", g_light_angle);
+    g_light_angle += delta * 30.0f;
+  }
 
   {
     // forward/backward
@@ -701,12 +926,18 @@ void idle_func()
   }
 
   { // handle rotation
-    g_look_at = glm::rotate(g_look_at, 10.0f * g_stick.rot.y * delta, g_up);
-    g_up = glm::rotate(g_up, 2.0f * g_stick.rot.z * delta, g_look_at);
+    float angle_d = 20.0f;
+
+    // yaw
+    g_look_at = glm::rotate(g_look_at, angle_d * g_stick.rot.y * delta, g_up);
+
+    // roll
+    g_up = glm::rotate(g_up, angle_d * g_stick.rot.z * delta, g_look_at);
     
+    // pitch
     glm::vec3 cross = glm::cross(g_look_at, g_up);
-    g_up = glm::rotate(g_up, 10.0f * g_stick.rot.x * delta, cross);
-    g_look_at = glm::rotate(g_look_at, 10.0f * g_stick.rot.x * delta, cross);
+    g_up = glm::rotate(g_up, angle_d * g_stick.rot.x * delta, cross);
+    g_look_at = glm::rotate(g_look_at, angle_d * g_stick.rot.x * delta, cross);
   }
 }
 
