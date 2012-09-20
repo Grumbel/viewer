@@ -35,9 +35,13 @@
 #include "model.hpp"
 #include "opengl_state.hpp"
 #include "framebuffer.hpp"
+#include "text_surface.hpp"
+#include "menu.hpp"
 
 // global variables
 namespace {
+
+std::unique_ptr<Menu> g_menu;
 
 float g_ipd = 0.0f;
 int g_screen_w = 1600;
@@ -48,6 +52,10 @@ GLuint g_noise_texture = 0;
 GLuint g_light_texture = 0;
 float g_light_angle = 0.0f;
 bool g_draw_3d = true;
+bool g_headlights = false;
+
+float g_spot_cutoff   = 60.0f;
+float g_spot_exponent = 30.0f;
 
 glm::vec3 g_eye(0.0f, 0.0f, 15.0f);
 glm::vec3 g_look_at(0.0f, 0.0f, -100.0f);
@@ -70,17 +78,22 @@ glm::ivec2 g_last_mouse;
 glm::mat4 g_object2world;
 glm::mat4 g_last_object2world;
 
+TextSurfacePtr g_hello_world;
+
 } // namespace
 
 struct Stick
 {
-  Stick() : dir(), rot(), light_rotation() {}
+  Stick() : dir(), rot(), light_rotation(), hat() {}
   glm::vec3 dir;
   glm::vec3 rot;
   bool light_rotation;
+  unsigned int hat;
 };
 
 Stick g_stick;
+Stick g_old_stick;
+unsigned int g_hat_autorepeat = 0;
 
 void reshape(int w, int h)
 {
@@ -108,10 +121,15 @@ void draw_scene()
 
   glEnable(GL_NORMALIZE);
 
-  if (true)
+  if (g_headlights)
   {
+    //log_debug("headlights");
     glEnable(GL_LIGHTING);
     glEnable(GL_LIGHT1);
+
+    glLightf(GL_LIGHT1, GL_CONSTANT_ATTENUATION,  0.0f);
+    glLightf(GL_LIGHT1, GL_LINEAR_ATTENUATION,    0.0f);
+    glLightf(GL_LIGHT1, GL_QUADRATIC_ATTENUATION, 0.25f);
 
     GLfloat light_pos[] = {0.0f, 0.0f, 0.0f, 1.0f};
     glLightfv(GL_LIGHT1, GL_POSITION, light_pos);
@@ -119,11 +137,17 @@ void draw_scene()
     GLfloat light_ambient[] = {0.0f, 0.0f, 0.45f, 1.0f};
     glLightfv(GL_LIGHT1, GL_AMBIENT, light_ambient);
 
-    GLfloat light_diffuse[] = {0.0f, 0.0f, 0.0f, 1.0f};
+    GLfloat light_diffuse[] = {2.0f, 2.0f, 2.0f, 1.0f};
     glLightfv(GL_LIGHT1, GL_DIFFUSE, light_diffuse);
 
     GLfloat light_specular[] = {0.0f, 0.0f, 0.0f, 1.0f};
     glLightfv(GL_LIGHT1, GL_SPECULAR, light_specular);
+
+    glLightf( GL_LIGHT1, GL_SPOT_CUTOFF,   g_spot_cutoff );
+    glLightf( GL_LIGHT1, GL_SPOT_EXPONENT, g_spot_exponent );
+
+    GLfloat light_direction[] = { 0.0f, 0.0f, -1.0f, 1.0f };
+    glLightfv(GL_LIGHT1, GL_SPOT_DIRECTION, light_direction);
   }
 
   // setup projection
@@ -192,7 +216,7 @@ void draw_scene()
     GLfloat light_diffuse[] = {2.0f, 2.0f, 2.0f, 1.0f};
     glLightfv(GL_LIGHT0, GL_DIFFUSE, light_diffuse);
 
-    GLfloat light_specular[] = {1.0f, 1.0f, 1.0f, 1.0f};
+    GLfloat light_specular[] = {10.0f, 10.0f, 10.0f, 1.0f};
     glLightfv(GL_LIGHT0, GL_SPECULAR, light_specular);
     
     glPopMatrix();
@@ -203,18 +227,17 @@ void draw_scene()
   //GLfloat light_pos[] = {0.0f, 0.0f, 20.0f, 1.0f};
   //glLightfv(GL_LIGHT0, GL_POSITION, light_pos);
 
-  /*
-    GLfloat mat_specular[] = { 0.0, 0.0, 0.0, 0.0 };
-    GLfloat mat_shininess[] = {  0.0 };
-    GLfloat mat_ambient[] = { 0.0, 0.0, 0.0, 1.0 };
-    GLfloat mat_diffuse[] = { 1.0, 1.0, 1.0, 1.0 };
+  GLfloat mat_specular[] = { 1.0, 1.0, 1.0, 1.0 };
+  GLfloat mat_ambient[]  = { 0.0, 0.0, 0.0, 1.0 };
+  GLfloat mat_diffuse[]  = { 1.0, 1.0, 1.0, 1.0 };
 
-    glMaterialfv(GL_FRONT, GL_AMBIENT,   mat_ambient);
-    glMaterialfv(GL_FRONT, GL_SPECULAR,  mat_specular);
-    glMaterialfv(GL_FRONT, GL_SHININESS, mat_shininess);
-    glMaterialfv(GL_FRONT, GL_EMISSION,  mat_specular);
-    glMaterialfv(GL_FRONT, GL_DIFFUSE,   mat_diffuse);
-  */
+  glMaterialfv(GL_FRONT, GL_AMBIENT,   mat_ambient);
+  glMaterialfv(GL_FRONT, GL_SPECULAR,  mat_specular);
+  //glMaterialfv(GL_FRONT, GL_EMISSION,  mat_specular);
+  glMaterialfv(GL_FRONT, GL_DIFFUSE,   mat_diffuse);
+
+  glMaterialf(GL_FRONT, GL_SHININESS, 64.0f);
+
   if (g_draw_look_at)
   { // draw look-at sphere
     auto target = g_eye + g_look_at;
@@ -222,7 +245,7 @@ void draw_scene()
     glPushMatrix();
     {
       glTranslatef(target.x, target.y, target.z);
-      glutSolidSphere(2.5, 12, 12);
+      glutSolidSphere(2.5, 32, 32);
     }
     glPopMatrix();
   }
@@ -340,6 +363,7 @@ void draw_scene()
 
       if (true)
       {
+        glDepthMask(GL_FALSE);
         glEnable(GL_TEXTURE_2D);
         glEnable(GL_BLEND);
         glBlendFunc(GL_SRC_ALPHA, GL_ONE);
@@ -364,6 +388,7 @@ void draw_scene()
           glVertex3f(-1.0f, 1.0f, 0.0f);
         }
         glEnd();
+        glDepthMask(GL_TRUE);
       }
     }
     glPopMatrix();
@@ -419,58 +444,130 @@ void draw_scene()
     }
   }
 
+  { // draw a grid
+    glDisable(GL_LIGHTING);
+    //glEnable(GL_LIGHT0);
+    //glEnable(GL_LIGHT1);
+    glDisable(GL_TEXTURE_2D);
+
+    int x_pos = g_eye.x;
+    int y_pos = g_eye.y;
+    int z_pos = g_eye.z;
+
+    glColor3f(1.0f, 1.0f, 1.0f);
+    int n = 1;
+    int n_in = 10;
+    int dist = 100;
+    int step = 1;
+    glPushMatrix();
+    
+    glBegin(GL_LINES);
+    {
+      for(int z = z_pos - n; z <= z_pos + n; z+=step)
+      {
+        for(int y = y_pos - n; y <= y_pos + n; y+=step)
+        {
+          glVertex3i(x_pos-n_in, y, z);
+          glVertex3i(x_pos+n_in, y, z);
+        }
+
+        for(int x = x_pos - n; x <= x_pos + n; x+=step)
+        {
+          glVertex3i(x, y_pos-n_in, z);
+          glVertex3i(x, y_pos+n_in, z);
+        }
+      }
+
+      for(int y = y_pos - n_in; y <= y_pos + n_in; y+=step)
+      {
+        for(int x = x_pos - n; x < x_pos + n; x+=step)
+        {
+          glVertex3i(x, y, z_pos-dist);
+          glVertex3i(x, y, z_pos+dist);
+        }
+      }
+    }
+    glEnd();
+    glPopMatrix();
+  }
+
   assert_gl("draw_scene:exit()");
 }
 
 void display()
 {
   //log_info("display()\n");
-
-  OpenGLState state;
-
-  g_framebuffer1->bind();
-  wiggle_int = 0;
-  draw_scene();
-  g_framebuffer1->unbind();
-
-  g_framebuffer2->bind();
-  wiggle_int = 1;
-  draw_scene();
-  g_framebuffer2->unbind();
-
-  // composit the final image
-  if (true)
   {
-    // 2d screen access
+    OpenGLState state;
+
+    g_framebuffer1->bind();
+    wiggle_int = 0;
+    draw_scene();
+    g_framebuffer1->unbind();
+
+    g_framebuffer2->bind();
+    wiggle_int = 1;
+    draw_scene();
+    g_framebuffer2->unbind();
+
+    // composit the final image
+    if (true)
+    {
+      // 2d screen access
+      glMatrixMode(GL_PROJECTION);
+      glLoadIdentity();
+      glOrtho(0, g_screen_w, 0, g_screen_h, 0.1f, 10000.0f);
+
+      glMatrixMode(GL_MODELVIEW);
+      glLoadIdentity();
+
+      glClearColor(0.0, 0.0, 0.0, 1.0);
+      glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
+
+      glEnable(GL_BLEND);
+
+      if (g_draw_3d)
+      {
+        glBlendFunc(GL_SRC_ALPHA, GL_ONE);
+
+        glColor3f(0.0f, 0.7f, 0.0f);
+        g_framebuffer1->draw(0.0f, 0.0f, g_screen_w, g_screen_h, -20.0f);
+
+        glColor3f(1.0f, 0.0f, 0.0f);
+        g_framebuffer2->draw(g_ipd, 0.0f, g_screen_w, g_screen_h, -20.0f);
+      }
+      else
+      {
+        glBlendFunc(GL_ONE, GL_ZERO);
+
+        glColor3f(1.0f, 1.0f, 1.0f);
+        g_framebuffer1->draw(0.0f, 0.0f, g_screen_w, g_screen_h, -20.0f);
+      }
+    }
+  }
+
+  { // 2D Rendering
+    OpenGLState state;
+
     glMatrixMode(GL_PROJECTION);
     glLoadIdentity();
-    glOrtho(0, g_screen_w, 0, g_screen_h, 0.1f, 10000.0f);
+    gluOrtho2D(0, g_screen_w, g_screen_h, 0);
 
     glMatrixMode(GL_MODELVIEW);
     glLoadIdentity();
 
     glClearColor(0.0, 0.0, 0.0, 1.0);
-    glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
+    //glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
+    
+    glDisable(GL_LIGHTING);
+    glDisable(GL_DEPTH_TEST);
+    glEnable(GL_TEXTURE_2D);
+    glColor3f(1.0f, 1.0f, 1.0f);
 
     glEnable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
-    if (g_draw_3d)
-    {
-      glBlendFunc(GL_SRC_ALPHA, GL_ONE);
-
-      glColor3f(0.0f, 0.7f, 0.0f);
-      g_framebuffer1->draw(0.0f, 0.0f, g_screen_w, g_screen_h, -20.0f);
-
-      glColor3f(1.0f, 0.0f, 0.0f);
-      g_framebuffer2->draw(g_ipd, 0.0f, g_screen_w, g_screen_h, -20.0f);
-    }
-    else
-    {
-      glBlendFunc(GL_ONE, GL_ZERO);
-
-      glColor3f(1.0f, 1.0f, 1.0f);
-      g_framebuffer1->draw(0.0f, 0.0f, g_screen_w, g_screen_h, -20.0f);
-    }
+    g_menu->draw(100.0f, 100.0f);
   }
 
   glutSwapBuffers();
@@ -765,6 +862,22 @@ void init()
     glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAX_ANISOTROPY_EXT, 8.0f);
   }
 
+  //g_hello_world = TextSurface::create("Hello World", TextProperties()
+  //                                    .set_line_width(3.0f));
+
+  g_menu.reset(new Menu);
+  g_menu->add_item("eye.x", &g_eye.x);
+  g_menu->add_item("eye.y", &g_eye.y);
+  g_menu->add_item("eye.z", &g_eye.z);
+
+  g_menu->add_item("FOV", &g_fov);
+
+  g_menu->add_item("scale", &g_scale);
+  g_menu->add_item("eye3D.dist", &g_wiggle_offset);
+
+  g_menu->add_item("spot.cutoff",   &g_spot_cutoff);
+  g_menu->add_item("spot.exponent", &g_spot_exponent);
+
   assert_gl("init()");
 }
 
@@ -882,11 +995,49 @@ void idle_func()
             //g_light_angle += 1.0f;
             g_stick.light_rotation = ev.jbutton.state;
             break;
+
+          case 2:
+            g_headlights = ev.jbutton.state;
+            break;
         }
+        break;
+
+      case SDL_JOYHATMOTION:
+        g_stick.hat = ev.jhat.value;
+        g_hat_autorepeat = SDL_GetTicks() + 500;
         break;
 
       default:
         break;
+    }
+  }
+
+  auto current_time = SDL_GetTicks();
+  if (g_stick.hat != g_old_stick.hat || (g_stick.hat && g_hat_autorepeat < current_time))
+  {
+    if (g_hat_autorepeat < current_time)
+    {
+      g_hat_autorepeat = current_time + 100 + (g_hat_autorepeat - current_time);
+    }
+
+    if (g_stick.hat & SDL_HAT_UP)
+    {
+      g_menu->up();
+    }
+        
+    if (g_stick.hat & SDL_HAT_DOWN)
+    {
+      g_menu->down();
+    }
+
+    if (g_stick.hat & SDL_HAT_LEFT)
+    {
+      g_menu->left();
+    }
+
+    if (g_stick.hat & SDL_HAT_RIGHT)
+    {
+      g_menu->right();
     }
   }
 
@@ -939,6 +1090,8 @@ void idle_func()
     g_up = glm::rotate(g_up, angle_d * g_stick.rot.x * delta, cross);
     g_look_at = glm::rotate(g_look_at, angle_d * g_stick.rot.x * delta, cross);
   }
+
+  g_old_stick = g_stick;
 }
 
 void mouse_motion(int x, int y)
