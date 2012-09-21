@@ -37,6 +37,8 @@
 #include "framebuffer.hpp"
 #include "text_surface.hpp"
 #include "menu.hpp"
+#include "program.hpp"
+#include "shader.hpp"
 
 // global variables
 namespace {
@@ -47,13 +49,20 @@ float g_ipd = 0.0f;
 int g_screen_w = 1600;
 int g_screen_h = 1000;
 float g_fov = 70.0f;
+
+float g_near_z = 0.1f;
+float g_far_z = 1000.0f;
+
+int g_spot_halo_samples = 100;
+
 bool g_draw_look_at = true;
 GLuint g_noise_texture = 0;
 GLuint g_light_texture = 0;
 float g_light_angle = 0.0f;
-bool g_draw_3d = true;
+bool g_draw_3d = false;
 bool g_headlights = false;
 bool g_draw_grid = false;
+bool g_draw_depth = false;
 
 float g_spot_cutoff   = 60.0f;
 float g_spot_exponent = 30.0f;
@@ -80,6 +89,8 @@ glm::mat4 g_object2world;
 glm::mat4 g_last_object2world;
 
 TextSurfacePtr g_hello_world;
+
+ProgramPtr g_program;
 
 } // namespace
 
@@ -167,12 +178,11 @@ void draw_scene(EyeType eye_type)
   glMatrixMode(GL_PROJECTION);
   glLoadIdentity();
   const float aspect_ratio = static_cast<GLfloat>(g_screen_w)/static_cast<GLfloat>(g_screen_h);
-  gluPerspective(g_fov /** aspect_ratio*/, aspect_ratio, 0.1f, 100000.0f);
+  gluPerspective(g_fov /** aspect_ratio*/, aspect_ratio, g_near_z, 100000.0f);
 
   // setup modelview
   glMatrixMode(GL_MODELVIEW);
   glLoadIdentity();
-
 
   {
     glm::vec3 sideways = glm::normalize(glm::cross(g_look_at, g_up)) * g_wiggle_offset;
@@ -281,8 +291,13 @@ void draw_scene(EyeType eye_type)
     {
       glEnable(GL_TEXTURE_2D);
       glBindTexture(GL_TEXTURE_2D, g_noise_texture);
-
       glColor3f(1.0, 1.0, 1.0);
+      g_program->validate();
+      if (!g_program->get_validate_status())
+      {
+        log_debug("validation failure: %s", g_program->get_info_log());
+      }
+      glUseProgram(g_program->get_id());
 
       int dim = 0;
       for(int y = -dim; y <= dim; ++y)
@@ -294,6 +309,8 @@ void draw_scene(EyeType eye_type)
           g_model->draw();
           glPopMatrix();
         }
+
+      glUseProgram(0);
     }
 
     if (false)
@@ -425,7 +442,7 @@ void draw_scene(EyeType eye_type)
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE);
     
-    int n = 100;
+    int n = g_spot_halo_samples;
     for(int i = 0; i < n; ++i)
     {
       float p = static_cast<float>(i) / static_cast<float>(n-1);
@@ -570,7 +587,14 @@ void display()
         glBlendFunc(GL_ONE, GL_ZERO);
 
         glColor3f(1.0f, 1.0f, 1.0f);
-        g_framebuffer1->draw(0.0f, 0.0f, g_screen_w, g_screen_h, -20.0f);
+        if (g_draw_depth)
+        {
+          g_framebuffer1->draw_depth(0.0f, 0.0f, g_screen_w, g_screen_h, -20.0f);
+        }
+        else
+        {
+          g_framebuffer1->draw(0.0f, 0.0f, g_screen_w, g_screen_h, -20.0f);
+        }
       }
     }
   }
@@ -894,15 +918,20 @@ void init()
   //g_hello_world = TextSurface::create("Hello World", TextProperties()
   //                                    .set_line_width(3.0f));
 
-  g_menu.reset(new Menu);
+  g_menu.reset(new Menu(TextProperties().set_line_width(4.0f)));
   g_menu->add_item("eye.x", &g_eye.x);
   g_menu->add_item("eye.y", &g_eye.y);
   g_menu->add_item("eye.z", &g_eye.z);
 
+  g_menu->add_item("depth.near_z", &g_near_z, 0.01, 0.0f);
+  g_menu->add_item("depth.far_z",  &g_far_z, 1.0f);
+
+  g_menu->add_item("spot_halo_samples",  &g_spot_halo_samples, 1, 0);
+
   g_menu->add_item("FOV", &g_fov);
 
-  g_menu->add_item("scale", &g_scale);
-  g_menu->add_item("eye3D.dist", &g_wiggle_offset);
+  g_menu->add_item("scale", &g_scale, 0.5f, 0.0f);
+  g_menu->add_item("eye3D.dist", &g_wiggle_offset, 0.1f);
 
   g_menu->add_item("spot.cutoff",   &g_spot_cutoff);
   g_menu->add_item("spot.exponent", &g_spot_exponent);
@@ -910,6 +939,11 @@ void init()
   g_menu->add_item("3D", &g_draw_3d);
   g_menu->add_item("Grid", &g_draw_grid);
   g_menu->add_item("Headlights", &g_headlights);
+  g_menu->add_item("Look At Sphere", &g_draw_look_at);
+  g_menu->add_item("draw depth", &g_draw_depth);
+
+  g_program = Program::create(Shader::from_file(GL_VERTEX_SHADER, "src/shader.vert"),
+                              Shader::from_file(GL_FRAGMENT_SHADER, "src/shader.frag"));
 
   assert_gl("init()");
 }

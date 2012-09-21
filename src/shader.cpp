@@ -9,19 +9,29 @@ ShaderPtr
 Shader::from_file(GLenum type, const std::string& filename)
 {
   std::ifstream in(filename);
-  std::string source{std::istreambuf_iterator<char>(in), std::istreambuf_iterator<char>()}; 
-  
-  ShaderPtr shader = std::make_shared<Shader>(type);
-
-  shader->source(source);
-  shader->compile();
-
-  if (!shader->get_compile_status())
+  if (!in)
   {
-    throw std::runtime_error((boost::format("%s: error:\n %s") % filename % shader->get_info_log()).str());
+    throw std::runtime_error((boost::format("%s: failed to open file") % filename).str());
   }
+  else
+  {
+    std::string source{std::istreambuf_iterator<char>(in), std::istreambuf_iterator<char>()}; 
+  
+    log_debug("shader source:\n %s\n", source);
 
-  return shader;
+    ShaderPtr shader = std::make_shared<Shader>(type);
+
+    shader->source(source);
+    shader->compile();
+
+    if (!shader->get_compile_status())
+    {
+      throw std::runtime_error((boost::format("%s: error:\n %s") % filename % shader->get_info_log()).str());
+    }
+
+    log_debug("%s: shader compile successful", filename);
+    return shader;
+  }
 }
 
 Shader::Shader(GLenum type) :
