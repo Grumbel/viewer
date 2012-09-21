@@ -53,6 +53,7 @@ GLuint g_light_texture = 0;
 float g_light_angle = 0.0f;
 bool g_draw_3d = true;
 bool g_headlights = false;
+bool g_draw_grid = false;
 
 float g_spot_cutoff   = 60.0f;
 float g_spot_exponent = 30.0f;
@@ -69,7 +70,7 @@ std::unique_ptr<Framebuffer> g_framebuffer2;
 
 float g_scale = 1.0f;
 
-float wiggle_int = 0;
+enum EyeType { kLeftEye, kRightEye, kCenterEye };
 float g_wiggle_offset = 0.3f;
 
 bool g_arcball_active = false;
@@ -111,7 +112,7 @@ void reshape(int w, int h)
   assert_gl("reshape");
 }
 
-void draw_scene()
+void draw_scene(EyeType eye_type)
 {
   OpenGLState state;
 
@@ -120,6 +121,18 @@ void draw_scene()
   glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
 
   glEnable(GL_NORMALIZE);
+
+  glMatrixMode(GL_PROJECTION);
+  glLoadIdentity();
+
+  glMatrixMode(GL_MODELVIEW);
+  glLoadIdentity();
+  
+  float ambient[4] = { 0.0f, 0.0f, 0.0f, 1.0f };
+  glLightModelfv(GL_LIGHT_MODEL_AMBIENT, ambient);
+
+  // must be set for correct specular reflections
+  glLightModeli(GL_LIGHT_MODEL_LOCAL_VIEWER, 1);
 
   if (g_headlights)
   {
@@ -133,8 +146,8 @@ void draw_scene()
 
     GLfloat light_pos[] = {0.0f, 0.0f, 0.0f, 1.0f};
     glLightfv(GL_LIGHT1, GL_POSITION, light_pos);
-    
-    GLfloat light_ambient[] = {0.0f, 0.0f, 0.45f, 1.0f};
+   
+    GLfloat light_ambient[] = {0.0f, 0.0f, 0.0f, 1.0f};
     glLightfv(GL_LIGHT1, GL_AMBIENT, light_ambient);
 
     GLfloat light_diffuse[] = {2.0f, 2.0f, 2.0f, 1.0f};
@@ -163,7 +176,20 @@ void draw_scene()
 
   {
     glm::vec3 sideways = glm::normalize(glm::cross(g_look_at, g_up)) * g_wiggle_offset;
-    sideways = wiggle_int ? sideways : -sideways;
+    switch(eye_type)
+    {
+      case kLeftEye:
+        sideways = sideways;
+        break;
+
+      case kRightEye:
+        sideways = -sideways;
+        break;
+
+      case kCenterEye:
+        sideways = glm::vec3(0);
+        break;
+    }
 
     //glTranslatef(wiggle_offset, 0.0f, 0.0f);
     gluLookAt(
@@ -207,8 +233,6 @@ void draw_scene()
     glLightf(GL_LIGHT0, GL_CONSTANT_ATTENUATION,  0.0f);
     glLightf(GL_LIGHT0, GL_LINEAR_ATTENUATION,    0.2f);
     glLightf(GL_LIGHT0, GL_QUADRATIC_ATTENUATION, 0.0f);
-
-    glLightfv(GL_LIGHT0, GL_POSITION, light_pos);
     
     GLfloat light_ambient[] = {0.0f, 0.0f, 0.0f, 1.0f};
     glLightfv(GL_LIGHT0, GL_AMBIENT, light_ambient);
@@ -219,16 +243,15 @@ void draw_scene()
     GLfloat light_specular[] = {10.0f, 10.0f, 10.0f, 1.0f};
     glLightfv(GL_LIGHT0, GL_SPECULAR, light_specular);
     
+    glLightfv(GL_LIGHT0, GL_POSITION, light_pos);
+
     glPopMatrix();
   }
 
   glDisable(GL_CULL_FACE);
 
-  //GLfloat light_pos[] = {0.0f, 0.0f, 20.0f, 1.0f};
-  //glLightfv(GL_LIGHT0, GL_POSITION, light_pos);
-
   GLfloat mat_specular[] = { 1.0, 1.0, 1.0, 1.0 };
-  GLfloat mat_ambient[]  = { 0.0, 0.0, 0.0, 1.0 };
+  GLfloat mat_ambient[]  = { 1.0, 1.0, 1.0, 1.0 };
   GLfloat mat_diffuse[]  = { 1.0, 1.0, 1.0, 1.0 };
 
   glMaterialfv(GL_FRONT, GL_AMBIENT,   mat_ambient);
@@ -260,8 +283,6 @@ void draw_scene()
       glBindTexture(GL_TEXTURE_2D, g_noise_texture);
 
       glColor3f(1.0, 1.0, 1.0);
-
-      // normalizes normals to unit length 
 
       int dim = 0;
       for(int y = -dim; y <= dim; ++y)
@@ -444,7 +465,8 @@ void draw_scene()
     }
   }
 
-  { // draw a grid
+  if (g_draw_grid)
+  {
     glDisable(GL_LIGHTING);
     //glEnable(GL_LIGHT0);
     //glEnable(GL_LIGHT1);
@@ -500,15 +522,22 @@ void display()
   {
     OpenGLState state;
 
-    g_framebuffer1->bind();
-    wiggle_int = 0;
-    draw_scene();
-    g_framebuffer1->unbind();
+    if (g_draw_3d)
+    {
+      g_framebuffer1->bind();
+      draw_scene(kLeftEye);
+      g_framebuffer1->unbind();
 
-    g_framebuffer2->bind();
-    wiggle_int = 1;
-    draw_scene();
-    g_framebuffer2->unbind();
+      g_framebuffer2->bind();
+      draw_scene(kRightEye);
+      g_framebuffer2->unbind();
+    }
+    else
+    {
+      g_framebuffer1->bind();
+      draw_scene(kCenterEye);
+      g_framebuffer1->unbind();
+    }
 
     // composit the final image
     if (true)
@@ -877,6 +906,10 @@ void init()
 
   g_menu->add_item("spot.cutoff",   &g_spot_cutoff);
   g_menu->add_item("spot.exponent", &g_spot_exponent);
+
+  g_menu->add_item("3D", &g_draw_3d);
+  g_menu->add_item("Grid", &g_draw_grid);
+  g_menu->add_item("Headlights", &g_headlights);
 
   assert_gl("init()");
 }
