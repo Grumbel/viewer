@@ -7,11 +7,12 @@
 class MenuItem
 {
 public:
-  MenuItem(const std::string& label) :
+  MenuItem(const std::string& label, const TextProperties& text_prop) :
+    m_text_prop(text_prop),
     m_label(label),
     m_label_surface()
   {
-    m_label_surface = TextSurface::create(m_label, TextProperties());
+    m_label_surface = TextSurface::create(m_label, text_prop);
   }
 
   virtual ~MenuItem()
@@ -25,6 +26,9 @@ public:
   virtual void left()   = 0;
   virtual void right() = 0;
 
+protected:
+  TextProperties m_text_prop;
+
 private:
   std::string m_label;
   TextSurfacePtr m_label_surface;
@@ -37,14 +41,14 @@ private:
 class BoolMenuItem : public MenuItem
 {
 public:
-  BoolMenuItem(const std::string& label, bool* value_ptr) : 
-    MenuItem(label),
+  BoolMenuItem(const std::string& label, const TextProperties& text_prop, bool* value_ptr) : 
+    MenuItem(label, text_prop),
     m_value_ptr(value_ptr),
     m_true_surface(),
     m_false_surface()
   {
-    m_true_surface  = TextSurface::create("[X]", TextProperties());
-    m_false_surface = TextSurface::create("[ ]", TextProperties());
+    m_true_surface  = TextSurface::create("[X]", text_prop);
+    m_false_surface = TextSurface::create("[ ]", text_prop);
   }
 
   void left()   
@@ -77,15 +81,18 @@ private:
   BoolMenuItem& operator=(const BoolMenuItem&) = delete; 
 };
 
-class FloatMenuItem : public MenuItem
+template<typename T>
+class ValueMenuItem : public MenuItem
 {
 public:
-  FloatMenuItem(const std::string& label, float* value_ptr) : 
-    MenuItem(label),
+  ValueMenuItem(const std::string& label, const TextProperties& text_prop, T* value_ptr, T step,
+                boost::optional<T> min = boost::optional<T>(), 
+                boost::optional<T> max = boost::optional<T>()) : 
+    MenuItem(label, text_prop),
     m_value_ptr(value_ptr),
-    m_step(1.0f),
-    m_min(),
-    m_max(),
+    m_step(step),
+    m_min(min),
+    m_max(max),
     m_value_surface(),
     m_old_value()
   {
@@ -130,24 +137,26 @@ public:
   {
     if (m_old_value != *m_value_ptr || !m_value_surface)
     {
-      m_value_surface = TextSurface::create(std::to_string(*m_value_ptr), TextProperties());
+      m_value_surface = TextSurface::create(std::to_string(*m_value_ptr), m_text_prop);
       m_old_value = *m_value_ptr;
     }
   }
 
 private:
-  float* m_value_ptr;
-  float m_step;
-  boost::optional<float> m_min;
-  boost::optional<float> m_max;
+  T* m_value_ptr;
+  T m_step;
+  boost::optional<T> m_min;
+  boost::optional<T> m_max;
 
   TextSurfacePtr m_value_surface;
-  float m_old_value;
+  T m_old_value;
 
 private:
-  FloatMenuItem(const FloatMenuItem&) = delete;
-  FloatMenuItem& operator=(const FloatMenuItem&) = delete;
+  ValueMenuItem(const ValueMenuItem&) = delete;
+  ValueMenuItem& operator=(const ValueMenuItem&) = delete;
 };
+
+typedef ValueMenuItem<float> FloatMenuItem;
 
 #endif
 
