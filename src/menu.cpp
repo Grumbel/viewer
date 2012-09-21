@@ -33,6 +33,12 @@ Menu::add_item(const std::string& label, float* value_ptr)
 }
 
 void
+Menu::add_item(const std::string& label, bool* value_ptr)
+{
+  m_items.emplace_back(new BoolMenuItem(label, value_ptr));
+}
+
+void
 Menu::up()
 {
   m_current_item -= 1;

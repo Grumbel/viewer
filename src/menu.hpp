@@ -15,6 +15,7 @@ public:
 
   void draw(float x, float y);
   void add_item(const std::string& label, float* value_ptr);
+  void add_item(const std::string& label, bool* value_ptr);
 
   void up();
   void down();

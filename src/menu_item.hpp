@@ -34,6 +34,49 @@ private:
   MenuItem& operator=(const MenuItem&) = delete;
 };
 
+class BoolMenuItem : public MenuItem
+{
+public:
+  BoolMenuItem(const std::string& label, bool* value_ptr) : 
+    MenuItem(label),
+    m_value_ptr(value_ptr),
+    m_true_surface(),
+    m_false_surface()
+  {
+    m_true_surface  = TextSurface::create("[X]", TextProperties());
+    m_false_surface = TextSurface::create("[ ]", TextProperties());
+  }
+
+  void left()   
+  {
+    *m_value_ptr = !*m_value_ptr;
+  }
+
+  void right() 
+  { 
+    left();
+  }
+
+  void draw(float x, float y)
+  {
+    MenuItem::draw(x, y);
+
+    auto& surface = (*m_value_ptr) ? m_true_surface : m_false_surface;
+    
+    surface->draw(x+300.0f - surface->get_width(), y);
+  }
+
+private:
+  bool* m_value_ptr;
+
+  TextSurfacePtr m_true_surface;
+  TextSurfacePtr m_false_surface;
+
+private:
+  BoolMenuItem(const BoolMenuItem&) = delete;
+  BoolMenuItem& operator=(const BoolMenuItem&) = delete; 
+};
+
 class FloatMenuItem : public MenuItem
 {
 public:
