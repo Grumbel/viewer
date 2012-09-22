@@ -70,6 +70,7 @@ bool g_render_shadow_map = true;
 float g_light_diffuse = 1.0f;
 float g_light_specular = 1.0f;
 float g_material_shininess = 10.0f;
+float g_light_up = 0.0f;
 
 float g_spot_cutoff   = 60.0f;
 float g_spot_exponent = 30.0f;
@@ -230,10 +231,13 @@ void draw_scene(EyeType eye_type)
     glPushMatrix();
 
     glRotatef(g_light_angle, 0.0f, 1.0f, 0.0f);
-    glTranslatef(10.0f,0,0.0f);
+    glTranslatef(10.0f,10,0.0f);
 
     if (true)
     {
+      glEnable(GL_DEPTH_TEST);
+      glDisable(GL_CULL_FACE);
+
       glPushMatrix();
       glTranslatef(light_pos[0], light_pos[1], light_pos[2]);
       glColor3f(1.0f, 1.0f, 1.0f);
@@ -294,12 +298,14 @@ void draw_shadowmap()
   glEnable(GL_LIGHTING);
   glEnable(GL_LIGHT0);
 
-  glm::vec3 light_pos(10.0f,0,0.0f);
+  glm::vec3 light_pos(10.0f,10,0.0f);
   light_pos = glm::rotate(light_pos, g_light_angle, glm::vec3(0.0f, 1.0f, 0.0f));
   
+  glm::vec3 up(0.0f, 1.0f, 0.0f);
+  up = glm::rotate(up, g_light_up, glm::vec3(0.0f, 0.0f, 1.0f));
   gluLookAt(light_pos.x, light_pos.y, light_pos.z,
             0.0f, 0.0f, 0.0f /* look-at */,
-            0.0f, 1.0f, 0.0f /* up */);
+            up.x, up.y, up.z /* up */);
 
   g_shadow_map_matrix = glm::mat4(0.5, 0.0, 0.0, 0.0, 
                                   0.0, 0.5, 0.0, 0.0,
@@ -360,8 +366,14 @@ void draw_models(bool shader_foo)
         }
 
         glActiveTexture(GL_TEXTURE1);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_MODE, GL_COMPARE_R_TO_TEXTURE);
+        //glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_MODE, GL_COMPARE_R_TO_TEXTURE);
+	
         glBindTexture(GL_TEXTURE_2D, g_shadow_map->get_depth_texture());
+        
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_MODE, GL_COMPARE_R_TO_TEXTURE);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_FUNC, GL_LEQUAL);
+	//glTexParameteri(GL_TEXTURE_2D, GL_DEPTH_TEXTURE_MODE, GL_INTENSITY); 
+        
         assert_gl("use program4");
         glUseProgram(g_program->get_id());
         assert_gl("use program5");
@@ -370,6 +382,10 @@ void draw_models(bool shader_foo)
         log_debug("location: %d", loc);
         glUniform1i(loc, 1);
         assert_gl("use program3");
+
+        glUniform1f(glGetUniformLocation(g_program->get_id(), "xPixelOffset"), 1.0f/static_cast<float>(g_screen_w));
+        glUniform1f(glGetUniformLocation(g_program->get_id(), "yPixelOffset"), 1.0f/static_cast<float>(g_screen_h));
+
         glUniformMatrix4fv(glGetUniformLocation(g_program->get_id(), "ShadowMapMatrix"),
                            1, GL_FALSE,
                            glm::value_ptr(g_shadow_map_matrix));
@@ -383,6 +399,17 @@ void draw_models(bool shader_foo)
           glScalef(g_scale, g_scale, g_scale);
           glTranslatef(20*x, 0, 20*y);
           g_model->draw();
+          if (true)
+          {
+            float plane_size = 50.0f;
+            float plane_y = -1.0f;
+            glBegin(GL_QUADS);
+            glVertex3f(-plane_size, plane_y, -plane_size);
+            glVertex3f(-plane_size, plane_y,  plane_size);
+            glVertex3f( plane_size, plane_y,  plane_size);
+            glVertex3f( plane_size, plane_y, -plane_size);
+            glEnd();
+          }
           glPopMatrix();
         }
 
@@ -1035,6 +1062,7 @@ void init()
   g_menu->add_item("spot.cutoff",   &g_spot_cutoff);
   g_menu->add_item("spot.exponent", &g_spot_exponent);
 
+  g_menu->add_item("light.up",  &g_light_up, 1.0f);
   g_menu->add_item("light.angle",  &g_light_angle, 1.0f);
   g_menu->add_item("light.diffuse",  &g_light_diffuse, 0.1f, 0.0f);
   g_menu->add_item("light.specular", &g_light_specular, 0.1f, 0.0f);
