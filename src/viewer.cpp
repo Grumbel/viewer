@@ -40,6 +40,8 @@
 #include "program.hpp"
 #include "shader.hpp"
 
+void draw_models(bool shader_foo);
+
 // global variables
 namespace {
 
@@ -50,8 +52,8 @@ int g_screen_w = 1600;
 int g_screen_h = 1000;
 float g_fov = 70.0f;
 
-float g_near_z = 0.1f;
-float g_far_z = 1000.0f;
+float g_near_z = 1.0f;
+float g_far_z  = 1000.0f;
 
 int g_spot_halo_samples = 100;
 
@@ -63,6 +65,7 @@ bool g_draw_3d = false;
 bool g_headlights = false;
 bool g_draw_grid = false;
 bool g_draw_depth = false;
+bool g_render_shadow_map = true;
 
 float g_light_diffuse = 1.0f;
 float g_light_specular = 1.0f;
@@ -74,12 +77,14 @@ float g_spot_exponent = 30.0f;
 glm::vec3 g_eye(0.0f, 0.0f, 15.0f);
 glm::vec3 g_look_at(0.0f, 0.0f, -100.0f);
 glm::vec3 g_up(0.0f, 1.0f, 0.0f);
+glm::mat4 g_shadow_map_matrix;
 
 std::string g_model_filename;
 Model* g_model;
 
 std::unique_ptr<Framebuffer> g_framebuffer1;
 std::unique_ptr<Framebuffer> g_framebuffer2;
+std::unique_ptr<Framebuffer> g_shadow_map;
 
 float g_scale = 1.0f;
 
@@ -123,6 +128,7 @@ void reshape(int w, int h)
 
   g_framebuffer1.reset(new Framebuffer(g_screen_w, g_screen_h));
   g_framebuffer2.reset(new Framebuffer(g_screen_w, g_screen_h));
+  g_shadow_map.reset(new Framebuffer(g_screen_w, g_screen_h));
 
   assert_gl("reshape");
 }
@@ -215,8 +221,6 @@ void draw_scene(EyeType eye_type)
       g_up.x, g_up.y, g_up.z);
   }
 
-  glEnable(GL_DEPTH_TEST);
-
   // light after gluLookAt() put it in worldspace, light before gluLookAt() puts it in eye space
   if (true)
   {
@@ -262,8 +266,56 @@ void draw_scene(EyeType eye_type)
     glPopMatrix();
   }
 
+  glEnable(GL_DEPTH_TEST);
   glDisable(GL_CULL_FACE);
 
+  draw_models(true);
+}
+
+void draw_shadowmap()
+{
+  OpenGLState state;
+
+  glClearColor(1.0, 0.0, 1.0, 1.0);
+  glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
+
+  glEnable(GL_NORMALIZE);
+
+  glMatrixMode(GL_PROJECTION);
+  glLoadIdentity();
+  gluPerspective(60.0f, 1.0f, g_near_z, 100000.0f);
+
+  glMatrixMode(GL_MODELVIEW);
+  glLoadIdentity();
+
+  glEnable(GL_DEPTH_TEST);
+  glDisable(GL_CULL_FACE);
+
+  glEnable(GL_LIGHTING);
+  glEnable(GL_LIGHT0);
+
+  glm::vec3 light_pos(10.0f,0,0.0f);
+  light_pos = glm::rotate(light_pos, g_light_angle, glm::vec3(0.0f, 1.0f, 0.0f));
+  
+  gluLookAt(light_pos.x, light_pos.y, light_pos.z,
+            0.0f, 0.0f, 0.0f /* look-at */,
+            0.0f, 1.0f, 0.0f /* up */);
+
+  g_shadow_map_matrix = glm::mat4(0.5, 0.0, 0.0, 0.0, 
+                                  0.0, 0.5, 0.0, 0.0,
+                                  0.0, 0.0, 0.5, 0.0,
+                                  0.5, 0.5, 0.5, 1.0);
+  glm::mat4 tmp_matrix;
+  glGetFloatv(GL_PROJECTION_MATRIX, glm::value_ptr(tmp_matrix));
+  g_shadow_map_matrix *= tmp_matrix;
+  glGetFloatv(GL_MODELVIEW_MATRIX, glm::value_ptr(tmp_matrix));
+  g_shadow_map_matrix *= tmp_matrix;
+
+  draw_models(false); 
+}
+
+void draw_models(bool shader_foo)
+{
   GLfloat mat_specular[] = { 1.0, 1.0, 1.0, 1.0 };
   GLfloat mat_ambient[]  = { 1.0, 1.0, 1.0, 1.0 };
   GLfloat mat_diffuse[]  = { 1.0, 1.0, 1.0, 1.0 };
@@ -293,15 +345,35 @@ void draw_scene(EyeType eye_type)
 
     // draw the model
     {
+      OpenGLState state2;
+
       glEnable(GL_TEXTURE_2D);
       glBindTexture(GL_TEXTURE_2D, g_noise_texture);
       glColor3f(1.0, 1.0, 1.0);
-      g_program->validate();
-      if (!g_program->get_validate_status())
+      
+      if (shader_foo)
       {
-        log_debug("validation failure: %s", g_program->get_info_log());
+        g_program->validate();
+        if (!g_program->get_validate_status())
+        {
+          log_debug("validation failure: %s", g_program->get_info_log());
+        }
+
+        glActiveTexture(GL_TEXTURE1);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_MODE, GL_COMPARE_R_TO_TEXTURE);
+        glBindTexture(GL_TEXTURE_2D, g_shadow_map->get_depth_texture());
+        assert_gl("use program4");
+        glUseProgram(g_program->get_id());
+        assert_gl("use program5");
+        assert_gl("use program2");
+        auto loc = glGetUniformLocation(g_program->get_id(), "ShadowMap");
+        log_debug("location: %d", loc);
+        glUniform1i(loc, 1);
+        assert_gl("use program3");
+        glUniformMatrix4fv(glGetUniformLocation(g_program->get_id(), "ShadowMapMatrix"),
+                           1, GL_FALSE,
+                           glm::value_ptr(g_shadow_map_matrix));
       }
-      glUseProgram(g_program->get_id());
 
       int dim = 0;
       for(int y = -dim; y <= dim; ++y)
@@ -314,7 +386,13 @@ void draw_scene(EyeType eye_type)
           glPopMatrix();
         }
 
-      glUseProgram(0);
+      if (shader_foo)
+      {
+        glUseProgram(0);
+        glBindTexture(GL_TEXTURE_2D, 0);
+        glActiveTexture(GL_TEXTURE0);
+        glBindTexture(GL_TEXTURE_2D, 0);
+      }
     }
 
     if (false)
@@ -410,26 +488,29 @@ void draw_scene(EyeType eye_type)
         glEnable(GL_BLEND);
         glBlendFunc(GL_SRC_ALPHA, GL_ONE);
 
-        // billboard
-        glMultMatrixf(glm::value_ptr(glm::mat4(glm::transpose(glm::mat3(mat)))));
-
-        glBindTexture(GL_TEXTURE_2D, g_light_texture);
-
-        glBegin(GL_QUADS);
+        if (false)
         {
-          glTexCoord2f(0.0f, 0.0f);
-          glVertex3f(-1.0f, -1.0f, 0.0f);
+          // billboard
+          glMultMatrixf(glm::value_ptr(glm::mat4(glm::transpose(glm::mat3(mat)))));
 
-          glTexCoord2f(1.0f, 0.0f);
-          glVertex3f(1.0f, -1.0f, 0.0f);
+          glBindTexture(GL_TEXTURE_2D, g_light_texture);
 
-          glTexCoord2f(1.0f, 1.0f);
-          glVertex3f(1.0f, 1.0f, 0.0f);
+          glBegin(GL_QUADS);
+          {
+            glTexCoord2f(0.0f, 0.0f);
+            glVertex3f(-1.0f, -1.0f, 0.0f);
 
-          glTexCoord2f(0.0f, 1.0f);
-          glVertex3f(-1.0f, 1.0f, 0.0f);
+            glTexCoord2f(1.0f, 0.0f);
+            glVertex3f(1.0f, -1.0f, 0.0f);
+
+            glTexCoord2f(1.0f, 1.0f);
+            glVertex3f(1.0f, 1.0f, 0.0f);
+
+            glTexCoord2f(0.0f, 1.0f);
+            glVertex3f(-1.0f, 1.0f, 0.0f);
+          }
+          glEnd();
         }
-        glEnd();
         glDepthMask(GL_TRUE);
       }
     }
@@ -543,6 +624,13 @@ void display()
   {
     OpenGLState state;
 
+    if (g_render_shadow_map)
+    {
+      g_shadow_map->bind();
+      draw_shadowmap();
+      g_shadow_map->unbind();
+    }
+
     if (g_draw_3d)
     {
       g_framebuffer1->bind();
@@ -599,6 +687,13 @@ void display()
         {
           g_framebuffer1->draw(0.0f, 0.0f, g_screen_w, g_screen_h, -20.0f);
         }
+      }
+
+      if (g_render_shadow_map)
+      {
+        glDisable(GL_BLEND);
+        g_shadow_map->draw_depth(g_screen_w - 356, 100, 256, 256, -20.0f);
+        g_shadow_map->draw(g_screen_w - 356 - 276, 100, 256, 256, -20.0f);
       }
     }
   }
@@ -940,6 +1035,7 @@ void init()
   g_menu->add_item("spot.cutoff",   &g_spot_cutoff);
   g_menu->add_item("spot.exponent", &g_spot_exponent);
 
+  g_menu->add_item("light.angle",  &g_light_angle, 1.0f);
   g_menu->add_item("light.diffuse",  &g_light_diffuse, 0.1f, 0.0f);
   g_menu->add_item("light.specular", &g_light_specular, 0.1f, 0.0f);
   g_menu->add_item("material.shininess", &g_material_shininess, 0.1f, 0.0f);
@@ -949,9 +1045,10 @@ void init()
   g_menu->add_item("Headlights", &g_headlights);
   g_menu->add_item("Look At Sphere", &g_draw_look_at);
   g_menu->add_item("draw depth", &g_draw_depth);
+  g_menu->add_item("shadow map", &g_render_shadow_map);
 
-  g_program = Program::create(Shader::from_file(GL_VERTEX_SHADER, "src/shader.vert"),
-                              Shader::from_file(GL_FRAGMENT_SHADER, "src/shader.frag"));
+  g_program = Program::create(Shader::from_file(GL_VERTEX_SHADER, "src/shadowmap.vert"),
+                              Shader::from_file(GL_FRAGMENT_SHADER, "src/shadowmap.frag"));
 
   assert_gl("init()");
 }

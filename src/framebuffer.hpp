@@ -38,6 +38,8 @@ public:
   void bind();
   void unbind();
 
+  GLuint get_depth_texture() const { return m_depth_buffer; }
+
 private:
   Framebuffer(const Framebuffer&) = delete;
   Framebuffer& operator=(const Framebuffer&) = delete;
