@@ -64,6 +64,10 @@ bool g_headlights = false;
 bool g_draw_grid = false;
 bool g_draw_depth = false;
 
+float g_light_diffuse = 1.0f;
+float g_light_specular = 1.0f;
+float g_material_shininess = 10.0f;
+
 float g_spot_cutoff   = 60.0f;
 float g_spot_exponent = 30.0f;
 
@@ -247,10 +251,10 @@ void draw_scene(EyeType eye_type)
     GLfloat light_ambient[] = {0.0f, 0.0f, 0.0f, 1.0f};
     glLightfv(GL_LIGHT0, GL_AMBIENT, light_ambient);
 
-    GLfloat light_diffuse[] = {2.0f, 2.0f, 2.0f, 1.0f};
+    GLfloat light_diffuse[] = { g_light_diffuse, g_light_diffuse, g_light_diffuse, 1.0f};
     glLightfv(GL_LIGHT0, GL_DIFFUSE, light_diffuse);
 
-    GLfloat light_specular[] = {10.0f, 10.0f, 10.0f, 1.0f};
+    GLfloat light_specular[] = { g_light_specular, g_light_specular, g_light_specular, 1.0f};
     glLightfv(GL_LIGHT0, GL_SPECULAR, light_specular);
     
     glLightfv(GL_LIGHT0, GL_POSITION, light_pos);
@@ -269,7 +273,7 @@ void draw_scene(EyeType eye_type)
   //glMaterialfv(GL_FRONT, GL_EMISSION,  mat_specular);
   glMaterialfv(GL_FRONT, GL_DIFFUSE,   mat_diffuse);
 
-  glMaterialf(GL_FRONT, GL_SHININESS, 64.0f);
+  glMaterialf(GL_FRONT, GL_SHININESS, g_material_shininess);
 
   if (g_draw_look_at)
   { // draw look-at sphere
@@ -936,6 +940,10 @@ void init()
   g_menu->add_item("spot.cutoff",   &g_spot_cutoff);
   g_menu->add_item("spot.exponent", &g_spot_exponent);
 
+  g_menu->add_item("light.diffuse",  &g_light_diffuse, 0.1f, 0.0f);
+  g_menu->add_item("light.specular", &g_light_specular, 0.1f, 0.0f);
+  g_menu->add_item("material.shininess", &g_material_shininess, 0.1f, 0.0f);
+
   g_menu->add_item("3D", &g_draw_3d);
   g_menu->add_item("Grid", &g_draw_grid);
   g_menu->add_item("Headlights", &g_headlights);
@@ -1126,7 +1134,7 @@ void idle_func()
 
   if (g_stick.light_rotation)
   {
-    log_debug("light angle: %f", g_light_angle);
+    //log_debug("light angle: %f", g_light_angle);
     g_light_angle += delta * 30.0f;
   }
 
