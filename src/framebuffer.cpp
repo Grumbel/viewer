@@ -100,6 +100,11 @@ Framebuffer::draw_depth(float x, float y, float w, float h, float z)
   glEnable(GL_TEXTURE_2D);
 
   glBindTexture(GL_TEXTURE_2D, m_depth_buffer);
+
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_MODE, GL_NONE);
+  //glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_FUNC, GL_LEQUAL);
+  //glTexParameteri(GL_TEXTURE_2D, GL_DEPTH_TEXTURE_MODE, GL_LUMINANCE); 
+
   glBegin(GL_QUADS);
   {
     glTexCoord2f(0.0f, 0.0f);
