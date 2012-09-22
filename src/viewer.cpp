@@ -378,8 +378,9 @@ void draw_models(bool shader_foo)
         glUseProgram(g_program->get_id());
         assert_gl("use program5");
         assert_gl("use program2");
+        glUniform1i(glGetUniformLocation(g_program->get_id(), "tex"), 0);
         auto loc = glGetUniformLocation(g_program->get_id(), "ShadowMap");
-        log_debug("location: %d", loc);
+        //log_debug("location: %d", loc);
         glUniform1i(loc, 1);
         assert_gl("use program3");
 
@@ -404,10 +405,19 @@ void draw_models(bool shader_foo)
             float plane_size = 50.0f;
             float plane_y = -1.0f;
             glBegin(GL_QUADS);
-            glVertex3f(-plane_size, plane_y, -plane_size);
-            glVertex3f(-plane_size, plane_y,  plane_size);
-            glVertex3f( plane_size, plane_y,  plane_size);
-            glVertex3f( plane_size, plane_y, -plane_size);
+            {
+              glTexCoord2f(0.0f, 0.0f);
+              glVertex3f(-plane_size, plane_y, -plane_size);
+
+              glTexCoord2f(1.0f, 0.0f);
+              glVertex3f(-plane_size, plane_y,  plane_size);
+
+              glTexCoord2f(1.0f, 1.0f);
+              glVertex3f( plane_size, plane_y,  plane_size);
+
+              glTexCoord2f(0.0f, 1.0f);
+              glVertex3f( plane_size, plane_y, -plane_size);
+            }
             glEnd();
           }
           glPopMatrix();
@@ -719,8 +729,8 @@ void display()
       if (g_render_shadow_map)
       {
         glDisable(GL_BLEND);
-        g_shadow_map->draw_depth(g_screen_w - 356, 100, 256, 256, -20.0f);
-        g_shadow_map->draw(g_screen_w - 356 - 276, 100, 256, 256, -20.0f);
+        g_shadow_map->draw_depth(g_screen_w - 266, 10, 256, 256, -20.0f);
+        g_shadow_map->draw(g_screen_w - 266 - 276, 10, 256, 256, -20.0f);
       }
     }
   }
