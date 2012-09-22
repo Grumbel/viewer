@@ -287,7 +287,9 @@ void draw_shadowmap()
 
   glMatrixMode(GL_PROJECTION);
   glLoadIdentity();
-  gluPerspective(60.0f, 1.0f, g_near_z, 100000.0f);
+  gluPerspective(90.0f, 1.0f, g_near_z, 1000.0f);
+  // needs bias tweaking to work
+  //glOrtho(-10.0f, 10.0f, -10.0f, 10.0f, g_near_z, 1000.0f);
 
   glMatrixMode(GL_MODELVIEW);
   glLoadIdentity();
@@ -406,15 +408,19 @@ void draw_models(bool shader_foo)
             float plane_y = -1.0f;
             glBegin(GL_QUADS);
             {
+              glNormal3f(0.0f, 1.0f, 0.0f);
               glTexCoord2f(0.0f, 0.0f);
               glVertex3f(-plane_size, plane_y, -plane_size);
 
+              glNormal3f(0.0f, 1.0f, 0.0f);
               glTexCoord2f(1.0f, 0.0f);
               glVertex3f(-plane_size, plane_y,  plane_size);
 
+              glNormal3f(0.0f, 1.0f, 0.0f);
               glTexCoord2f(1.0f, 1.0f);
               glVertex3f( plane_size, plane_y,  plane_size);
 
+              glNormal3f(0.0f, 1.0f, 0.0f);
               glTexCoord2f(0.0f, 1.0f);
               glVertex3f( plane_size, plane_y, -plane_size);
             }

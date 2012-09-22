@@ -1,6 +1,7 @@
 // shadowmap
 uniform mat4 ShadowMapMatrix;
 varying vec4 ProjShadow;
+varying vec4 position;
 
 // phong
 varying vec3 normal;
@@ -27,7 +28,7 @@ void main(void)
 
   gl_TexCoord[0] = gl_TextureMatrix[0] * gl_MultiTexCoord0;
 
-  gl_Position = ftransform();
+  gl_Position = position = ftransform();
 }
 
 /* EOF */
