@@ -9,6 +9,11 @@ varying vec3 normal;
 varying vec3 lightDir[2];
 varying vec3 eyeVec;
 
+// normal mapping
+uniform sampler2D normalMap;
+varying vec3 lightDir_;
+varying vec3 viewDir;
+
 float offset_lookup(sampler2DShadow map,
                     vec4 loc,
                     vec2 offset)
@@ -73,7 +78,6 @@ vec4 phong_value()
   vec4 final_color = 
     (gl_FrontLightModelProduct.sceneColor * gl_FrontMaterial.ambient);
     
-
   for(int i = 0; i < 2; ++i)
   {
     final_color += gl_LightSource[i].ambient * gl_FrontMaterial.ambient;
@@ -102,6 +106,21 @@ vec4 phong_value()
   }
 
   return final_color;
+}
+
+// normal vector is in tangent space, not world space
+vec3 normal_value()
+{
+  vec3 l = lightDir_;
+  float atten = max(0.0, 1.0 - dot(l, l));
+
+  l = normalize(l);
+
+  vec3 n = normalize(texture2D(normalMap, gl_TexCoord[0].st).xyz * 2.0 - 1.0);
+  vec3 v = normalize(viewDir);
+  vec3 h = normalize(l + v);
+
+  return h;
 }
 
 void main (void)
