@@ -3,6 +3,8 @@
 #include "opengl_state.hpp"
 
 Framebuffer::Framebuffer(int width, int height) :
+  m_width(width),
+  m_height(height),
   m_fbo(0),
   m_color_buffer(0),
   m_depth_buffer(0)

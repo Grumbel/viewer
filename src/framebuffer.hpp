@@ -24,6 +24,9 @@
 class Framebuffer
 {
 private:
+  int m_width;
+  int m_height;
+
   GLuint m_fbo;
   GLuint m_color_buffer;
   GLuint m_depth_buffer;
@@ -39,6 +42,9 @@ public:
   void unbind();
 
   GLuint get_depth_texture() const { return m_depth_buffer; }
+
+  int get_width()  const { return m_width; }
+  int get_height() const { return m_height; }
 
 private:
   Framebuffer(const Framebuffer&) = delete;
