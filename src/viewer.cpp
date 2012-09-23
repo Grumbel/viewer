@@ -67,6 +67,10 @@ bool g_draw_grid = false;
 bool g_draw_depth = false;
 bool g_render_shadow_map = true;
 
+int g_shadow_map_resolution = 512;
+
+float g_shadow_map_bias = -0.015f;
+float g_shadow_map_fov = 70.0f;
 float g_light_diffuse = 1.0f;
 float g_light_specular = 1.0f;
 float g_material_shininess = 10.0f;
@@ -124,12 +128,10 @@ void reshape(int w, int h)
   g_screen_h = h;
 
   assert_gl("reshape1");
-  glViewport(0,0, g_screen_w, g_screen_h);
-  assert_gl("reshape2");
 
   g_framebuffer1.reset(new Framebuffer(g_screen_w, g_screen_h));
   g_framebuffer2.reset(new Framebuffer(g_screen_w, g_screen_h));
-  g_shadow_map.reset(new Framebuffer(g_screen_w, g_screen_h));
+  g_shadow_map.reset(new Framebuffer(g_shadow_map_resolution, g_shadow_map_resolution));
 
   assert_gl("reshape");
 }
@@ -137,6 +139,8 @@ void reshape(int w, int h)
 void draw_scene(EyeType eye_type)
 {
   OpenGLState state;
+
+  glViewport(0,0, g_screen_w, g_screen_h);
 
   // clear the screen
   glClearColor(0.0, 0.0, 0.0, 1.0);
@@ -280,6 +284,8 @@ void draw_shadowmap()
 {
   OpenGLState state;
 
+  glViewport(0, 0, g_shadow_map->get_width(), g_shadow_map->get_height());
+
   glClearColor(1.0, 0.0, 1.0, 1.0);
   glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
 
@@ -287,7 +293,7 @@ void draw_shadowmap()
 
   glMatrixMode(GL_PROJECTION);
   glLoadIdentity();
-  gluPerspective(90.0f, 1.0f, g_near_z, 1000.0f);
+  gluPerspective(g_shadow_map_fov, 1.0f, g_near_z, 1000.0f);
   // needs bias tweaking to work
   //glOrtho(-10.0f, 10.0f, -10.0f, 10.0f, g_near_z, 1000.0f);
 
@@ -380,14 +386,15 @@ void draw_models(bool shader_foo)
         glUseProgram(g_program->get_id());
         assert_gl("use program5");
         assert_gl("use program2");
+        glUniform1f(glGetUniformLocation(g_program->get_id(), "shadowmap_bias"), g_shadow_map_bias);
         glUniform1i(glGetUniformLocation(g_program->get_id(), "tex"), 0);
         auto loc = glGetUniformLocation(g_program->get_id(), "ShadowMap");
         //log_debug("location: %d", loc);
         glUniform1i(loc, 1);
         assert_gl("use program3");
 
-        glUniform1f(glGetUniformLocation(g_program->get_id(), "xPixelOffset"), 1.0f/static_cast<float>(g_screen_w));
-        glUniform1f(glGetUniformLocation(g_program->get_id(), "yPixelOffset"), 1.0f/static_cast<float>(g_screen_h));
+        glUniform1f(glGetUniformLocation(g_program->get_id(), "xPixelOffset"), 1.0f/static_cast<float>(g_shadow_map->get_width()));
+        glUniform1f(glGetUniformLocation(g_program->get_id(), "yPixelOffset"), 1.0f/static_cast<float>(g_shadow_map->get_height()));
 
         glUniformMatrix4fv(glGetUniformLocation(g_program->get_id(), "ShadowMapMatrix"),
                            1, GL_FALSE,
@@ -1067,6 +1074,9 @@ void init()
 
   g_menu->add_item("depth.near_z", &g_near_z, 0.01, 0.0f);
   g_menu->add_item("depth.far_z",  &g_far_z, 1.0f);
+
+  g_menu->add_item("shadowmap.bias", &g_shadow_map_bias, 0.005f);
+  g_menu->add_item("shadowmap.fov", &g_shadow_map_fov, 1.0f);
 
   g_menu->add_item("spot_halo_samples",  &g_spot_halo_samples, 1, 0);
 

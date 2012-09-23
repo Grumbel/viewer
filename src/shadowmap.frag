@@ -1,5 +1,6 @@
 // shadow map
 uniform sampler2DShadow ShadowMap;
+uniform float shadowmap_bias;
 varying vec4 ProjShadow;
 varying vec4 position;
 
@@ -24,7 +25,7 @@ float offset_lookup(sampler2DShadow map,
   
   return shadow2DProj(map, vec4(loc.st + offset * texmapscale * loc.q, 
                                 //loc.p-0.0001,//ortho
-                                loc.p-0.015, //perspective
+                                loc.p + shadowmap_bias, //perspective
                                 loc.q)).z;
 }
 
@@ -61,14 +62,12 @@ float shadow_value_4()
 
   if (offset.y > 1.1)
     offset.y = 0;
-  return (offset_lookup(ShadowMap, ProjShadow, offset +
-                        vec2(-1.5, 0.5)) +
-          offset_lookup(ShadowMap, ProjShadow, offset +
-                        vec2(0.5, 0.5)) +
-          offset_lookup(ShadowMap, ProjShadow, offset +
-                        vec2(-1.5, -1.5)) +
-          offset_lookup(ShadowMap, ProjShadow, offset +
-                        vec2(0.5, -1.5)) ) * 0.25;
+  return (
+    offset_lookup(ShadowMap, ProjShadow, offset + vec2(-1.5,  0.5)) +
+    offset_lookup(ShadowMap, ProjShadow, offset + vec2( 0.5,  0.5)) +
+    offset_lookup(ShadowMap, ProjShadow, offset + vec2(-1.5, -1.5)) +
+    offset_lookup(ShadowMap, ProjShadow, offset + vec2( 0.5, -1.5)) 
+    ) * 0.25;
 }
 
 vec4 phong_value()
