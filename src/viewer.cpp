@@ -671,6 +671,8 @@ void draw_models(bool shader_foo)
 
 void display()
 {
+  glViewport(0,0, g_screen_w, g_screen_h);
+  
   //log_info("display()\n");
   {
     OpenGLState state;
