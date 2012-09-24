@@ -577,6 +577,7 @@ void draw_models(bool shader_foo)
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE);
     
+    float g_spot_halo_length = 5.0f;
     int n = g_spot_halo_samples;
     for(int i = 0; i < n; ++i)
     {
@@ -589,14 +590,14 @@ void draw_models(bool shader_foo)
         glScalef(0.1f + 1.0f * p * p,
                  0.1f + 1.0f * p * p,
                  0.1f + 1.0f * p * p);
-        glTranslatef(0.0f, 0.0f, 0.05f * i);
+        glTranslatef(0.0f, 0.0f, g_spot_halo_length * static_cast<float>(i) / static_cast<float>(n));
 
         // billboard
         glMultMatrixf(glm::value_ptr(glm::mat4(glm::transpose(glm::mat3(mat)))));
 
         glBindTexture(GL_TEXTURE_2D, g_light_texture);
 
-        glColor4f(1.0f, 1.0f, 1.0f, 0.25f * (1.0f-p));
+        glColor4f(1.0f, 1.0f, 1.0f, 0.25f * (1.0f-p) * (100.0f / g_spot_halo_samples));
         glBegin(GL_QUADS);
         {
           glTexCoord2f(0.0f, 0.0f);
