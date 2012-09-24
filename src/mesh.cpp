@@ -17,9 +17,134 @@
 #include "mesh.hpp"
 
 #include <iostream>
+#include <boost/tokenizer.hpp>
+#include <boost/lexical_cast.hpp>
 
 #include "log.hpp"
 #include "opengl_state.hpp"
+
+namespace {
+
+} // namespace
+
+std::unique_ptr<Mesh>
+Mesh::from_obj_istream(std::istream& in)
+{
+  // This is not a fully featured .obj file reader, it just takes some
+  // inspiration from it: 
+  // http://www.martinreddy.net/gfx/3d/OBJ.spec
+
+  std::unique_ptr<Mesh> mesh(new Mesh);
+
+  std::string line;
+  int line_number = 0;
+
+  while(std::getline(in, line))
+  {
+    line_number += 1;
+
+    boost::tokenizer<boost::char_separator<char> > tokens(line, boost::char_separator<char>(" ", ""));
+    for(auto it = tokens.begin(); it != tokens.end(); ++it)
+    {
+#define INCR_AND_CHECK {                                                \
+        ++it;                                                           \
+        if (it == tokens.end())                                         \
+        {                                                               \
+          throw std::runtime_error((boost::format("not enough tokens at line %d") % line_number).str()); \
+        }                                                               \
+      }
+
+      try
+      {
+        if (*it == "g")
+        {
+          // group
+          break;
+        }
+        else if (*it == "v")
+        {
+          glm::vec3 v;
+
+          INCR_AND_CHECK;
+          v.x = boost::lexical_cast<float>(*it);
+          INCR_AND_CHECK;
+          v.y = boost::lexical_cast<float>(*it);
+          INCR_AND_CHECK;
+          v.z = boost::lexical_cast<float>(*it);
+
+          mesh->m_vertices.push_back(v);
+        }
+        else if (*it == "vt")
+        {
+          glm::vec2 vt;
+
+          INCR_AND_CHECK;
+          vt.s = boost::lexical_cast<float>(*it);
+          INCR_AND_CHECK;
+          vt.t = boost::lexical_cast<float>(*it);
+
+          mesh->m_texcoords.push_back(vt);
+        }
+        else if (*it == "vn")
+        {
+          glm::vec3 vn;
+
+          INCR_AND_CHECK;
+          vn.x = boost::lexical_cast<float>(*it);
+          INCR_AND_CHECK;
+          vn.y = boost::lexical_cast<float>(*it);
+          INCR_AND_CHECK;
+          vn.z = boost::lexical_cast<float>(*it);
+
+          mesh->m_normals.push_back(vn);
+        }
+        else if (*it == "f")
+        {
+          Face face;
+
+          INCR_AND_CHECK;
+          face.vertex1 = boost::lexical_cast<int>(*it);
+          INCR_AND_CHECK;
+          face.vertex2 = boost::lexical_cast<int>(*it);
+          INCR_AND_CHECK;
+          face.vertex3 = boost::lexical_cast<int>(*it);
+
+          mesh->m_faces.push_back(face);
+        }
+        else if ((*it)[0] == '#')
+        {
+          // ignore comments
+          break;
+        }
+        else
+        {
+          throw std::runtime_error((boost::format("unhandled token %s") % *it).str());
+        }
+      }
+      catch(const std::exception& err)
+      {
+        throw std::runtime_error((boost::format("unknown:%d: %s") % line_number % err.what()).str());
+      }
+    }
+  }
+
+  // fill in some texcoords if there aren't enough
+  if (mesh->m_texcoords.size() < mesh->m_vertices.size())
+  {
+    auto& texcoords = mesh->m_texcoords;
+
+    texcoords.resize(mesh->m_vertices.size());
+    for(FaceLst::size_type i = mesh->m_vertices.size()-1; i < texcoords.size(); ++i)
+    {
+      texcoords[i] = glm::vec2(0.0f, 0.0f);
+    }
+  }
+
+  mesh->build_vbos();
+  mesh->verify();
+
+  return mesh;
+}
 
 std::unique_ptr<Mesh>
 Mesh::from_istream(std::istream& in)
@@ -86,6 +211,18 @@ Mesh::from_istream(std::istream& in)
   return std::unique_ptr<Mesh>(new Mesh(normals, texcoords, vertices, faces));
 }
 
+Mesh::Mesh() :
+  m_normals(),
+  m_texcoords(),
+  m_vertices(),
+  m_faces(),
+  m_normals_vbo(0),
+  m_texcoords_vbo(0),
+  m_vertices_vbo(0),
+  m_faces_vbo(0)
+{
+}
+
 Mesh::Mesh(const NormalLst& normals,
            const TexCoordLst& texcoords,
            const VertexLst& vertices,
@@ -98,6 +235,19 @@ Mesh::Mesh(const NormalLst& normals,
   m_texcoords_vbo(0),
   m_vertices_vbo(0),
   m_faces_vbo(0)
+{
+  build_vbos();
+}
+
+Mesh::~Mesh()
+{
+  glDeleteBuffers(1, &m_normals_vbo);
+  glDeleteBuffers(1, &m_vertices_vbo);
+  glDeleteBuffers(1, &m_faces_vbo);
+}
+
+void
+Mesh::build_vbos()
 {
   OpenGLState state;
 
@@ -124,11 +274,37 @@ Mesh::Mesh(const NormalLst& normals,
   assert_gl("VBO upload");
 }
 
-Mesh::~Mesh()
+void
+Mesh::verify() const
 {
-  glDeleteBuffers(1, &m_normals_vbo);
-  glDeleteBuffers(1, &m_vertices_vbo);
-  glDeleteBuffers(1, &m_faces_vbo);
+  std::cout << "Mesh::verify:\n" 
+            << "  texcoords: " << m_texcoords.size() << '\n'
+            << "  normals:   " << m_normals.size() << '\n'
+            << "  vertices:  " << m_vertices.size() << '\n'
+            << "  faces:     " << m_faces.size() << '\n';
+
+  for (const auto& face : m_faces)
+  {
+    if (face.vertex1 < 0 ||
+                       face.vertex2 < 0 ||
+                                      face.vertex3 < 0 ||
+                                                     face.vertex1 >= static_cast<int>(m_vertices.size()) ||
+                                      face.vertex2 >= static_cast<int>(m_vertices.size()) ||
+                       face.vertex3 >= static_cast<int>(m_vertices.size()))
+    {
+      throw std::runtime_error("face tries to access non existing vertex");
+    }
+}
+
+  if (m_vertices.size() != m_texcoords.size())
+  {
+    throw std::runtime_error("texcoord count doesn't match vertex count");
+  }
+  
+  if (m_vertices.size() != m_normals.size())
+  {
+    throw std::runtime_error("normal count doesn't match vertex count");
+  }
 }
 
 void

@@ -15,51 +15,96 @@
 ##  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import bpy
+from collections import namedtuple
 
-def writeObject(obj):
-    mesh = obj.data
-    writeVertices(mesh.vertices, obj.location)
-    writeFaces(mesh.faces)
+Face   = namedtuple('Face',   ['v1', 'v2', 'v3'])
+Vertex = namedtuple('Vertex', ['co', 'n', 'uv'])
 
-def writeVertices(vertices, location):
-    outfile.write("%d\n" % len(vertices))
-    for i in vertices:
-        outfile.write("%f %f %f\n"
-                      % (i.normal.x,
-                         i.normal.y,
-                         i.normal.z))
+def writeObj(obj):
+    faces = collect_faces(obj.data, obj.location)
+    faces, vertices = index_vertices(faces)
 
-        outfile.write("%f %f %f\n"
-                      % (i.co.x + location.x,
-                         i.co.y + location.y,
-                         i.co.z + location.z))
+    outfile.write("g %s\n" % obj.name)
 
-def writeFaces(faces_data):       
-    # collect data from Blender and triangulate it
-    faces = []
-    for i in faces_data:
-        if len(i.vertices) == 3:
-            faces.append((i.vertices[0], i.vertices[1], i.vertices[2]))
-        elif len(i.vertices) == 4:
-            faces.append((i.vertices[0], i.vertices[1], i.vertices[2]))
-            faces.append((i.vertices[0], i.vertices[3], i.vertices[2]))
-        else: 
-            print("unhandled number of faces: %d" % len(i.vertices))
-    
-    # write data to file
-    outfile.write("%d\n" % len(faces))
+    for v in vertices:
+        outfile.write("vn %f %f %f\n" % v.n)
+        if v.uv:
+            outfile.write("vt %f %f\n" % v.uv)
+        outfile.write("v %f %f %f\n" % v.co)
+
+    for f in faces:
+        outfile.write("f %d %d %d\n" % (f.v1, f.v2, f.v3))
+
+def index_vertices(faces):
+    # collect vertices
+    vertices = {}
     for face in faces:
-        outfile.write("%d %d %d\n" % face)
+        vertices[face.v1] = None
+        vertices[face.v2] = None
+        vertices[face.v3] = None
+        
+    # number the vertices
+    i = 0
+    for k in vertices.keys():
+        vertices[k] = i
+        i += 1
 
+    # replace vertices with index
+    out_faces = []
+    for face in faces:
+        out_faces.append(Face(vertices[face.v1],
+                              vertices[face.v2],
+                              vertices[face.v3]))
 
-outfile = open("/tmp/blender.mod", "w")
+    return out_faces, list(vertices.keys())
 
-outfile.write("%d\n" % (len(bpy.data.objects)))
-objects = [obj for obj in bpy.data.objects if obj.type == 'MESH']
-for child in objects:
-    writeObject(child)
-    
-outfile.close()
+def collect_faces(mesh, loc):
+    """collect data from the given mesh and triangulate it"""
+
+    uv_faces = None
+    faces = mesh.faces
+    if mesh.uv_textures.active:
+        uv_faces = mesh.uv_textures.active.data
+
+    out_faces = []
+        
+    for i in range(0, len(faces)):
+        v1 = mesh.vertices[faces[i].vertices[0]]
+        v2 = mesh.vertices[faces[i].vertices[1]]
+        v3 = mesh.vertices[faces[i].vertices[2]]
+        if len(faces[i].vertices) == 4:
+            v4 = mesh.vertices[faces[i].vertices[3]]
+
+        uv1 = uv2 = uv3 = uv4 = None
+        if uv_faces:
+            uv1 = uv_faces[i].uv1.to_tuple()
+            uv2 = uv_faces[i].uv2.to_tuple()
+            uv3 = uv_faces[i].uv3.to_tuple()
+            if len(faces[i].vertices) == 4:
+                uv4 = uv_faces[i].uv4.to_tuple()
+
+        face = Face(Vertex((v1.co + loc).to_tuple(), v1.normal.to_tuple(), uv1),
+                    Vertex((v2.co + loc).to_tuple(), v2.normal.to_tuple(), uv2),
+                    Vertex((v3.co + loc).to_tuple(), v3.normal.to_tuple(), uv3))
+
+        out_faces.append(face)
+       
+        if len(faces[i].vertices) == 4:
+            face = Face(Vertex((v1.co + loc).to_tuple(), v1.normal.to_tuple(), uv1),
+                        Vertex((v3.co + loc).to_tuple(), v3.normal.to_tuple(), uv3),
+                        Vertex((v4.co + loc).to_tuple(), v4.normal.to_tuple(), uv4))
+
+            out_faces.append(face)
+
+    return out_faces
+
+with open("/tmp/blender.mod", "w") as outfile:
+    outfile.write("# exported by %s\n" % __file__)
+    objects = [obj for obj in bpy.data.objects if obj.type == 'MESH']
+    for obj in objects:
+        writeObj(obj)
+    outfile.write("\n# EOF #\n")
+
 print("-- export complete --")
 
 # EOF #

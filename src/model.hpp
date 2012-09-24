@@ -37,15 +37,8 @@ public:
       exit(EXIT_FAILURE);
     }
 
-    int number_of_meshes;
-    in >> number_of_meshes;
-    std::cout << "number_of_meshes: " << number_of_meshes << std::endl;
-    for (int i = 0; i < number_of_meshes; ++i)   
-    {
-      std::unique_ptr<Mesh> mesh = Mesh::from_istream(in);
-      //mesh.display();
-      meshes.push_back(std::move(mesh));
-    }
+    std::unique_ptr<Mesh> mesh = Mesh::from_obj_istream(in);
+    meshes.push_back(std::move(mesh));
   }
 
   void draw() 

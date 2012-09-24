@@ -50,6 +50,9 @@ private:
 
 public:
   static std::unique_ptr<Mesh> from_istream(std::istream& in);
+  static std::unique_ptr<Mesh> from_obj_istream(std::istream& in);
+
+public:
   Mesh(const NormalLst& normals,
        const TexCoordLst& texcoords,
        const VertexLst& vertices,
@@ -58,9 +61,12 @@ public:
 
   void display();
   void draw();
-  void draw_face_normal(const Face& face);
-  glm::vec3 calc_face_normal(const Face& face);
-  void set_face_normal(const Face& face);
+
+private:
+  Mesh();
+
+  void build_vbos();
+  void verify() const;
 
 private:
   Mesh(const Mesh&) = delete;
