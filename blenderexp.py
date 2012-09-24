@@ -58,6 +58,10 @@ def index_vertices(faces):
 
     return out_faces, list(vertices.keys())
 
+def to_tuple(vec):
+    """Convert Blender vector into tuple, swaps Y and Z"""
+    return (vec.x, vec.z, -vec.y)
+
 def collect_faces(mesh, loc):
     """collect data from the given mesh and triangulate it"""
 
@@ -83,16 +87,16 @@ def collect_faces(mesh, loc):
             if len(faces[i].vertices) == 4:
                 uv4 = uv_faces[i].uv4.to_tuple()
 
-        face = Face(Vertex((v1.co + loc).to_tuple(), v1.normal.to_tuple(), uv1),
-                    Vertex((v2.co + loc).to_tuple(), v2.normal.to_tuple(), uv2),
-                    Vertex((v3.co + loc).to_tuple(), v3.normal.to_tuple(), uv3))
+        face = Face(Vertex(to_tuple(v1.co + loc), to_tuple(v1.normal), uv1),
+                    Vertex(to_tuple(v2.co + loc), to_tuple(v2.normal), uv2),
+                    Vertex(to_tuple(v3.co + loc), to_tuple(v3.normal), uv3))
 
         out_faces.append(face)
        
         if len(faces[i].vertices) == 4:
-            face = Face(Vertex((v1.co + loc).to_tuple(), v1.normal.to_tuple(), uv1),
-                        Vertex((v3.co + loc).to_tuple(), v3.normal.to_tuple(), uv3),
-                        Vertex((v4.co + loc).to_tuple(), v4.normal.to_tuple(), uv4))
+            face = Face(Vertex(to_tuple(v1.co + loc), to_tuple(v1.normal), uv1),
+                        Vertex(to_tuple(v3.co + loc), to_tuple(v3.normal), uv3),
+                        Vertex(to_tuple(v4.co + loc), to_tuple(v4.normal), uv4))
 
             out_faces.append(face)
 
