@@ -25,6 +25,8 @@ varying vec3 lightDir_;
 varying vec3 viewDir;
 #endif
 
+varying vec4 vertex_position;
+
 #ifdef SHADOW_MAPPING
 float offset_lookup(sampler2DShadow map,
                     vec4 loc,
@@ -119,6 +121,16 @@ vec4 phong_value()
   return final_color;
 }
 
+float grid_value()
+{
+  vec4 grid_offset = vec4(0,0.0,0,0);
+  float line_width = 0.001;
+  float grid_size = 5.0;
+  vec4 v = abs(fract((vertex_position + grid_offset) * grid_size) - vec4(0.5, 0.5, 0.5, 0.0));
+  float grid_dist = 1.0 - float(min(min(v.x, v.y), v.z));
+  return pow(grid_dist, 12.0);
+}
+
 #ifdef NORMAL_MAPPING
 // normal vector is in tangent space, not world space
 vec3 normal_value()
@@ -139,7 +151,7 @@ vec3 normal_value()
 void main (void)
 {
   float shadow = SHADOW_MAPPING_FUNCTION;
-  vec4  color  = phong_value();
+  vec4  color  = phong_value() + vec4(0, 1, 0, 1) * grid_value();
   gl_FragColor = color * (shadow + 0.5)/2.0;
 }
 

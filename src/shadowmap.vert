@@ -12,8 +12,15 @@ varying vec3 lightDir[2];
 varying vec3 lightDir_;
 varying vec3 viewDir;
 
+// grid
+varying vec4 vertex_position;
+
 void main(void)
 {
+  { // grid
+    vertex_position = gl_Vertex;    
+  }
+
   { // shadowmap
     ProjShadow  = ShadowMapMatrix * gl_Vertex;
   }
