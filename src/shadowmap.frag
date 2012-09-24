@@ -11,7 +11,6 @@ varying vec3 eyeVec;
 uniform sampler2DShadow ShadowMap;
 uniform float shadowmap_bias;
 varying vec4 ProjShadow;
-varying vec4 position;
 
 #  define SHADOW_MAPPING_FUNCTION shadow_value_4()
 #else
@@ -26,6 +25,8 @@ varying vec3 viewDir;
 #endif
 
 varying vec4 vertex_position;
+uniform vec4 grid_offset;
+varying vec4 position;
 
 #ifdef SHADOW_MAPPING
 float offset_lookup(sampler2DShadow map,
@@ -123,12 +124,13 @@ vec4 phong_value()
 
 float grid_value()
 {
-  vec4 grid_offset = vec4(0,0.0,0,0);
   float line_width = 0.001;
   float grid_size = 5.0;
   vec4 v = abs(fract((vertex_position + grid_offset) * grid_size) - vec4(0.5, 0.5, 0.5, 0.0));
   float grid_dist = 1.0 - float(min(min(v.x, v.y), v.z));
-  return pow(grid_dist, 12.0);
+
+  float attenuation = max(0.0, (1.0f - pow(length(position)/25.0, 1)));
+  return pow(grid_dist, 12.0) * attenuation + 0.2 * (1.0 - attenuation);
 }
 
 #ifdef NORMAL_MAPPING
