@@ -1,8 +1,4 @@
-// shadow map
-uniform sampler2DShadow ShadowMap;
-uniform float shadowmap_bias;
-varying vec4 ProjShadow;
-varying vec4 position;
+#define SHADOW_MAPPING 1
 
 // phong shading
 uniform sampler2D tex;
@@ -10,11 +6,26 @@ varying vec3 normal;
 varying vec3 lightDir[2];
 varying vec3 eyeVec;
 
+#ifdef SHADOW_MAPPING
+// shadow map
+uniform sampler2DShadow ShadowMap;
+uniform float shadowmap_bias;
+varying vec4 ProjShadow;
+varying vec4 position;
+
+#  define SHADOW_MAPPING_FUNCTION shadow_value_4()
+#else
+#  define SHADOW_MAPPING_FUNCTION 1.0f
+#endif
+
+#ifdef NORMAL_MAPPING
 // normal mapping
 uniform sampler2D normalMap;
 varying vec3 lightDir_;
 varying vec3 viewDir;
+#endif
 
+#ifdef SHADOW_MAPPING
 float offset_lookup(sampler2DShadow map,
                     vec4 loc,
                     vec2 offset)
@@ -31,7 +42,7 @@ float offset_lookup(sampler2DShadow map,
 
 float shadow_value_1()
 {
-  return shadow2DProj(ShadowMap, ProjShadow - vec4(0,0,0.0001,0.0)).z;
+  return shadow2DProj(ShadowMap, ProjShadow - vec4(0, 0, shadowmap_bias, 0)).z;
 }
 
 float shadow_value_16()
@@ -69,6 +80,7 @@ float shadow_value_4()
     offset_lookup(ShadowMap, ProjShadow, offset + vec2( 0.5, -1.5)) 
     ) * 0.25;
 }
+#endif
 
 vec4 phong_value()
 {
@@ -107,6 +119,7 @@ vec4 phong_value()
   return final_color;
 }
 
+#ifdef NORMAL_MAPPING
 // normal vector is in tangent space, not world space
 vec3 normal_value()
 {
@@ -121,23 +134,13 @@ vec3 normal_value()
 
   return h;
 }
+#endif
 
 void main (void)
 {
-  float shadow = shadow_value_4();
+  float shadow = SHADOW_MAPPING_FUNCTION;
   vec4  color  = phong_value();
   gl_FragColor = color * (shadow + 0.5)/2.0;
-
-  //float shadowCoeff = textureProj(ShadowMap, ProjShadow).r;
-  /*
-    if (shadowCoeff < (ProjShadow.z-0.00005)/ProjShadow.w)
-    {
-    gl_FragColor = vec4(0.1,0.1,0.1,1);
-    }
-    else
-    {
-    gl_FragColor = vec4(0.9,0.9,0.9,1);
-    }*/
 }
 
 /* EOF */
