@@ -81,6 +81,8 @@ float g_light_up = 0.0f;
 float g_spot_cutoff   = 60.0f;
 float g_spot_exponent = 30.0f;
 
+bool g_show_menu = true;
+
 glm::vec3 g_eye(0.0f, 0.0f, 15.0f);
 glm::vec3 g_look_at(0.0f, 0.0f, -100.0f);
 glm::vec3 g_up(0.0f, 1.0f, 0.0f);
@@ -833,7 +835,7 @@ void display()
         }
       }
 
-      if (g_render_shadow_map)
+      if (g_show_menu)
       {
         glDisable(GL_BLEND);
         g_shadow_map->draw_depth(g_screen_w - 266, 10, 256, 256, -20.0f);
@@ -863,7 +865,10 @@ void display()
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
-    g_menu->draw(100.0f, 100.0f);
+    if (g_show_menu)
+    {
+      g_menu->draw(100.0f, 100.0f);
+    }
   }
 
   glutSwapBuffers();
@@ -1366,6 +1371,13 @@ void idle_func()
 
           case 2:
             g_headlights = ev.jbutton.state;
+            break;
+
+          case 7:
+            if (ev.jbutton.state)
+            {
+              g_show_menu = !g_show_menu;
+            }
             break;
         }
         break;
