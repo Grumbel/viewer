@@ -24,9 +24,12 @@ varying vec3 lightDir_;
 varying vec3 viewDir;
 #endif
 
+// grid
 varying vec4 vertex_position;
-uniform vec4 grid_offset;
 varying vec4 position;
+uniform vec4 grid_offset;
+uniform float grid_line_width;
+uniform float grid_size;
 
 #ifdef SHADOW_MAPPING
 float offset_lookup(sampler2DShadow map,
@@ -124,13 +127,15 @@ vec4 phong_value()
 
 float grid_value()
 {
-  float line_width = 0.001;
-  float grid_size = 5.0;
+  //float grid_line_width = 0.001;
   vec4 v = abs(fract((vertex_position + grid_offset) * grid_size) - vec4(0.5, 0.5, 0.5, 0.0));
   float grid_dist = 1.0 - float(min(min(v.x, v.y), v.z));
 
   float attenuation = max(0.0, (1.0f - pow(length(position)/25.0, 1)));
-  return pow(grid_dist, 12.0) * attenuation + 0.2 * (1.0 - attenuation);
+  float p = pow(grid_dist, 12.0) * attenuation + 0.2 * (1.0 - attenuation);
+  if (p < 0.6)
+    discard;
+  return p;
 }
 
 #ifdef NORMAL_MAPPING
@@ -153,7 +158,7 @@ vec3 normal_value()
 void main (void)
 {
   float shadow = SHADOW_MAPPING_FUNCTION;
-  vec4  color  = phong_value() + vec4(0, 1, 0, 1) * grid_value();
+  vec4  color  = phong_value();// + vec4(0, 1, 0, 1) * grid_value();
   gl_FragColor = color * (shadow + 0.5)/2.0;
 }
 
