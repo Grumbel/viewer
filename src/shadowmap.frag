@@ -138,10 +138,10 @@ float grid_value()
   vec4 v = abs(fract((vertex_position + grid_offset) * grid_size) - vec4(0.5, 0.5, 0.5, 0.0));
   float grid_dist = 1.0 - float(min(min(v.x, v.y), v.z));
 
-  float attenuation = max(0.0, (1.0f - pow(length(position)/25.0, 1)));
+  float attenuation = 1.0; //max(0.0, (1.0f - pow(length(position)/25.0, 1)));
   float p = pow(grid_dist, 12.0) * attenuation + 0.2 * (1.0 - attenuation);
-  if (p < 0.6)
-    discard;
+  //if (p < 0.6)
+  //  discard;
   return p;
 }
 
@@ -183,7 +183,9 @@ vec4 cube_map()
 void main (void)
 {
   float shadow = SHADOW_MAPPING_FUNCTION;
-  vec4  color  = phong_value() + cube_map(); // + vec4(0, 1, 0, 1) * grid_value();
+  //vec4  color  = phong_value() + cube_map(); // + vec4(0, 1, 0, 1) * grid_value();
+  vec4 grid = grid_value();
+  vec4 color = phong_value() + cube_map() + (grid * ((vec4(1,1,1,1) - pow(length(fwidth(position)), 0.2))));
   gl_FragColor = color * (shadow + 0.5)/2.0;
 }
 
