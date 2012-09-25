@@ -17,9 +17,16 @@ varying vec4 vertex_position;
 
 // cubemap
 varying vec3 world_normal;
+varying vec4 world_position;
+uniform mat4 eye_matrix;
 
 void main(void)
 {
+  { // cube map
+    world_position = eye_matrix * gl_ModelViewMatrix * gl_Vertex;
+    world_normal   = mat3(eye_matrix) * gl_NormalMatrix * gl_Normal;
+  }
+
   { // grid
     vertex_position = gl_Vertex;    
   }
@@ -30,7 +37,6 @@ void main(void)
 
   { // phong
     normal = gl_NormalMatrix * gl_Normal;
-    world_normal = gl_Normal;
 
     vec3 vVertex = vec3(gl_ModelViewMatrix * gl_Vertex);
 

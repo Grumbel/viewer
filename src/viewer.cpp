@@ -105,6 +105,7 @@ glm::ivec2 g_mouse;
 glm::ivec2 g_last_mouse;
 glm::mat4 g_object2world;
 glm::mat4 g_last_object2world;
+glm::mat4 g_eye_matrix;
 
 TextSurfacePtr g_hello_world;
 
@@ -228,6 +229,8 @@ void draw_scene(EyeType eye_type)
       /*wiggle_offset + */g_eye.x + g_look_at.x, g_eye.y + g_look_at.y, g_eye.z + g_look_at.z, // look-at
       //0.0, 0.0, -100.0, // look-at
       g_up.x, g_up.y, g_up.z);
+
+    glGetFloatv(GL_MODELVIEW_MATRIX, glm::value_ptr(g_eye_matrix));
   }
 
   // light after gluLookAt() put it in worldspace, light before gluLookAt() puts it in eye space
@@ -472,6 +475,8 @@ void draw_models(bool shader_foo)
         glUniform1i(glGetUniformLocation(g_program->get_id(), "ShadowMap"), 1);
         glUniform1i(glGetUniformLocation(g_program->get_id(), "cubemap"), 2);
 
+        glUniform4fv(glGetUniformLocation(g_program->get_id(), "world_eye_pos"), 4, glm::value_ptr(g_eye));
+        
         glUniform4fv(glGetUniformLocation(g_program->get_id(), "grid_offset"), 4, glm::value_ptr(g_grid_offset));
         glUniform1f(glGetUniformLocation(g_program->get_id(), "grid_size"), g_grid_size);
 
@@ -483,6 +488,8 @@ void draw_models(bool shader_foo)
         glUniformMatrix4fv(glGetUniformLocation(g_program->get_id(), "ShadowMapMatrix"),
                            1, GL_FALSE,
                            glm::value_ptr(g_shadow_map_matrix));
+
+        glUniformMatrix4fv(glGetUniformLocation(g_program->get_id(), "eye_matrix"), 1, GL_FALSE, glm::value_ptr(glm::inverse(g_eye_matrix)));
       }
 
       int dim = 0;
@@ -1215,13 +1222,17 @@ void init()
     glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
     glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
     glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
+   
+    gluBuild2DMipmaps(GL_TEXTURE_CUBE_MAP_POSITIVE_X, GL_RGB, lf->w, lf->h, lf->format->BytesPerPixel == 4 ? GL_RGBA : GL_RGB, GL_UNSIGNED_BYTE, lf->pixels);
+    gluBuild2DMipmaps(GL_TEXTURE_CUBE_MAP_NEGATIVE_X, GL_RGB, rt->w, rt->h, rt->format->BytesPerPixel == 4 ? GL_RGBA : GL_RGB, GL_UNSIGNED_BYTE, rt->pixels);
+    gluBuild2DMipmaps(GL_TEXTURE_CUBE_MAP_POSITIVE_Y, GL_RGB, up->w, up->h, up->format->BytesPerPixel == 4 ? GL_RGBA : GL_RGB, GL_UNSIGNED_BYTE, up->pixels);
+    gluBuild2DMipmaps(GL_TEXTURE_CUBE_MAP_NEGATIVE_Y, GL_RGB, dn->w, dn->h, dn->format->BytesPerPixel == 4 ? GL_RGBA : GL_RGB, GL_UNSIGNED_BYTE, dn->pixels);
+    gluBuild2DMipmaps(GL_TEXTURE_CUBE_MAP_POSITIVE_Z, GL_RGB, ft->w, ft->h, ft->format->BytesPerPixel == 4 ? GL_RGBA : GL_RGB, GL_UNSIGNED_BYTE, ft->pixels);
+    gluBuild2DMipmaps(GL_TEXTURE_CUBE_MAP_NEGATIVE_Z, GL_RGB, bk->w, bk->h, bk->format->BytesPerPixel == 4 ? GL_RGBA : GL_RGB, GL_UNSIGNED_BYTE, bk->pixels);
 
-    glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X, 0, GL_RGB, lf->w, lf->h, 0, lf->format->BytesPerPixel == 4 ? GL_RGBA : GL_RGB, GL_UNSIGNED_BYTE, lf->pixels);
-    glTexImage2D(GL_TEXTURE_CUBE_MAP_NEGATIVE_X, 0, GL_RGB, rt->w, rt->h, 0, rt->format->BytesPerPixel == 4 ? GL_RGBA : GL_RGB, GL_UNSIGNED_BYTE, rt->pixels);
-    glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_Y, 0, GL_RGB, up->w, up->h, 0, up->format->BytesPerPixel == 4 ? GL_RGBA : GL_RGB, GL_UNSIGNED_BYTE, up->pixels);
-    glTexImage2D(GL_TEXTURE_CUBE_MAP_NEGATIVE_Y, 0, GL_RGB, dn->w, dn->h, 0, dn->format->BytesPerPixel == 4 ? GL_RGBA : GL_RGB, GL_UNSIGNED_BYTE, dn->pixels);
-    glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_Z, 0, GL_RGB, ft->w, ft->h, 0, ft->format->BytesPerPixel == 4 ? GL_RGBA : GL_RGB, GL_UNSIGNED_BYTE, ft->pixels);
-    glTexImage2D(GL_TEXTURE_CUBE_MAP_NEGATIVE_Z, 0, GL_RGB, bk->w, bk->h, 0, bk->format->BytesPerPixel == 4 ? GL_RGBA : GL_RGB, GL_UNSIGNED_BYTE, bk->pixels);
+    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_BASE_LEVEL, 0);
+    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAX_LEVEL, 10);
+    glGenerateMipmap(GL_TEXTURE_CUBE_MAP);
 
     SDL_FreeSurface(up);
     SDL_FreeSurface(dn);

@@ -34,6 +34,8 @@ uniform float grid_size;
 
 // cubemap
 uniform samplerCube cubemap;
+uniform vec4 world_eye_pos;
+varying vec4 world_position;
 varying vec3 world_normal;
 
 #ifdef SHADOW_MAPPING
@@ -162,9 +164,20 @@ vec3 normal_value()
 
 vec4 cube_map()
 {
-  vec3 o = reflect(viewDir, world_normal);
+  vec3 o = reflect(world_position - world_eye_pos, normalize(world_normal));
   
-  return textureCube(cubemap, normal) * textureCube(cubemap, world_normal);
+  vec4 col = textureCube(cubemap, normalize(o), -8);// * textureCube(cubemap, world_normal);
+  vec4 specular = vec4(pow(col.rgb, vec3(20,20,20)), 1.0);
+  
+  vec4 diffuse = textureCube(cubemap, normalize(world_normal), -9);
+
+  return specular + diffuse;
+
+  //return textureCube(cubemap, world_position - world_eye_pos);
+  //return vec4(world_normal, 1.0); 
+  //return world_eye_pos;
+  //return world_position;
+  //return vec4(o, 1.0);
 }
 
 void main (void)
