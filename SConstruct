@@ -17,7 +17,7 @@ env = Environment(ENV=os.environ,
                               "-Wcast-qual",
                               "-Winit-self", # only works with >= -O1
                               "-Wno-unused-parameter"])
-env.Append(LIBS=["glut"])
+env.Append(LIBS=["glut", "SDL_image"])
 env.ParseConfig("sdl-config --libs --cflags | sed 's/-I/-isystem/'")
 env.ParseConfig("pkg-config --libs --cflags  gl glu glew | sed 's/-I/-isystem/'")
 env.ParseConfig("pkg-config --libs --cflags cairomm-1.0 gl glu | sed 's/-I/-isystem/'")
