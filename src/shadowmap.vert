@@ -15,6 +15,9 @@ varying vec3 viewDir;
 // grid
 varying vec4 vertex_position;
 
+// cubemap
+varying vec3 world_normal;
+
 void main(void)
 {
   { // grid
@@ -27,6 +30,7 @@ void main(void)
 
   { // phong
     normal = gl_NormalMatrix * gl_Normal;
+    world_normal = gl_Normal;
 
     vec3 vVertex = vec3(gl_ModelViewMatrix * gl_Vertex);
 

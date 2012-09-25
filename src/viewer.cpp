@@ -459,6 +459,10 @@ void draw_models(bool shader_foo)
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_FUNC, GL_LEQUAL);
 	//glTexParameteri(GL_TEXTURE_2D, GL_DEPTH_TEXTURE_MODE, GL_INTENSITY); 
         
+        glActiveTexture(GL_TEXTURE2);
+        glEnable(GL_TEXTURE_CUBE_MAP);
+        glBindTexture(GL_TEXTURE_CUBE_MAP, g_cube_texture);
+
         assert_gl("use program4");
         glUseProgram(g_program->get_id());
         assert_gl("use program5");
@@ -466,6 +470,7 @@ void draw_models(bool shader_foo)
         glUniform1f(glGetUniformLocation(g_program->get_id(), "shadowmap_bias"), g_shadow_map_bias);
         glUniform1i(glGetUniformLocation(g_program->get_id(), "tex"), 0);
         glUniform1i(glGetUniformLocation(g_program->get_id(), "ShadowMap"), 1);
+        glUniform1i(glGetUniformLocation(g_program->get_id(), "cubemap"), 2);
 
         glUniform4fv(glGetUniformLocation(g_program->get_id(), "grid_offset"), 4, glm::value_ptr(g_grid_offset));
         glUniform1f(glGetUniformLocation(g_program->get_id(), "grid_size"), g_grid_size);

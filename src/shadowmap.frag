@@ -1,4 +1,5 @@
 #define SHADOW_MAPPING 1
+#define NORMAL_MAPPING 1
 
 // phong shading
 uniform sampler2D tex;
@@ -30,6 +31,10 @@ varying vec4 position;
 uniform vec4 grid_offset;
 uniform float grid_line_width;
 uniform float grid_size;
+
+// cubemap
+uniform samplerCube cubemap;
+varying vec3 world_normal;
 
 #ifdef SHADOW_MAPPING
 float offset_lookup(sampler2DShadow map,
@@ -155,10 +160,17 @@ vec3 normal_value()
 }
 #endif
 
+vec4 cube_map()
+{
+  vec3 o = reflect(viewDir, world_normal);
+  
+  return textureCube(cubemap, normal) * textureCube(cubemap, world_normal);
+}
+
 void main (void)
 {
   float shadow = SHADOW_MAPPING_FUNCTION;
-  vec4  color  = phong_value();// + vec4(0, 1, 0, 1) * grid_value();
+  vec4  color  = phong_value() + cube_map(); // + vec4(0, 1, 0, 1) * grid_value();
   gl_FragColor = color * (shadow + 0.5)/2.0;
 }
 
