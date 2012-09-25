@@ -15,6 +15,7 @@
 //  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include <SDL.h>
+#include <SDL_image.h>
 #include <cmath>
 #include <memory>
 #include <unistd.h>
@@ -48,8 +49,8 @@ namespace {
 std::unique_ptr<Menu> g_menu;
 
 float g_ipd = 0.0f;
-int g_screen_w = 1600;
-int g_screen_h = 1000;
+int g_screen_w = 1280;
+int g_screen_h = 800;
 float g_fov = 70.0f;
 
 float g_near_z = 1.0f;
@@ -60,6 +61,7 @@ int g_spot_halo_samples = 100;
 bool g_draw_look_at = true;
 GLuint g_noise_texture = 0;
 GLuint g_light_texture = 0;
+GLuint g_cube_texture = 0;
 float g_light_angle = 0.0f;
 bool g_draw_3d = false;
 bool g_headlights = false;
@@ -83,6 +85,8 @@ glm::vec3 g_eye(0.0f, 0.0f, 15.0f);
 glm::vec3 g_look_at(0.0f, 0.0f, -100.0f);
 glm::vec3 g_up(0.0f, 1.0f, 0.0f);
 glm::mat4 g_shadow_map_matrix;
+glm::vec4 g_grid_offset;
+float g_grid_size = 2.0f;
 
 std::string g_model_filename;
 Model* g_model;
@@ -308,7 +312,7 @@ void draw_shadowmap()
 
   glm::vec3 light_pos(10.0f,10,0.0f);
   light_pos = glm::rotate(light_pos, g_light_angle, glm::vec3(0.0f, 1.0f, 0.0f));
-  
+
   glm::vec3 up(0.0f, 1.0f, 0.0f);
   up = glm::rotate(up, g_light_up, glm::vec3(0.0f, 0.0f, 1.0f));
   gluLookAt(light_pos.x, light_pos.y, light_pos.z,
@@ -328,8 +332,81 @@ void draw_shadowmap()
   draw_models(false); 
 }
 
+void draw_cubemap()
+{
+  OpenGLState state;
+
+  glEnable(GL_NORMALIZE);
+  glDisable(GL_DEPTH_TEST);
+
+  glDisable(GL_LIGHTING);
+
+  glActiveTexture(GL_TEXTURE0);
+  glEnable(GL_TEXTURE_CUBE_MAP);
+  glBindTexture(GL_TEXTURE_CUBE_MAP, g_cube_texture);
+
+  /*
+    glTexGeni(GL_S, GL_TEXTURE_GEN_MODE, GL_REFLECTION_MAP);
+    glTexGeni(GL_T, GL_TEXTURE_GEN_MODE, GL_REFLECTION_MAP);
+    glTexGeni(GL_R, GL_TEXTURE_GEN_MODE, GL_REFLECTION_MAP);
+    glEnable(GL_TEXTURE_GEN_S);
+    glEnable(GL_TEXTURE_GEN_T);
+    glEnable(GL_TEXTURE_GEN_R);
+  */
+
+  float d = 5.0f;
+  float t = 1.0f;
+  float n = 1.0f;
+  
+  glPushMatrix();
+  glTranslatef(g_eye.x, g_eye.y, g_eye.z);
+  glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
+  glBegin(GL_QUADS);
+  { 
+    // front
+    glNormal3f(-n,  n, -n); glTexCoord3f(-t,  t, -t); glVertex3f(-d,  d, -d);
+    glNormal3f( n,  n, -n); glTexCoord3f( t,  t, -t); glVertex3f( d,  d, -d);
+    glNormal3f( n, -n, -n); glTexCoord3f( t, -t, -t); glVertex3f( d, -d, -d);
+    glNormal3f(-n, -n, -n); glTexCoord3f(-t, -t, -t); glVertex3f(-d, -d, -d);
+
+    // back
+    glNormal3f(-n, -n, n); glTexCoord3f(-t, -t, t); glVertex3f(-d, -d, d);
+    glNormal3f( n, -n, n); glTexCoord3f( t, -t, t); glVertex3f( d, -d, d);
+    glNormal3f( n,  n, n); glTexCoord3f( t,  t, t); glVertex3f( d,  d, d);
+    glNormal3f(-n,  n, n); glTexCoord3f(-t,  t, t); glVertex3f(-d,  d, d);
+
+    // left
+    glNormal3f(-n,  n,  n); glTexCoord3f(-t,  t,  t); glVertex3f(-d,  d,  d);
+    glNormal3f(-n,  n, -n); glTexCoord3f(-t,  t, -t); glVertex3f(-d,  d, -d);
+    glNormal3f(-n, -n, -n); glTexCoord3f(-t, -t, -t); glVertex3f(-d, -d, -d);
+    glNormal3f(-n, -n,  n); glTexCoord3f(-t, -t,  t); glVertex3f(-d, -d,  d);
+
+    // right
+    glNormal3f( n, -n,  n); glTexCoord3f( t, -t,  t); glVertex3f(d, -d,  d);
+    glNormal3f( n, -n, -n); glTexCoord3f( t, -t, -t); glVertex3f(d, -d, -d);
+    glNormal3f( n,  n, -n); glTexCoord3f( t,  t, -t); glVertex3f(d,  d, -d);
+    glNormal3f( n,  n,  n); glTexCoord3f( t,  t,  t); glVertex3f(d,  d,  d);
+
+    // top
+    glNormal3f( n,  n, -n); glTexCoord3f( t,  t, -t); glVertex3f( d,  d, -d);
+    glNormal3f(-n,  n, -n); glTexCoord3f(-t,  t, -t); glVertex3f(-d,  d, -d);
+    glNormal3f(-n,  n,  n); glTexCoord3f(-t,  t,  t); glVertex3f(-d,  d,  d);
+    glNormal3f( n,  n,  n); glTexCoord3f( t,  t,  t); glVertex3f( d,  d,  d);
+
+    // bottom
+    glNormal3f(-n, -n,  n); glTexCoord3f(-t, -t,  t); glVertex3f(-d, -d,  d);
+    glNormal3f( n, -n,  n); glTexCoord3f( t, -t,  t); glVertex3f( d, -d,  d);
+    glNormal3f( n, -n, -n); glTexCoord3f( t, -t, -t); glVertex3f( d, -d, -d);
+    glNormal3f(-n, -n, -n); glTexCoord3f(-t, -t, -t); glVertex3f(-d, -d, -d);
+  }
+  glEnd();
+  glPopMatrix();
+}
+
 void draw_models(bool shader_foo)
 {
+  draw_cubemap();
+
   GLfloat mat_specular[] = { 1.0, 1.0, 1.0, 1.0 };
   GLfloat mat_ambient[]  = { 1.0, 1.0, 1.0, 1.0 };
   GLfloat mat_diffuse[]  = { 1.0, 1.0, 1.0, 1.0 };
@@ -388,9 +465,11 @@ void draw_models(bool shader_foo)
         assert_gl("use program2");
         glUniform1f(glGetUniformLocation(g_program->get_id(), "shadowmap_bias"), g_shadow_map_bias);
         glUniform1i(glGetUniformLocation(g_program->get_id(), "tex"), 0);
-        auto loc = glGetUniformLocation(g_program->get_id(), "ShadowMap");
-        //log_debug("location: %d", loc);
-        glUniform1i(loc, 1);
+        glUniform1i(glGetUniformLocation(g_program->get_id(), "ShadowMap"), 1);
+
+        glUniform4fv(glGetUniformLocation(g_program->get_id(), "grid_offset"), 4, glm::value_ptr(g_grid_offset));
+        glUniform1f(glGetUniformLocation(g_program->get_id(), "grid_size"), g_grid_size);
+
         assert_gl("use program3");
 
         glUniform1f(glGetUniformLocation(g_program->get_id(), "xPixelOffset"), 1.0f/static_cast<float>(g_shadow_map->get_width()));
@@ -412,7 +491,7 @@ void draw_models(bool shader_foo)
           if (true)
           {
             float plane_size = 50.0f;
-            float plane_y = -1.0f;
+            float plane_y = 0.0f;
             glBegin(GL_QUADS);
             {
               glNormal3f(0.0f, 1.0f, 0.0f);
@@ -1103,9 +1182,51 @@ void init()
   g_menu->add_item("Look At Sphere", &g_draw_look_at);
   g_menu->add_item("draw depth", &g_draw_depth);
   g_menu->add_item("shadow map", &g_render_shadow_map);
+  g_menu->add_item("grid.size", &g_grid_size, 0.5f);
 
   g_program = Program::create(Shader::from_file(GL_VERTEX_SHADER, "src/shadowmap.vert"),
                               Shader::from_file(GL_FRAGMENT_SHADER, "src/shadowmap.frag"));
+
+  {
+    OpenGLState cube_state;
+
+    SDL_Surface* up = IMG_Load("data/textures/miramar_up.tga");
+    SDL_Surface* dn = IMG_Load("data/textures/miramar_dn.tga");
+    SDL_Surface* ft = IMG_Load("data/textures/miramar_ft.tga");
+    SDL_Surface* bk = IMG_Load("data/textures/miramar_bk.tga");
+    SDL_Surface* lf = IMG_Load("data/textures/miramar_lf.tga");
+    SDL_Surface* rt = IMG_Load("data/textures/miramar_rt.tga");
+
+    glPixelStorei(GL_UNPACK_ALIGNMENT, 4);
+    glPixelStorei(GL_UNPACK_ROW_LENGTH, up->pitch / up->format->BytesPerPixel);
+
+    glActiveTexture(GL_TEXTURE0);
+    glEnable(GL_TEXTURE_CUBE_MAP);
+    glGenTextures(1, &g_cube_texture);
+    glBindTexture(GL_TEXTURE_CUBE_MAP, g_cube_texture);
+
+    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
+
+    glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X, 0, GL_RGB, lf->w, lf->h, 0, lf->format->BytesPerPixel == 4 ? GL_RGBA : GL_RGB, GL_UNSIGNED_BYTE, lf->pixels);
+    glTexImage2D(GL_TEXTURE_CUBE_MAP_NEGATIVE_X, 0, GL_RGB, rt->w, rt->h, 0, rt->format->BytesPerPixel == 4 ? GL_RGBA : GL_RGB, GL_UNSIGNED_BYTE, rt->pixels);
+    glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_Y, 0, GL_RGB, up->w, up->h, 0, up->format->BytesPerPixel == 4 ? GL_RGBA : GL_RGB, GL_UNSIGNED_BYTE, up->pixels);
+    glTexImage2D(GL_TEXTURE_CUBE_MAP_NEGATIVE_Y, 0, GL_RGB, dn->w, dn->h, 0, dn->format->BytesPerPixel == 4 ? GL_RGBA : GL_RGB, GL_UNSIGNED_BYTE, dn->pixels);
+    glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_Z, 0, GL_RGB, ft->w, ft->h, 0, ft->format->BytesPerPixel == 4 ? GL_RGBA : GL_RGB, GL_UNSIGNED_BYTE, ft->pixels);
+    glTexImage2D(GL_TEXTURE_CUBE_MAP_NEGATIVE_Z, 0, GL_RGB, bk->w, bk->h, 0, bk->format->BytesPerPixel == 4 ? GL_RGBA : GL_RGB, GL_UNSIGNED_BYTE, bk->pixels);
+
+    SDL_FreeSurface(up);
+    SDL_FreeSurface(dn);
+    SDL_FreeSurface(ft);
+    SDL_FreeSurface(bk);
+    SDL_FreeSurface(lf);
+    SDL_FreeSurface(rt);
+
+    assert_gl("cube texture");
+  }
 
   assert_gl("init()");
 }
@@ -1171,6 +1292,8 @@ void idle_func()
 
   display();
   usleep(10000);
+
+  g_grid_offset += glm::vec4(0.0f, 0.0f, 0.001f, 0.0f);
 
   SDL_Event ev;
   while(SDL_PollEvent(&ev))
