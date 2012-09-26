@@ -23,27 +23,20 @@ class Model
 {
 private:
   typedef std::vector<std::unique_ptr<Mesh> > MeshLst;
-  MeshLst meshes;
+  MeshLst m_meshes;
 
 public:
-  Model(const std::string& filename) :
-    meshes()
-  {
-    std::ifstream in(filename.c_str());
-    
-    if(!in)
-    {
-      std::cout << filename << ": File not found" << std::endl;
-      exit(EXIT_FAILURE);
-    }
-
-    std::unique_ptr<Mesh> mesh = Mesh::from_obj_istream(in);
-    meshes.push_back(std::move(mesh));
-  }
+  static std::unique_ptr<Model> from_istream(std::istream& in);
+  static std::unique_ptr<Model> from_file(const std::string& filename);
+  
+public:
+  Model() :
+    m_meshes()
+  {}
 
   void draw() 
   {
-    for (MeshLst::iterator i = meshes.begin(); i != meshes.end(); ++i)
+    for (MeshLst::iterator i = m_meshes.begin(); i != m_meshes.end(); ++i)
     {
       (*i)->draw();
     }

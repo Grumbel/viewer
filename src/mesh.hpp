@@ -32,12 +32,13 @@ struct Face
 
 class Mesh
 {
-private:
+public:
   typedef std::vector<glm::vec3> NormalLst;
   typedef std::vector<glm::vec3> VertexLst;
   typedef std::vector<glm::vec2> TexCoordLst;
   typedef std::vector<Face>   FaceLst;
 
+private:
   NormalLst   m_normals;
   TexCoordLst m_texcoords;
   VertexLst   m_vertices;
@@ -47,10 +48,6 @@ private:
   GLuint m_texcoords_vbo;
   GLuint m_vertices_vbo;
   GLuint m_faces_vbo;
-
-public:
-  static std::unique_ptr<Mesh> from_istream(std::istream& in);
-  static std::unique_ptr<Mesh> from_obj_istream(std::istream& in);
 
 public:
   Mesh(const NormalLst& normals,
@@ -66,6 +63,8 @@ private:
   Mesh();
 
   void build_vbos();
+
+public:
   void verify() const;
 
 private:

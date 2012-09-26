@@ -17,8 +17,6 @@
 #include "mesh.hpp"
 
 #include <iostream>
-#include <boost/tokenizer.hpp>
-#include <boost/lexical_cast.hpp>
 
 #include "log.hpp"
 #include "opengl_state.hpp"
@@ -26,190 +24,6 @@
 namespace {
 
 } // namespace
-
-std::unique_ptr<Mesh>
-Mesh::from_obj_istream(std::istream& in)
-{
-  // This is not a fully featured .obj file reader, it just takes some
-  // inspiration from it: 
-  // http://www.martinreddy.net/gfx/3d/OBJ.spec
-
-  std::unique_ptr<Mesh> mesh(new Mesh);
-
-  std::string line;
-  int line_number = 0;
-
-  while(std::getline(in, line))
-  {
-    line_number += 1;
-
-    boost::tokenizer<boost::char_separator<char> > tokens(line, boost::char_separator<char>(" ", ""));
-    for(auto it = tokens.begin(); it != tokens.end(); ++it)
-    {
-#define INCR_AND_CHECK {                                                \
-        ++it;                                                           \
-        if (it == tokens.end())                                         \
-        {                                                               \
-          throw std::runtime_error((boost::format("not enough tokens at line %d") % line_number).str()); \
-        }                                                               \
-      }
-
-      try
-      {
-        if (*it == "g")
-        {
-          // group
-          break;
-        }
-        else if (*it == "v")
-        {
-          glm::vec3 v;
-
-          INCR_AND_CHECK;
-          v.x = boost::lexical_cast<float>(*it);
-          INCR_AND_CHECK;
-          v.y = boost::lexical_cast<float>(*it);
-          INCR_AND_CHECK;
-          v.z = boost::lexical_cast<float>(*it);
-
-          mesh->m_vertices.push_back(v);
-        }
-        else if (*it == "vt")
-        {
-          glm::vec2 vt;
-
-          INCR_AND_CHECK;
-          vt.s = boost::lexical_cast<float>(*it);
-          INCR_AND_CHECK;
-          vt.t = boost::lexical_cast<float>(*it);
-
-          mesh->m_texcoords.push_back(vt);
-        }
-        else if (*it == "vn")
-        {
-          glm::vec3 vn;
-
-          INCR_AND_CHECK;
-          vn.x = boost::lexical_cast<float>(*it);
-          INCR_AND_CHECK;
-          vn.y = boost::lexical_cast<float>(*it);
-          INCR_AND_CHECK;
-          vn.z = boost::lexical_cast<float>(*it);
-
-          mesh->m_normals.push_back(vn);
-        }
-        else if (*it == "f")
-        {
-          Face face;
-
-          INCR_AND_CHECK;
-          face.vertex1 = boost::lexical_cast<int>(*it);
-          INCR_AND_CHECK;
-          face.vertex2 = boost::lexical_cast<int>(*it);
-          INCR_AND_CHECK;
-          face.vertex3 = boost::lexical_cast<int>(*it);
-
-          mesh->m_faces.push_back(face);
-        }
-        else if ((*it)[0] == '#')
-        {
-          // ignore comments
-          break;
-        }
-        else
-        {
-          throw std::runtime_error((boost::format("unhandled token %s") % *it).str());
-        }
-      }
-      catch(const std::exception& err)
-      {
-        throw std::runtime_error((boost::format("unknown:%d: %s") % line_number % err.what()).str());
-      }
-    }
-  }
-
-  // fill in some texcoords if there aren't enough
-  if (mesh->m_texcoords.size() < mesh->m_vertices.size())
-  {
-    auto& texcoords = mesh->m_texcoords;
-
-    texcoords.resize(mesh->m_vertices.size());
-    for(FaceLst::size_type i = mesh->m_vertices.size()-1; i < texcoords.size(); ++i)
-    {
-      texcoords[i] = glm::vec2(0.0f, 0.0f);
-    }
-  }
-
-  mesh->build_vbos();
-  mesh->verify();
-
-  return mesh;
-}
-
-std::unique_ptr<Mesh>
-Mesh::from_istream(std::istream& in)
-{
-  NormalLst normals;
-  VertexLst vertices;
-  FaceLst   faces;
-  TexCoordLst texcoords;
-
-  int num_vertices;
-  in >> num_vertices;
-
-  log_info("NumVertices: %d", num_vertices);
-
-  for (int i = 0; i < num_vertices; ++i)
-  {
-    glm::vec3 normal;
-    in >> normal.x >> normal.y >> normal.z;
-    normals.push_back(normal);
-
-    glm::vec3 vertex;
-    in >> vertex.x >> vertex.y >> vertex.z;
-    vertices.push_back(vertex);
-  }
-
-  int number_of_faces;
-  in >> number_of_faces;
-  log_info("NumFaces: %d", number_of_faces);
-  for (int i = 0; i < number_of_faces; ++i)
-  {
-    Face face;
-    in >> face.vertex1 >> face.vertex2 >> face.vertex3;
-    
-    if (0 <= face.vertex1 && face.vertex1 < num_vertices &&
-        0 <= face.vertex2 && face.vertex2 < num_vertices &&
-        0 <= face.vertex3 && face.vertex3 < num_vertices)
-    {
-      faces.push_back(face);
-    }
-    else
-    {
-      log_info("invalid face: %d %d %d", face.vertex1, face.vertex2, face.vertex3);
-    }
-  }
-
-  // generate some texcoords
-  texcoords.resize(faces.size() * 3);
-  for(FaceLst::size_type i = 0; i < faces.size(); ++i)
-  {
-    if (false)
-    {
-      texcoords[faces[i].vertex1] = glm::vec2(0.0f, 0.0f);
-      texcoords[faces[i].vertex2] = glm::vec2(1.0f, 0.0f);
-      texcoords[faces[i].vertex3] = glm::vec2(0.0f, 1.0f);
-    }
-    else
-    {
-      texcoords[3*i+0] = glm::vec2(0.0f, 0.0f);
-      texcoords[3*i+1] = glm::vec2(1.0f, 0.0f);
-      texcoords[3*i+2] = glm::vec2(0.0f, 1.0f);
-    }
-  }
-
-  return std::unique_ptr<Mesh>(new Mesh(normals, texcoords, vertices, faces));
-}
 
 Mesh::Mesh() :
   m_normals(),
@@ -285,16 +99,16 @@ Mesh::verify() const
 
   for (const auto& face : m_faces)
   {
-    if (face.vertex1 < 0 ||
-                       face.vertex2 < 0 ||
-                                      face.vertex3 < 0 ||
-                                                     face.vertex1 >= static_cast<int>(m_vertices.size()) ||
-                                      face.vertex2 >= static_cast<int>(m_vertices.size()) ||
-                       face.vertex3 >= static_cast<int>(m_vertices.size()))
+    if ((face.vertex1<0) ||
+         (face.vertex2<0) ||
+          (face.vertex3<0) ||
+           (face.vertex1 >= static_cast<int>(m_vertices.size())) ||
+          (face.vertex2 >= static_cast<int>(m_vertices.size())) ||
+         face.vertex3 >= static_cast<int>(m_vertices.size()))
     {
       throw std::runtime_error("face tries to access non existing vertex");
     }
-}
+  }
 
   if (m_vertices.size() != m_texcoords.size())
   {

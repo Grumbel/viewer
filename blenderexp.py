@@ -20,11 +20,14 @@ from collections import namedtuple
 Face   = namedtuple('Face',   ['v1', 'v2', 'v3'])
 Vertex = namedtuple('Vertex', ['co', 'n', 'uv'])
 
-def writeObj(obj):
-    faces = collect_faces(obj.data, obj.location)
+def writeObj(objects):
+    faces = []
+    for obj in objects:
+        faces += collect_faces(obj.data, obj.location)
+
     faces, vertices = index_vertices(faces)
 
-    outfile.write("g %s\n" % obj.name)
+    # outfile.write("g %s\n" % obj.name)
 
     for v in vertices:
         outfile.write("vn %f %f %f\n" % v.n)
@@ -105,8 +108,7 @@ def collect_faces(mesh, loc):
 with open("/tmp/blender.mod", "w") as outfile:
     outfile.write("# exported by %s\n" % __file__)
     objects = [obj for obj in bpy.data.objects if obj.type == 'MESH']
-    for obj in objects:
-        writeObj(obj)
+    writeObj(objects)
     outfile.write("\n# EOF #\n")
 
 print("-- export complete --")
