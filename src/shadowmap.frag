@@ -38,6 +38,9 @@ uniform vec4 world_eye_pos;
 varying vec4 world_position;
 varying vec3 world_normal;
 
+uniform sampler2D grass;
+uniform sampler2D cliff;
+
 #ifdef SHADOW_MAPPING
 float offset_lookup(sampler2DShadow map,
                     vec4 loc,
@@ -166,13 +169,13 @@ vec4 cube_map()
 {
   vec3 o = reflect(world_position - world_eye_pos, normalize(world_normal));
   
-  vec4 col = textureCube(cubemap, normalize(o), -8);// * textureCube(cubemap, world_normal);
+  vec4 col = textureCubeLod(cubemap, normalize(o), 3);// * textureCube(cubemap, world_normal);
   vec4 specular = vec4(pow(col.rgb, vec3(20,20,20)), 1.0);
   
-  vec4 diffuse = textureCube(cubemap, normalize(world_normal), -9);
+  vec4 diffuse = textureCubeLod(cubemap, normalize(world_normal), 5);
 
-  return specular + diffuse;
-
+  return /*specular + */diffuse;
+  
   //return textureCube(cubemap, world_position - world_eye_pos);
   //return vec4(world_normal, 1.0); 
   //return world_eye_pos;
@@ -183,10 +186,20 @@ vec4 cube_map()
 void main (void)
 {
   float shadow = SHADOW_MAPPING_FUNCTION;
-  //vec4  color  = phong_value() + cube_map(); // + vec4(0, 1, 0, 1) * grid_value();
   vec4 grid = grid_value();
+  /*
+  //vec4  color  = phong_value() + cube_map(); // + vec4(0, 1, 0, 1) * grid_value();
   vec4 color = phong_value() + cube_map() + (grid * ((vec4(1,1,1,1) - pow(length(fwidth(position)), 0.2))));
   gl_FragColor = color * (shadow + 0.5)/2.0;
+  */
+
+  vec3 f = abs(normalize(world_normal * vec3(1,1,1)));
+  vec4 color = 
+    texture(grass, world_position.xy*0.2) * f.z +
+    texture(grass, world_position.yz*0.2) * f.x +
+    texture(cliff, world_position.xz*0.2) * f.y;
+
+  gl_FragColor = color * cube_map();
 }
 
 /* EOF */
