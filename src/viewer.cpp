@@ -61,6 +61,8 @@ int g_spot_halo_samples = 100;
 bool g_draw_look_at = true;
 GLuint g_noise_texture = 0;
 GLuint g_light_texture = 0;
+GLuint g_cliff_texture = 0;
+GLuint g_grass_texture = 0;
 GLuint g_cube_texture = 0;
 float g_light_angle = 0.0f;
 bool g_draw_3d = false;
@@ -91,7 +93,7 @@ glm::vec4 g_grid_offset;
 float g_grid_size = 2.0f;
 
 std::string g_model_filename;
-Model* g_model;
+std::unique_ptr<Model> g_model;
 
 std::unique_ptr<Framebuffer> g_framebuffer1;
 std::unique_ptr<Framebuffer> g_framebuffer2;
@@ -141,6 +143,16 @@ void reshape(int w, int h)
   g_shadow_map.reset(new Framebuffer(g_shadow_map_resolution, g_shadow_map_resolution));
 
   assert_gl("reshape");
+}
+
+void flip_rgb(SDL_Surface* surface)
+{
+  for(int y = 0; y < surface->h; ++y)
+    for(int x = 0; x < surface->w; ++x)
+    {
+      uint8_t* p = static_cast<uint8_t*>(surface->pixels) + y * surface->pitch + x * surface->format->BytesPerPixel;
+      std::swap(p[0], p[2]);
+    }
 }
 
 void draw_scene(EyeType eye_type)
@@ -244,7 +256,7 @@ void draw_scene(EyeType eye_type)
     glPushMatrix();
 
     glRotatef(g_light_angle, 0.0f, 1.0f, 0.0f);
-    glTranslatef(10.0f,10,0.0f);
+    glTranslatef(50.0f,50,0.0f);
 
     if (true)
     {
@@ -315,7 +327,7 @@ void draw_shadowmap()
   glEnable(GL_LIGHTING);
   glEnable(GL_LIGHT0);
 
-  glm::vec3 light_pos(10.0f,10,0.0f);
+  glm::vec3 light_pos(50.0f,50,0.0f);
   light_pos = glm::rotate(light_pos, g_light_angle, glm::vec3(0.0f, 1.0f, 0.0f));
 
   glm::vec3 up(0.0f, 1.0f, 0.0f);
@@ -468,6 +480,14 @@ void draw_models(bool shader_foo)
         glEnable(GL_TEXTURE_CUBE_MAP);
         glBindTexture(GL_TEXTURE_CUBE_MAP, g_cube_texture);
 
+        glActiveTexture(GL_TEXTURE3);
+        glEnable(GL_TEXTURE_2D);
+        glBindTexture(GL_TEXTURE_2D, g_grass_texture);
+
+        glActiveTexture(GL_TEXTURE4);
+        glEnable(GL_TEXTURE_2D);
+        glBindTexture(GL_TEXTURE_2D, g_cliff_texture);
+
         assert_gl("use program4");
         glUseProgram(g_program->get_id());
         assert_gl("use program5");
@@ -476,6 +496,8 @@ void draw_models(bool shader_foo)
         glUniform1i(glGetUniformLocation(g_program->get_id(), "tex"), 0);
         glUniform1i(glGetUniformLocation(g_program->get_id(), "ShadowMap"), 1);
         glUniform1i(glGetUniformLocation(g_program->get_id(), "cubemap"), 2);
+        glUniform1i(glGetUniformLocation(g_program->get_id(), "grass"), 3);
+        glUniform1i(glGetUniformLocation(g_program->get_id(), "cliff"), 4);
 
         glUniform4fv(glGetUniformLocation(g_program->get_id(), "world_eye_pos"), 4, glm::value_ptr(g_eye));
         
@@ -1088,7 +1110,7 @@ void init()
   g_framebuffer2.reset(new Framebuffer(g_screen_w, g_screen_h));
   assert_gl("init()");
 
-  g_model = new Model(g_model_filename);
+  g_model = Model::from_file(g_model_filename);
 
   { // upload noise texture
     glGenTextures(1, &g_noise_texture);
@@ -1204,6 +1226,48 @@ void init()
   g_program = Program::create(Shader::from_file(GL_VERTEX_SHADER, "src/shadowmap.vert"),
                               Shader::from_file(GL_FRAGMENT_SHADER, "src/shadowmap.frag"));
 
+
+  {
+    OpenGLState grass_state;
+    SDL_Surface* grass = IMG_Load("data/textures/cliff_02_v2.tga");
+    SDL_Surface* cliff = IMG_Load("data/textures/grass_01_v1.tga");
+
+    flip_rgb(grass);
+    flip_rgb(cliff);
+
+    assert(grass);
+    assert(cliff);
+
+    glPixelStorei(GL_UNPACK_ALIGNMENT, 4);
+    glPixelStorei(GL_UNPACK_ROW_LENGTH, cliff->pitch / cliff->format->BytesPerPixel);
+
+    glActiveTexture(GL_TEXTURE0);
+    glEnable(GL_TEXTURE_2D);
+    glGenTextures(1, &g_grass_texture);
+    glBindTexture(GL_TEXTURE_2D, g_grass_texture);
+
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+
+    gluBuild2DMipmaps(GL_TEXTURE_2D, GL_RGB, grass->w, grass->h, grass->format->BytesPerPixel == 4 ? GL_RGBA : GL_RGB, GL_UNSIGNED_BYTE, grass->pixels);
+
+
+    glGenTextures(1, &g_cliff_texture);
+    glBindTexture(GL_TEXTURE_2D, g_cliff_texture);
+
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+
+    gluBuild2DMipmaps(GL_TEXTURE_2D, GL_RGB, cliff->w, cliff->h, cliff->format->BytesPerPixel == 4 ? GL_RGBA : GL_RGB, GL_UNSIGNED_BYTE, cliff->pixels);
+
+    SDL_FreeSurface(grass);
+    SDL_FreeSurface(cliff);
+  }
+
   {
     OpenGLState cube_state;
 
@@ -1214,6 +1278,13 @@ void init()
     SDL_Surface* lf = IMG_Load("data/textures/miramar_lf.tga");
     SDL_Surface* rt = IMG_Load("data/textures/miramar_rt.tga");
 
+    flip_rgb(up);
+    flip_rgb(dn);
+    flip_rgb(ft);
+    flip_rgb(bk);
+    flip_rgb(lf);
+    flip_rgb(rt);
+
     glPixelStorei(GL_UNPACK_ALIGNMENT, 4);
     glPixelStorei(GL_UNPACK_ROW_LENGTH, up->pitch / up->format->BytesPerPixel);
 
@@ -1223,7 +1294,7 @@ void init()
     glBindTexture(GL_TEXTURE_CUBE_MAP, g_cube_texture);
 
     glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
     glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
     glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
     glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
