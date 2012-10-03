@@ -30,6 +30,7 @@ Mesh::Mesh() :
   m_texcoords(),
   m_vertices(),
   m_faces(),
+  m_location(),
   m_normals_vbo(0),
   m_texcoords_vbo(0),
   m_vertices_vbo(0),
@@ -45,6 +46,7 @@ Mesh::Mesh(const NormalLst& normals,
   m_texcoords(texcoords),
   m_vertices(vertices),
   m_faces(faces),
+  m_location(),
   m_normals_vbo(0),
   m_texcoords_vbo(0),
   m_vertices_vbo(0),
@@ -160,7 +162,11 @@ Mesh::draw()
     glEnableClientState(GL_VERTEX_ARRAY);
 
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_faces_vbo);
+
+    glPushMatrix();
+    glTranslatef(m_location.x, m_location.y, m_location.z);
     glDrawElements(GL_TRIANGLES, 3*m_faces.size(), GL_UNSIGNED_INT, 0);
+    glPopMatrix();
   }
   else
   {

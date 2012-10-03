@@ -43,6 +43,8 @@ private:
   TexCoordLst m_texcoords;
   VertexLst   m_vertices;
   FaceLst     m_faces;
+
+  glm::vec3 m_location;
   
   GLuint m_normals_vbo;
   GLuint m_texcoords_vbo;
@@ -58,6 +60,8 @@ public:
 
   void display();
   void draw();
+
+  void set_location(const glm::vec3& location) {  m_location = location; }
 
 private:
   Mesh();
