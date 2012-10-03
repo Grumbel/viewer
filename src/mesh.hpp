@@ -38,7 +38,7 @@ public:
   typedef std::vector<glm::vec2>  TexCoordLst;
   typedef std::vector<Face>       FaceLst;
   typedef std::vector<glm::vec4>  BoneWeights;
-  typedef std::vector<glm::vec4> BoneIndices;
+  typedef std::vector<glm::ivec4> BoneIndices;
 
 private:
   NormalLst   m_normals;

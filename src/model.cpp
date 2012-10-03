@@ -186,7 +186,7 @@ Model::from_istream(std::istream& in)
         }
         else if (*it == "bi")
         {
-          glm::vec4 bi;
+          glm::ivec4 bi;
 
           INCR_AND_CHECK;
           bi.x = boost::lexical_cast<int>(*it);

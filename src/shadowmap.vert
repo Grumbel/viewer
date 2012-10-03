@@ -5,7 +5,7 @@
 // uniform mat4  projection_matrix;
 
 attribute vec4  bone_weights;
-attribute vec4 bone_indices;
+attribute ivec4 bone_indices;
 
 uniform mat4 bones[30];
 uniform mat4 pose_bones[30];
@@ -81,13 +81,13 @@ void main(void)
   { // regular stuff
     gl_TexCoord[0] = gl_TextureMatrix[0] * gl_MultiTexCoord0;
 
-    vec4 bi = bone_indices;
+    ivec4 bi = bone_indices;
     vec4 bw = bone_weights;
 
     vec4 p;
     for(int i = 0; i < 4; ++i)
     {
-      p += pose_bones[int(bi.x)] * bones[int(bi.x)] * gl_Vertex * bw.x;
+      p += pose_bones[bi.x] * bones[bi.x] * gl_Vertex * bw.x;
       
       bw = bw.yzwx;
       bi = bi.yzwx;

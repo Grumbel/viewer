@@ -178,7 +178,7 @@ Mesh::draw()
 
       int bone_indices_loc = 1;
       glBindBuffer(GL_ARRAY_BUFFER, m_bone_indices_vbo);
-      glVertexAttribPointer(bone_indices_loc, 4, GL_FLOAT, GL_FALSE, 0, nullptr);
+      glVertexAttribIPointer(bone_indices_loc, 4, GL_INT, 0, nullptr);
       glEnableVertexAttribArray(bone_indices_loc);
     }
 
