@@ -18,6 +18,16 @@ import bpy
 from mathutils import Matrix, Vector
 from collections import namedtuple
 
+def pm(mat):
+    print("Matrix(%6.2f  %6.2f  %6.2f  %6.2f\n"
+          "       %6.2f  %6.2f  %6.2f  %6.2f\n"
+          "       %6.2f  %6.2f  %6.2f  %6.2f\n"
+          "       %6.2f  %6.2f  %6.2f  %6.2f)" % 
+          (mat[0][0], mat[1][0], mat[2][0], mat[3][0], 
+           mat[0][1], mat[1][1], mat[2][1], mat[3][1], 
+           mat[0][2], mat[1][2], mat[2][2], mat[3][2], 
+           mat[0][3], mat[1][3], mat[2][3], mat[3][3]))
+
 Face   = namedtuple('Face',   ['v1', 'v2', 'v3'])
 Vertex = namedtuple('Vertex', ['co', 'n', 'uv', 'bones'])
 
@@ -32,7 +42,7 @@ def vec3(v):
     # return (v.x, v.z, -v.y)
     return (v.x, v.y, v.z)
 
-def writeObj(obj):
+def write_mesh(obj):
     faces = collect_faces(obj.data)
     faces, vertices = index_vertices(faces)
 
@@ -44,20 +54,21 @@ def writeObj(obj):
         if v.uv:
             outfile.write("vt %f %f\n" % v.uv)
 
-        bones = list(v.bones)
-        while len(bones) < 4:
-            bones.append((0, 0.0))
+        if v.bones:
+            bones = list(v.bones)
+            while len(bones) < 4:
+                bones.append((0, 0.0))
 
-        # FIXME: should only discard least important bone
-        while len(bones) > 4:
-            bones.pop()
+            # FIXME: should only discard least important bone
+            while len(bones) > 4:
+                bones.pop()
 
-        bone_index  = [g for g, w in bones]
-        bone_weight = [w for g, w in bones]
-        bone_weight = [w / sum(bone_weight) for w in bone_weight]
+            bone_index  = [g for g, w in bones]
+            bone_weight = [w for g, w in bones]
+            bone_weight = [w / sum(bone_weight) for w in bone_weight]
 
-        outfile.write("bi %d %d %d %d\n" % tuple(bone_index))
-        outfile.write("bw %f %f %f %f\n" % tuple(bone_weight))
+            outfile.write("bi %d %d %d %d\n" % tuple(bone_index))
+            outfile.write("bw %f %f %f %f\n" % tuple(bone_weight))
         
         outfile.write("v %f %f %f\n" % v.co)
 
@@ -129,11 +140,51 @@ def collect_faces(mesh):
 
     return out_faces
 
+def vec3_str(v):
+    return "%6.2f %6.2f %6.2f" % (v.x, v.y, v.z)
+
+def vec4_str(v):
+    return "%6.2f %6.2f %6.2f %6.2f" % (v.x, v.y, v.z, v.w)
+
+def mat3_str(m):
+    return "%s %s %s" % (vec3_str(m[0]), vec3_str(m[1]), vec3_str(m[2]))
+
+def mat4_str(m):
+    return "%s %s %s %s" % (vec4_str(m[0]), vec4_str(m[1]), vec4_str(m[2]), vec4_str(m[3]))
+
+def write_armature(obj):
+    with open("/tmp/blender.bones", "w") as f:
+        f.write("# exported by %s\n" % __file__)
+        armature = obj.data
+        for bone in armature.bones:
+            # _local is in armature space, the other in bone space
+            f.write("bone %s\n" % bone.name)
+            if bone.parent: 
+                f.write("  parent       %s\n" % bone.parent.name)
+            f.write("  head         %s\n" % vec3_str(bone.head))
+            f.write("  tail         %s\n" % vec3_str(bone.tail))
+            f.write("  head_local   %s\n" % vec3_str(bone.head_local))
+            f.write("  tail_local   %s\n" % vec3_str(bone.tail_local))
+            f.write("  matrix       %s\n" % mat3_str(bone.matrix)) # a 3x3 matrix
+            f.write("  matrix_local %s\n" % mat4_str(bone.matrix_local)) # a 4x4 matrix
+            f.write("\n")
+
+    with open("/tmp/blender.pose", "w") as f:
+        f.write("# exported by %s\n" % __file__)
+        for bone in obj.pose.bones:
+            f.write("bone\n")
+            f.write("  matrix       %s\n" % mat4_str(bone.matrix))
+            f.write("  matrix_basis %s\n" % mat4_str(bone.matrix_basis))
+            f.write("\n")
+
 with open("/tmp/blender.mod", "w") as outfile:
     outfile.write("# exported by %s\n" % __file__)
-    objects = [obj for obj in bpy.data.objects if obj.type == 'MESH']
-    for obj in objects:
-        writeObj(obj)
+    meshes = [obj for obj in bpy.data.objects if obj.type == 'MESH']
+    armatures = [obj for obj in bpy.data.objects if obj.type == 'ARMATURE']
+    for mesh in meshes:
+        write_mesh(mesh)
+    for armature in armatures:
+        write_armature(armature)
     outfile.write("\n# EOF #\n")
 
 print("-- export complete --")

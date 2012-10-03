@@ -17,7 +17,7 @@ Shader::from_file(GLenum type, const std::string& filename)
   {
     std::string source{std::istreambuf_iterator<char>(in), std::istreambuf_iterator<char>()}; 
   
-    log_debug("shader source:\n %s\n", source);
+    //log_debug("shader source:\n %s\n", source);
 
     ShaderPtr shader = std::make_shared<Shader>(type);
 

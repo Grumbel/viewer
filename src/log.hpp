@@ -80,6 +80,7 @@ void print(Out& out, const Head& head, Arg... arg)
 } // namespace logging
 
 #define log_info(...)  logging::print(std::cout, "[INFO] " __VA_ARGS__)
+#define log_warn(...)  logging::print(std::cout, "[WARN] " __VA_ARGS__)
 #define log_debug(...) logging::print(std::cout, "[DEBUG]" __VA_ARGS__)
 
 #endif

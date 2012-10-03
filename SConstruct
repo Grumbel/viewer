@@ -2,10 +2,11 @@ import os
 
 env = Environment(ENV=os.environ,
                   CXX="g++-snapshot",
-                  CXXFLAGS= [ "-O2", "-g3",
+                  CXXFLAGS= [ "-O0", "-g3",
                               "-std=c++11",
                               # "-ansi",
                               # "-pedantic",
+                              "-Wno-unused-variable",
                               "-Wall",
                               "-Wextra",
                               "-Wnon-virtual-dtor",

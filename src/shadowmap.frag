@@ -187,12 +187,11 @@ void main (void)
 {
   float shadow = SHADOW_MAPPING_FUNCTION;
   vec4 grid = grid_value();
-  /*
-  //vec4  color  = phong_value() + cube_map(); // + vec4(0, 1, 0, 1) * grid_value();
+ //vec4  color  = phong_value() + cube_map(); // + vec4(0, 1, 0, 1) * grid_value();
   vec4 color = phong_value() + cube_map() + (grid * ((vec4(1,1,1,1) - pow(length(fwidth(position)), 0.2))));
   gl_FragColor = color * (shadow + 0.5)/2.0;
-  */
 
+  /*
   vec3 f = abs(normalize(world_normal * vec3(1,1,1)));
   vec4 color = 
     texture(grass, world_position.xy*0.2) * f.z +
@@ -200,6 +199,7 @@ void main (void)
     texture(cliff, world_position.xz*0.2) * f.y;
 
   gl_FragColor = color * cube_map();
+*/
 }
 
 /* EOF */

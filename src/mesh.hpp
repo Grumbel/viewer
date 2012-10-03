@@ -33,16 +33,20 @@ struct Face
 class Mesh
 {
 public:
-  typedef std::vector<glm::vec3> NormalLst;
-  typedef std::vector<glm::vec3> VertexLst;
-  typedef std::vector<glm::vec2> TexCoordLst;
-  typedef std::vector<Face>   FaceLst;
+  typedef std::vector<glm::vec3>  NormalLst;
+  typedef std::vector<glm::vec3>  VertexLst;
+  typedef std::vector<glm::vec2>  TexCoordLst;
+  typedef std::vector<Face>       FaceLst;
+  typedef std::vector<glm::vec4>  BoneWeights;
+  typedef std::vector<glm::vec4> BoneIndices;
 
 private:
   NormalLst   m_normals;
   TexCoordLst m_texcoords;
   VertexLst   m_vertices;
   FaceLst     m_faces;
+  BoneWeights m_bone_weights;
+  BoneIndices m_bone_indices;
 
   glm::vec3 m_location;
   
@@ -50,12 +54,16 @@ private:
   GLuint m_texcoords_vbo;
   GLuint m_vertices_vbo;
   GLuint m_faces_vbo;
+  GLuint m_bone_weights_vbo;
+  GLuint m_bone_indices_vbo;
 
 public:
   Mesh(const NormalLst& normals,
        const TexCoordLst& texcoords,
        const VertexLst& vertices,
-       const FaceLst&   faces);
+       const FaceLst&   faces,
+       const BoneWeights& bone_weights = BoneWeights(),
+       const BoneIndices& bone_indices = BoneIndices());
   ~Mesh();
 
   void display();
@@ -65,6 +73,16 @@ public:
 
 private:
   Mesh();
+
+  template<typename T>
+  GLuint build_vbo(GLenum target, const std::vector<T>& vec)
+  {
+    GLuint vbo;
+    glGenBuffers(1, &vbo);
+    glBindBuffer(target, vbo);
+    glBufferData(target, sizeof(T) * vec.size(), vec.data(), GL_STATIC_DRAW);
+    return vbo;
+  }
 
   void build_vbos();
 

@@ -40,6 +40,8 @@
 #include "menu.hpp"
 #include "program.hpp"
 #include "shader.hpp"
+#include "armature.hpp"
+#include "pose.hpp"
 
 void draw_models(bool shader_foo);
 
@@ -94,6 +96,8 @@ float g_grid_size = 2.0f;
 
 std::string g_model_filename;
 std::unique_ptr<Model> g_model;
+std::unique_ptr<Armature> g_armature;
+std::unique_ptr<Pose> g_pose;
 
 std::unique_ptr<Framebuffer> g_framebuffer1;
 std::unique_ptr<Framebuffer> g_framebuffer2;
@@ -492,12 +496,19 @@ void draw_models(bool shader_foo)
         glUseProgram(g_program->get_id());
         assert_gl("use program5");
         assert_gl("use program2");
+        
+        std::cout << "bone_weight:  " << glGetAttribLocation(g_program->get_id(), "bone_weights") << std::endl;
+        std::cout << "bone_indices: " << glGetAttribLocation(g_program->get_id(), "bone_indices") << std::endl;
+
         glUniform1f(glGetUniformLocation(g_program->get_id(), "shadowmap_bias"), g_shadow_map_bias);
         glUniform1i(glGetUniformLocation(g_program->get_id(), "tex"), 0);
         glUniform1i(glGetUniformLocation(g_program->get_id(), "ShadowMap"), 1);
         glUniform1i(glGetUniformLocation(g_program->get_id(), "cubemap"), 2);
         glUniform1i(glGetUniformLocation(g_program->get_id(), "grass"), 3);
         glUniform1i(glGetUniformLocation(g_program->get_id(), "cliff"), 4);
+
+        g_armature->bind_uniform(glGetUniformLocation(g_program->get_id(), "bones"));
+        g_pose->bind_uniform(glGetUniformLocation(g_program->get_id(), "pose_bones"));
 
         glUniform4fv(glGetUniformLocation(g_program->get_id(), "world_eye_pos"), 4, glm::value_ptr(g_eye));
         
@@ -1111,6 +1122,8 @@ void init()
   assert_gl("init()");
 
   g_model = Model::from_file(g_model_filename);
+  g_armature = Armature::from_file("/tmp/blender.bones");
+  g_pose = Pose::from_file("/tmp/blender.pose");
 
   { // upload noise texture
     glGenTextures(1, &g_noise_texture);

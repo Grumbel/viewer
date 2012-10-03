@@ -1,3 +1,15 @@
+#version 140
+
+// uniform mat4  model_matrix;
+// uniform mat4  view_matrix;
+// uniform mat4  projection_matrix;
+
+attribute vec4  bone_weights;
+attribute vec4 bone_indices;
+
+uniform mat4 bones[30];
+uniform mat4 pose_bones[30];
+
 // shadowmap
 uniform mat4 ShadowMapMatrix;
 varying vec4 ProjShadow;
@@ -68,7 +80,20 @@ void main(void)
 
   { // regular stuff
     gl_TexCoord[0] = gl_TextureMatrix[0] * gl_MultiTexCoord0;
-    gl_Position = position = ftransform();
+
+    vec4 bi = bone_indices;
+    vec4 bw = bone_weights;
+
+    vec4 p;
+    for(int i = 0; i < 4; ++i)
+    {
+      p += pose_bones[int(bi.x)] * bones[int(bi.x)] * gl_Vertex * bw.x;
+      
+      bw = bw.yzwx;
+      bi = bi.yzwx;
+    }
+
+    gl_Position = position = gl_ModelViewProjectionMatrix * p;
   }
 }
 
