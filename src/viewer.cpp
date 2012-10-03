@@ -524,7 +524,7 @@ void draw_models(bool shader_foo)
           glScalef(g_scale, g_scale, g_scale);
           glTranslatef(20*x, 0, 20*y);
           g_model->draw();
-          if (true)
+          if (false)
           {
             float plane_size = 50.0f;
             float plane_y = 0.0f;
@@ -1584,14 +1584,14 @@ int main(int argc, char** argv)
 
     g_model_filename = argv[1];
 
-    log_info("glutInit()\n");
+    log_info("glutInit()");
     glutInit(&argc, argv);
     glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGB | GLUT_DEPTH);
     glutInitWindowSize(g_screen_w, g_screen_h);
     //glutInitWindowPosition(100, 100);
-    log_info("glutCreateWindow()\n");
+    log_info("glutCreateWindow()");
     glutCreateWindow(argv[0]);
-    log_info("glewInit\n");
+    log_info("glewInit()");
     glewInit();
     init();
     glutDisplayFunc(display);
