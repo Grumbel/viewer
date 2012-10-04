@@ -142,13 +142,12 @@ Armature::Armature() :
 void
 Armature::bind_uniform(int loc)
 {
-  std::vector<glm::mat4> matrices;
-  for(auto& bone : m_bones)
+  for(size_t i = 0; i < m_bones.size(); ++i)
   {
-    matrices.push_back(glm::inverse(bone->matrix_local));
-  } 
-
-  glUniformMatrix4fv(loc, matrices.size(), GL_FALSE, reinterpret_cast<float*>(matrices.data()));
+    //matrices.push_back(glm::mat4(1));
+    glUniformMatrix4fv(loc + i, 1, GL_FALSE, 
+                       glm::value_ptr(glm::inverse(m_bones[i]->matrix_local)));
+  }
 }
 
 /* EOF */

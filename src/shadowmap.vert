@@ -1,4 +1,4 @@
-#version 140
+//#version 140
 
 // uniform mat4  model_matrix;
 // uniform mat4  view_matrix;
@@ -6,9 +6,13 @@
 
 attribute vec4  bone_weights;
 attribute ivec4 bone_indices;
+attribute int   bone_count;
 
-uniform mat4 bones[30];
-uniform mat4 pose_bones[30];
+// FIXME: lowering the matrix count below 35 makes the whole thing fail, even
+// so they aren't actually used
+const int n = 35;
+uniform mat4 bones[n];
+uniform mat4 pose_bones[n];
 
 // shadowmap
 uniform mat4 ShadowMapMatrix;

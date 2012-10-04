@@ -39,6 +39,7 @@ public:
   typedef std::vector<Face>       FaceLst;
   typedef std::vector<glm::vec4>  BoneWeights;
   typedef std::vector<glm::ivec4> BoneIndices;
+  typedef std::vector<int>        BoneCounts;
 
 private:
   NormalLst   m_normals;
@@ -47,6 +48,7 @@ private:
   FaceLst     m_faces;
   BoneWeights m_bone_weights;
   BoneIndices m_bone_indices;
+  BoneCounts  m_bone_counts;
 
   glm::vec3 m_location;
   
@@ -56,6 +58,7 @@ private:
   GLuint m_faces_vbo;
   GLuint m_bone_weights_vbo;
   GLuint m_bone_indices_vbo;
+  GLuint m_bone_counts_vbo;
 
 public:
   Mesh(const NormalLst& normals,
@@ -72,8 +75,6 @@ public:
   void set_location(const glm::vec3& location) {  m_location = location; }
 
 private:
-  Mesh();
-
   template<typename T>
   GLuint build_vbo(GLenum target, const std::vector<T>& vec)
   {

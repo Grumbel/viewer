@@ -51,14 +51,16 @@ Pose::from_file(const std::string& filename)
   std::string line;
   while(std::getline(in, line))
   {
+    log_debug("pose: tokenizer: %s", line);
     boost::tokenizer<boost::char_separator<char> > tokens(line, boost::char_separator<char>(" ", ""));
-    log_debug("tokenizer: %s", line);
     std::vector<std::string> args(tokens.begin(), tokens.end());
-    log_debug("tokenizer: done");
+    log_debug("pose: tokenizer: done");
     if (!args.empty() && args[0][0] != '#')
     {
       if (args[0] == "bone")
       {
+        assert(args.size() == 2);
+
         if (bone)
         {
           pose->m_bones.push_back(std::move(bone));
@@ -70,11 +72,13 @@ Pose::from_file(const std::string& filename)
       else if (args[0] == "matrix")
       {
         assert(args.size() == 17);
+        assert(bone);
         bone->matrix = mat4(args);
       }
       else if (args[0] == "matrix_basis")
       {
         assert(args.size() == 17);
+        assert(bone);
         bone->matrix_basis = mat4(args);
       }
       else
@@ -100,12 +104,12 @@ Pose::Pose() :
 void
 Pose::bind_uniform(int loc)
 {
-  std::vector<glm::mat4> matrices;
-  for(auto& bone : m_bones)
+  for(size_t i = 0; i < m_bones.size(); ++i)
   {
-    matrices.push_back(bone->matrix);
+    //matrices.push_back(glm::mat4(1));
+    glUniformMatrix4fv(loc + i, 1, GL_FALSE, 
+                       glm::value_ptr(m_bones[i]->matrix));
   }
-  glUniformMatrix4fv(loc, matrices.size(), GL_FALSE, reinterpret_cast<float*>(matrices.data()));
 }
 
 /* EOF */

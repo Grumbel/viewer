@@ -497,8 +497,12 @@ void draw_models(bool shader_foo)
         assert_gl("use program5");
         assert_gl("use program2");
         
-        std::cout << "bone_weight:  " << glGetAttribLocation(g_program->get_id(), "bone_weights") << std::endl;
-        std::cout << "bone_indices: " << glGetAttribLocation(g_program->get_id(), "bone_indices") << std::endl;
+        if (false)
+        {
+          std::cout << "bone_weight:  " << glGetAttribLocation(g_program->get_id(), "bone_weights") << std::endl;
+          std::cout << "bone_indices: " << glGetAttribLocation(g_program->get_id(), "bone_indices") << std::endl;
+          std::cout << "bone_counts:  " << glGetAttribLocation(g_program->get_id(), "bone_count") << std::endl;
+        }
 
         glUniform1f(glGetUniformLocation(g_program->get_id(), "shadowmap_bias"), g_shadow_map_bias);
         glUniform1i(glGetUniformLocation(g_program->get_id(), "tex"), 0);

@@ -32,14 +32,19 @@ Face   = namedtuple('Face',   ['v1', 'v2', 'v3'])
 Vertex = namedtuple('Vertex', ['co', 'n', 'uv', 'bones'])
 
 # "B2OGL * vec" results in OpenGL coordinates
-B2OGL = Matrix(((1, 0,  0, 0),
+B2OGL4 = Matrix(((1, 0,  0, 0),
                 (0, 0, -1, 0),
                 (0, 1,  0, 0),
                 (0, 0,  0, 1)))
 
+B2OGL3 = Matrix(((1, 0,  0),
+                 (0, 0, -1),
+                 (0, 1,  0)))
+
 def vec3(v):
     """Convert Blender vector into tuple, swaps Y and Z"""
     # return (v.x, v.z, -v.y)
+    v = B2OGL3 * v
     return (v.x, v.y, v.z)
 
 def write_mesh(obj):
@@ -56,10 +61,12 @@ def write_mesh(obj):
 
         if v.bones:
             bones = list(v.bones)
+
+            bones.sort(key=lambda bone: bone[1], reverse=True)
+
             while len(bones) < 4:
                 bones.append((0, 0.0))
 
-            # FIXME: should only discard least important bone
             while len(bones) > 4:
                 bones.pop()
 
@@ -147,9 +154,11 @@ def vec4_str(v):
     return "%6.2f %6.2f %6.2f %6.2f" % (v.x, v.y, v.z, v.w)
 
 def mat3_str(m):
+    # m = B2OGL3 * m
     return "%s %s %s" % (vec3_str(m[0]), vec3_str(m[1]), vec3_str(m[2]))
 
 def mat4_str(m):
+    # m = B2OGL4 * m
     return "%s %s %s %s" % (vec4_str(m[0]), vec4_str(m[1]), vec4_str(m[2]), vec4_str(m[3]))
 
 def write_armature(obj):
@@ -172,10 +181,13 @@ def write_armature(obj):
     with open("/tmp/blender.pose", "w") as f:
         f.write("# exported by %s\n" % __file__)
         for bone in obj.pose.bones:
-            f.write("bone\n")
+            f.write("bone %s\n" % bone.name)
             f.write("  matrix       %s\n" % mat4_str(bone.matrix))
             f.write("  matrix_basis %s\n" % mat4_str(bone.matrix_basis))
             f.write("\n")
+
+# [(x.name, k) for k,v in enumerate(bpy.data.objects[0].data.bones)]
+# [(v.name, v.index) for v in bpy.data.objects[1].vertex_groups]
 
 with open("/tmp/blender.mod", "w") as outfile:
     outfile.write("# exported by %s\n" % __file__)

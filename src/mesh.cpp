@@ -25,23 +25,6 @@ namespace {
 
 } // namespace
 
-Mesh::Mesh() :
-  m_normals(),
-  m_texcoords(),
-  m_vertices(),
-  m_faces(),
-  m_bone_weights(),
-  m_bone_indices(),
-  m_location(),
-  m_normals_vbo(0),
-  m_texcoords_vbo(0),
-  m_vertices_vbo(0),
-  m_faces_vbo(0),
-  m_bone_weights_vbo(0),
-  m_bone_indices_vbo(0)
-{
-}
-
 Mesh::Mesh(const NormalLst& normals,
            const TexCoordLst& texcoords,
            const VertexLst& vertices,
@@ -54,14 +37,26 @@ Mesh::Mesh(const NormalLst& normals,
   m_faces(faces),
   m_bone_weights(bone_weights),
   m_bone_indices(bone_indices),
+  m_bone_counts(),
   m_location(),
   m_normals_vbo(0),
   m_texcoords_vbo(0),
   m_vertices_vbo(0),
   m_faces_vbo(0),
   m_bone_weights_vbo(0),
-  m_bone_indices_vbo(0)
+  m_bone_indices_vbo(0),
+  m_bone_counts_vbo(0)
 {
+  // generate m_bone_counts array
+  for(auto& idx : m_bone_indices)
+  {
+    if      (idx.x == -1) { m_bone_counts.push_back(0); }
+    else if (idx.y == -1) { m_bone_counts.push_back(1); }
+    else if (idx.z == -1) { m_bone_counts.push_back(2); }
+    else if (idx.w == -1) { m_bone_counts.push_back(3); }
+    else                  { m_bone_counts.push_back(4); }
+  }
+
   build_vbos();
 }
 
@@ -82,6 +77,7 @@ Mesh::build_vbos()
   m_vertices_vbo     = build_vbo(GL_ARRAY_BUFFER, m_vertices);
   m_bone_weights_vbo = build_vbo(GL_ARRAY_BUFFER, m_bone_weights);
   m_bone_indices_vbo = build_vbo(GL_ARRAY_BUFFER, m_bone_indices);
+  m_bone_counts_vbo  = build_vbo(GL_ARRAY_BUFFER, m_bone_counts);
 
   m_faces_vbo = build_vbo(GL_ELEMENT_ARRAY_BUFFER, m_faces);
 
@@ -130,6 +126,11 @@ Mesh::verify() const
   if (m_vertices.size() != m_bone_indices.size())
   {
     throw std::runtime_error("bone_indices count doesn't match vertex count");
+  }
+
+  if (m_vertices.size() != m_bone_counts.size())
+  {
+    throw std::runtime_error("bone_counts count doesn't match vertex count");
   }
 }
 
@@ -180,6 +181,14 @@ Mesh::draw()
       glBindBuffer(GL_ARRAY_BUFFER, m_bone_indices_vbo);
       glVertexAttribIPointer(bone_indices_loc, 4, GL_INT, 0, nullptr);
       glEnableVertexAttribArray(bone_indices_loc);
+
+      if (false)
+      {
+        int bone_counts_loc = 1;
+        glBindBuffer(GL_ARRAY_BUFFER, m_bone_counts_vbo);
+        glVertexAttribIPointer(bone_counts_loc, 1, GL_INT, 0, nullptr);
+        glEnableVertexAttribArray(bone_counts_loc);
+      }
     }
 
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_faces_vbo);
