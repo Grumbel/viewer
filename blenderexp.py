@@ -32,14 +32,25 @@ Face   = namedtuple('Face',   ['v1', 'v2', 'v3'])
 Vertex = namedtuple('Vertex', ['co', 'n', 'uv', 'bones'])
 
 # "B2OGL * vec" results in OpenGL coordinates
-B2OGL4 = Matrix(((1, 0,  0, 0),
-                (0, 0, -1, 0),
-                (0, 1,  0, 0),
-                (0, 0,  0, 1)))
+if True:
+    B2OGL4 = Matrix(((1, 0,  0, 0),
+                     (0, 0, -1, 0),
+                     (0, 1,  0, 0),
+                     (0, 0,  0, 1)))
 
-B2OGL3 = Matrix(((1, 0,  0),
-                 (0, 0, -1),
-                 (0, 1,  0)))
+    B2OGL3 = Matrix(((1, 0,  0),
+                     (0, 0, -1),
+                     (0, 1,  0)))
+else:
+    B2OGL4 = Matrix(((1, 0,  0, 0),
+                     (0, 1,  0, 0),
+                     (0, 0,  1, 0),
+                     (0, 0,  0, 1)))
+
+    B2OGL3 = Matrix(((1, 0, 0),
+                     (0, 1, 0),
+                     (0, 0, 1)))
+
 
 def vec3(v):
     """Convert Blender vector into tuple, swaps Y and Z"""
@@ -48,7 +59,7 @@ def vec3(v):
     return (v.x, v.y, v.z)
 
 def write_mesh(obj):
-    faces = collect_faces(obj.data)
+    faces = collect_faces(obj)
     faces, vertices = index_vertices(faces)
 
     outfile.write("o %s\n" % obj.name)
@@ -105,8 +116,17 @@ def index_vertices(faces):
 
     return out_faces, list(vertices.keys())
 
-def collect_faces(mesh):
+def collect_faces(obj):
     """collect data from the given mesh and triangulate it"""
+
+    bone_name2idx = {}
+    if len(obj.modifiers) == 1 and obj.modifiers[0].type == "ARMATURE":
+        for i, bone in enumerate(obj.modifiers[0].object.data.bones):
+            bone_name2idx[bone.name] = i
+
+    print(bone_name2idx)
+
+    mesh = obj.data
 
     uv_faces = None
     faces = mesh.faces
@@ -130,7 +150,7 @@ def collect_faces(mesh):
         bones = [[], [], [], []]
         for i, vert in enumerate(v):
             for j, g in enumerate(mesh.vertices[vert.index].groups):
-                bones[i].append((g.group, g.weight))
+                bones[i].append((bone_name2idx[obj.vertex_groups[g.group].name], g.weight))
             bones[i] = tuple(bones[i])
         bones = tuple(bones)
 
@@ -148,9 +168,11 @@ def collect_faces(mesh):
     return out_faces
 
 def vec3_str(v):
+    v = B2OGL3 * v
     return "%6.2f %6.2f %6.2f" % (v.x, v.y, v.z)
 
 def vec4_str(v):
+    v = B2OGL4 * v
     return "%6.2f %6.2f %6.2f %6.2f" % (v.x, v.y, v.z, v.w)
 
 def mat3_str(m):
