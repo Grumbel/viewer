@@ -17,7 +17,15 @@
 #ifndef HEADER_MODEL_HPP
 #define HEADER_MODEL_HPP
 
+#include <memory>
+
 #include "mesh.hpp"
+#include "material.hpp"
+#include "opengl_state.hpp"
+
+class Model;
+
+typedef std::shared_ptr<Model> ModelPtr;
 
 class Model
 {
@@ -25,24 +33,24 @@ private:
   typedef std::vector<std::unique_ptr<Mesh> > MeshLst;
   MeshLst m_meshes;
 
+  MaterialPtr m_material;
+
 public:
-  static std::unique_ptr<Model> from_istream(std::istream& in);
-  static std::unique_ptr<Model> from_file(const std::string& filename);
+  static ModelPtr from_istream(std::istream& in);
+  static ModelPtr from_file(const std::string& filename);
   
 public:
   Model() :
-    m_meshes()
+    m_meshes(),
+    m_material()
   {}
 
-  void draw() 
-  {
-    for (MeshLst::iterator i = m_meshes.begin(); i != m_meshes.end(); ++i)
-    {
-      (*i)->draw();
-    }
-  }
-  
+  void draw();
+
+  void set_material(MaterialPtr material) { m_material = material; }
 };
+
+typedef Model Entity;
 
 #endif
 

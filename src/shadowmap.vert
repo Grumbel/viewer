@@ -84,17 +84,26 @@ void main(void)
 
   { // regular stuff
     gl_TexCoord[0] = gl_TextureMatrix[0] * gl_MultiTexCoord0;
-
-    ivec4 bi = bone_indices;
-    vec4 bw = bone_weights;
-
+    
     vec4 p;
-    for(int i = 0; i < 4; ++i)
+
+    if (false)
     {
-      p += pose_bones[bi.x] * bones[bi.x] * gl_Vertex * bw.x;
+      ivec4 bi = bone_indices;
+      vec4 bw = bone_weights;
+
+      p = vec4(0,0,0,0);
+      for(int i = 0; i < 4; ++i)
+      {
+        p += pose_bones[bi.x] * bones[bi.x] * gl_Vertex * bw.x;
       
-      bw = bw.yzwx;
-      bi = bi.yzwx;
+        bw = bw.yzwx;
+        bi = bi.yzwx;
+      }
+    }
+    else
+    {
+      p = gl_Vertex;
     }
 
     gl_Position = position = gl_ModelViewProjectionMatrix * p;

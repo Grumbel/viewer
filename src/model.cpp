@@ -24,7 +24,7 @@
 
 #include "log.hpp"
 
-std::unique_ptr<Model>
+ModelPtr
 Model::from_file(const std::string& filename)
 {
   std::ifstream in(filename.c_str());
@@ -40,7 +40,7 @@ Model::from_file(const std::string& filename)
   }
 }
 
-std::unique_ptr<Model>
+ModelPtr
 Model::from_istream(std::istream& in)
 {
   // This is not a fully featured .obj file reader, it just takes some
@@ -55,7 +55,7 @@ Model::from_istream(std::istream& in)
   Mesh::BoneIndices bone_indices;
   glm::vec3         location;
 
-  std::unique_ptr<Model> model(new Model);
+  ModelPtr model = std::make_shared<Model>();
 
   auto commit_object = [&]{
     if (!vertices.empty())
@@ -231,6 +231,24 @@ Model::from_istream(std::istream& in)
   commit_object();
 
   return model;
+}
+
+void 
+Model::draw()
+{
+  OpenGLState state;
+
+  if (m_material)
+  {
+    m_material->apply();
+  }
+
+  for (MeshLst::iterator i = m_meshes.begin(); i != m_meshes.end(); ++i)
+  {
+    (*i)->draw();
+  }
+
+  glUseProgram(0);
 }
 
 /* EOF */

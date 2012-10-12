@@ -47,6 +47,16 @@ Mesh::Mesh(const NormalLst& normals,
   m_bone_indices_vbo(0),
   m_bone_counts_vbo(0)
 {
+  if (m_bone_indices.empty())
+  {
+    m_bone_indices.resize(m_vertices.size(), glm::ivec4(-1, -1, -1, -1));
+  }
+
+  if (m_bone_weights.empty())
+  {
+    m_bone_weights.resize(m_vertices.size(), glm::vec4(0.0f, 0.0f, 0.0f, 0.0f));
+  }
+
   // generate m_bone_counts array
   for(auto& idx : m_bone_indices)
   {
@@ -123,14 +133,14 @@ Mesh::verify() const
     throw std::runtime_error("bone_weight count doesn't match vertex count");
   }
 
-  if (m_vertices.size() != m_bone_indices.size())
-  {
-    throw std::runtime_error("bone_indices count doesn't match vertex count");
-  }
-
   if (m_vertices.size() != m_bone_counts.size())
   {
     throw std::runtime_error("bone_counts count doesn't match vertex count");
+  }
+
+  if (m_vertices.size() != m_bone_indices.size())
+  {
+    throw std::runtime_error("bone_indices count doesn't match vertex count");
   }
 }
 
@@ -170,7 +180,7 @@ Mesh::draw()
     glBindBuffer(GL_ARRAY_BUFFER, m_vertices_vbo);
     glVertexPointer(3, GL_FLOAT, 0, 0);
     glEnableClientState(GL_VERTEX_ARRAY);
-  
+    
     {
       int bone_weights_loc = 2; // FIXME: use get
       glBindBuffer(GL_ARRAY_BUFFER, m_bone_weights_vbo);

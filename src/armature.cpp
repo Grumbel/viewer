@@ -117,7 +117,7 @@ Armature::from_file(const std::string& filename)
       else if (args[0] == "matrix_local")
       {
         assert(args.size() == 17);
-        bone->matrix_local = mat4(args);
+        bone->matrix_local = glm::inverse(mat4(args));
       }
       else
       {
@@ -142,11 +142,12 @@ Armature::Armature() :
 void
 Armature::bind_uniform(int loc)
 {
+  //std::cout << "bonesize: " << m_bones.size() << std::endl;
   for(size_t i = 0; i < m_bones.size(); ++i)
   {
     //matrices.push_back(glm::mat4(1));
     glUniformMatrix4fv(loc + i, 1, GL_FALSE, 
-                       glm::value_ptr(glm::inverse(m_bones[i]->matrix_local)));
+                       glm::value_ptr(m_bones[i]->matrix_local));
   }
 }
 

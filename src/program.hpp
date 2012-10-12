@@ -31,7 +31,7 @@ public:
   std::string get_info_log() const;
   bool get_link_status() const;
   bool get_validate_status() const;
-
+  
   GLuint get_id() const { return m_program; }
 
 private:

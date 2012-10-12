@@ -30,18 +30,20 @@
 #include <glm/glm.hpp>
 #include <glm/ext.hpp>
 
-#include "log.hpp"
+#include "armature.hpp"
 #include "assert_gl.hpp"
+#include "framebuffer.hpp"
+#include "log.hpp"
+#include "menu.hpp"
 #include "mesh.hpp"
 #include "model.hpp"
 #include "opengl_state.hpp"
-#include "framebuffer.hpp"
-#include "text_surface.hpp"
-#include "menu.hpp"
-#include "program.hpp"
-#include "shader.hpp"
-#include "armature.hpp"
 #include "pose.hpp"
+#include "program.hpp"
+#include "scene_manager.hpp"
+#include "shader.hpp"
+#include "text_surface.hpp"
+#include "uniform_group.hpp"
 
 void draw_models(bool shader_foo);
 
@@ -49,23 +51,26 @@ void draw_models(bool shader_foo);
 namespace {
 
 std::unique_ptr<Menu> g_menu;
+std::unique_ptr<SceneManager> g_scene_manager;
+
+bool g_cross_eye = false;
 
 float g_ipd = 0.0f;
 int g_screen_w = 1280;
 int g_screen_h = 800;
 float g_fov = 70.0f;
 
-float g_near_z = 1.0f;
+float g_near_z = 0.01f;
 float g_far_z  = 1000.0f;
 
 int g_spot_halo_samples = 100;
 
-bool g_draw_look_at = true;
+bool g_draw_look_at = false;
 GLuint g_noise_texture = 0;
 GLuint g_light_texture = 0;
 GLuint g_cliff_texture = 0;
 GLuint g_grass_texture = 0;
-GLuint g_cube_texture = 0;
+TexturePtr g_cube_texture;
 float g_light_angle = 0.0f;
 bool g_draw_3d = false;
 bool g_headlights = false;
@@ -95,7 +100,7 @@ glm::vec4 g_grid_offset;
 float g_grid_size = 2.0f;
 
 std::string g_model_filename;
-std::unique_ptr<Model> g_model;
+ModelPtr g_model;
 std::unique_ptr<Armature> g_armature;
 std::unique_ptr<Pose> g_pose;
 
@@ -252,7 +257,7 @@ void draw_scene(EyeType eye_type)
   }
 
   // light after gluLookAt() put it in worldspace, light before gluLookAt() puts it in eye space
-  if (true)
+  if (false)
   {
     GLfloat light_pos[] = {0.0f, 0.0f, 0.0f, 1.0f};
     glDisable(GL_LIGHTING);
@@ -262,7 +267,7 @@ void draw_scene(EyeType eye_type)
     glRotatef(g_light_angle, 0.0f, 1.0f, 0.0f);
     glTranslatef(50.0f,50,0.0f);
 
-    if (true)
+    if (false)
     {
       glEnable(GL_DEPTH_TEST);
       glDisable(GL_CULL_FACE);
@@ -299,10 +304,12 @@ void draw_scene(EyeType eye_type)
     glPopMatrix();
   }
 
-  glEnable(GL_DEPTH_TEST);
-  glDisable(GL_CULL_FACE);
+  //glEnable(GL_DEPTH_TEST);
+  //glDisable(GL_CULL_FACE);
 
-  draw_models(true);
+  //draw_models(true);
+
+  g_scene_manager->render();
 }
 
 void draw_shadowmap()
@@ -364,7 +371,7 @@ void draw_cubemap()
 
   glActiveTexture(GL_TEXTURE0);
   glEnable(GL_TEXTURE_CUBE_MAP);
-  glBindTexture(GL_TEXTURE_CUBE_MAP, g_cube_texture);
+  glBindTexture(GL_TEXTURE_CUBE_MAP, g_cube_texture->get_id());
 
   /*
     glTexGeni(GL_S, GL_TEXTURE_GEN_MODE, GL_REFLECTION_MAP);
@@ -426,7 +433,10 @@ void draw_cubemap()
 
 void draw_models(bool shader_foo)
 {
-  draw_cubemap();
+  if (false)
+  {
+    draw_cubemap();
+  }
 
   GLfloat mat_specular[] = { 1.0, 1.0, 1.0, 1.0 };
   GLfloat mat_ambient[]  = { 1.0, 1.0, 1.0, 1.0 };
@@ -482,7 +492,7 @@ void draw_models(bool shader_foo)
         
         glActiveTexture(GL_TEXTURE2);
         glEnable(GL_TEXTURE_CUBE_MAP);
-        glBindTexture(GL_TEXTURE_CUBE_MAP, g_cube_texture);
+        glBindTexture(GL_TEXTURE_CUBE_MAP, g_cube_texture->get_id());
 
         glActiveTexture(GL_TEXTURE3);
         glEnable(GL_TEXTURE_2D);
@@ -592,6 +602,8 @@ void draw_models(bool shader_foo)
   }
   glPopMatrix();
 
+  // point sprite
+  if (false)
   {
     glPushMatrix();
 
@@ -640,6 +652,7 @@ void draw_models(bool shader_foo)
     glPopMatrix();
   }
 
+  if (false)
   {
     OpenGLState gl_state;
     glDisable(GL_LIGHTING);
@@ -697,7 +710,7 @@ void draw_models(bool shader_foo)
     glPopMatrix();
   }
 
-  if (true)
+  if (false)
   {
     glm::mat4 mat;
 
@@ -814,7 +827,7 @@ void display()
       g_shadow_map->unbind();
     }
 
-    if (g_draw_3d)
+    if (g_draw_3d || g_cross_eye)
     {
       g_framebuffer1->bind();
       draw_scene(kLeftEye);
@@ -847,7 +860,13 @@ void display()
 
       glEnable(GL_BLEND);
 
-      if (g_draw_3d)
+      if (g_cross_eye)
+      {
+        glColor3f(1.0f, 1.0f, 1.0f);
+        g_framebuffer1->draw(0.0f, 0.0f, g_screen_w/2.0f, g_screen_h, -20.0f);
+        g_framebuffer2->draw(g_screen_w/2.0f, 0.0f, g_screen_w/2.0f, g_screen_h, -20.0f);
+      }
+      else if (g_draw_3d)
       {
         glBlendFunc(GL_SRC_ALPHA, GL_ONE);
 
@@ -1129,6 +1148,42 @@ void init()
   g_armature = Armature::from_file("/tmp/blender.bones");
   g_pose = Pose::from_file("/tmp/blender.pose");
 
+  {
+    g_scene_manager.reset(new SceneManager);
+    if (true)
+    {
+      auto entity = Model::from_file(g_model_filename);
+      MaterialPtr material(new Material);
+      material->set_diffuse(glm::vec4(1.0f, 1.0f, 1.0f, 1.0f));
+      material->set_program(Program::create(Shader::from_file(GL_VERTEX_SHADER, "src/basic.vert"),
+                                            Shader::from_file(GL_FRAGMENT_SHADER, "src/basic.frag")));
+      UniformGroupPtr ug(new UniformGroup);
+      ug->set_uniform("bone_count", glm::ivec2(0));
+      ug->set_uniform("shadowmatrix", glm::mat4(1));
+      material->set_uniform(ug);
+
+      entity->set_material(material);
+
+      {
+        auto node = g_scene_manager->get_root()->create_child();
+        node->set_position(glm::vec3(1.0f, -1.0f, -100.0f));
+        node->attach_entity(entity);
+      }
+
+      {
+        auto node = g_scene_manager->get_root()->create_child();
+        node->set_position(glm::vec3(1.0f, -1.0f, -50.0f));
+        node->attach_entity(entity);
+      }
+
+      {
+        auto node = g_scene_manager->get_root()->create_child();
+        node->set_position(glm::vec3(1.0f, -1.0f, -25.0f));
+        node->attach_entity(entity);
+      }
+    }
+  }
+
   { // upload noise texture
     glGenTextures(1, &g_noise_texture);
     glBindTexture(GL_TEXTURE_2D, g_noise_texture);
@@ -1240,9 +1295,40 @@ void init()
   g_menu->add_item("shadow map", &g_render_shadow_map);
   g_menu->add_item("grid.size", &g_grid_size, 0.5f);
 
-  g_program = Program::create(Shader::from_file(GL_VERTEX_SHADER, "src/shadowmap.vert"),
-                              Shader::from_file(GL_FRAGMENT_SHADER, "src/shadowmap.frag"));
+  g_program = Program::create(Shader::from_file(GL_VERTEX_SHADER, "src/phong.vert"),
+                              Shader::from_file(GL_FRAGMENT_SHADER, "src/phong.frag"));
 
+  auto uniform_loc_test = [&](const char* name) {
+    std::cout << name << ": " << glGetUniformLocation(g_program->get_id(), name) << std::endl;
+  };
+
+  uniform_loc_test("bones");
+  uniform_loc_test("bones[0]");
+  uniform_loc_test("bones[1]");
+  uniform_loc_test("bones[2]");
+  uniform_loc_test("bones[3]");
+  uniform_loc_test("bones[31]");
+  uniform_loc_test("bones[32]");
+  uniform_loc_test("bones[33]");
+  uniform_loc_test("bones[34]");
+  uniform_loc_test("bones[35]");
+  uniform_loc_test("bones[36]");
+  uniform_loc_test("bones[37]");
+  uniform_loc_test("bones[38]");
+
+  uniform_loc_test("pose_bones");
+  uniform_loc_test("pose_bones[0]");
+  uniform_loc_test("pose_bones[1]");
+  uniform_loc_test("pose_bones[2]");
+  uniform_loc_test("pose_bones[3]");
+  uniform_loc_test("pose_bones[31]");
+  uniform_loc_test("pose_bones[32]");
+  uniform_loc_test("pose_bones[33]");
+  uniform_loc_test("pose_bones[34]");
+  uniform_loc_test("pose_bones[35]");
+  uniform_loc_test("pose_bones[36]");
+  uniform_loc_test("pose_bones[37]");
+  uniform_loc_test("pose_bones[38]");
 
   {
     OpenGLState grass_state;
@@ -1285,57 +1371,7 @@ void init()
     SDL_FreeSurface(cliff);
   }
 
-  {
-    OpenGLState cube_state;
-
-    SDL_Surface* up = IMG_Load("data/textures/miramar_up.tga");
-    SDL_Surface* dn = IMG_Load("data/textures/miramar_dn.tga");
-    SDL_Surface* ft = IMG_Load("data/textures/miramar_ft.tga");
-    SDL_Surface* bk = IMG_Load("data/textures/miramar_bk.tga");
-    SDL_Surface* lf = IMG_Load("data/textures/miramar_lf.tga");
-    SDL_Surface* rt = IMG_Load("data/textures/miramar_rt.tga");
-
-    flip_rgb(up);
-    flip_rgb(dn);
-    flip_rgb(ft);
-    flip_rgb(bk);
-    flip_rgb(lf);
-    flip_rgb(rt);
-
-    glPixelStorei(GL_UNPACK_ALIGNMENT, 4);
-    glPixelStorei(GL_UNPACK_ROW_LENGTH, up->pitch / up->format->BytesPerPixel);
-
-    glActiveTexture(GL_TEXTURE0);
-    glEnable(GL_TEXTURE_CUBE_MAP);
-    glGenTextures(1, &g_cube_texture);
-    glBindTexture(GL_TEXTURE_CUBE_MAP, g_cube_texture);
-
-    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
-    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
-   
-    gluBuild2DMipmaps(GL_TEXTURE_CUBE_MAP_POSITIVE_X, GL_RGB, lf->w, lf->h, lf->format->BytesPerPixel == 4 ? GL_RGBA : GL_RGB, GL_UNSIGNED_BYTE, lf->pixels);
-    gluBuild2DMipmaps(GL_TEXTURE_CUBE_MAP_NEGATIVE_X, GL_RGB, rt->w, rt->h, rt->format->BytesPerPixel == 4 ? GL_RGBA : GL_RGB, GL_UNSIGNED_BYTE, rt->pixels);
-    gluBuild2DMipmaps(GL_TEXTURE_CUBE_MAP_POSITIVE_Y, GL_RGB, up->w, up->h, up->format->BytesPerPixel == 4 ? GL_RGBA : GL_RGB, GL_UNSIGNED_BYTE, up->pixels);
-    gluBuild2DMipmaps(GL_TEXTURE_CUBE_MAP_NEGATIVE_Y, GL_RGB, dn->w, dn->h, dn->format->BytesPerPixel == 4 ? GL_RGBA : GL_RGB, GL_UNSIGNED_BYTE, dn->pixels);
-    gluBuild2DMipmaps(GL_TEXTURE_CUBE_MAP_POSITIVE_Z, GL_RGB, ft->w, ft->h, ft->format->BytesPerPixel == 4 ? GL_RGBA : GL_RGB, GL_UNSIGNED_BYTE, ft->pixels);
-    gluBuild2DMipmaps(GL_TEXTURE_CUBE_MAP_NEGATIVE_Z, GL_RGB, bk->w, bk->h, bk->format->BytesPerPixel == 4 ? GL_RGBA : GL_RGB, GL_UNSIGNED_BYTE, bk->pixels);
-
-    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_BASE_LEVEL, 0);
-    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAX_LEVEL, 10);
-    glGenerateMipmap(GL_TEXTURE_CUBE_MAP);
-
-    SDL_FreeSurface(up);
-    SDL_FreeSurface(dn);
-    SDL_FreeSurface(ft);
-    SDL_FreeSurface(bk);
-    SDL_FreeSurface(lf);
-    SDL_FreeSurface(rt);
-
-    assert_gl("cube texture");
-  }
+  g_cube_texture = Texture::cube_from_file("data/textures/miramar/miramar");
 
   assert_gl("init()");
 }

@@ -41,9 +41,7 @@ glm::mat4 mat4(const std::vector<std::string>& args)
 std::unique_ptr<Pose>
 Pose::from_file(const std::string& filename)
 {
-  std::ifstream in;
-  in.exceptions( std::ifstream::badbit );
-  in.open(filename.c_str());
+  std::ifstream in(filename);
     
   std::unique_ptr<Pose> pose(new Pose);
   std::unique_ptr<PoseBone> bone;
