@@ -20,58 +20,78 @@
 #include <vector>
 #include <glm/glm.hpp>
 #include <memory>
+#include <unordered_map>
 
 #include "opengl_state.hpp"
 
+typedef std::vector<glm::vec3>  NormalLst;
+typedef std::vector<glm::vec3>  VertexLst;
+typedef std::vector<glm::vec3>  TexCoordLst;
+typedef std::vector<int>        FaceLst;
+typedef std::vector<glm::vec4>  BoneWeights;
+typedef std::vector<glm::ivec4> BoneIndices;
+typedef std::vector<int>        BoneCounts;
+
 class Mesh
 {
-public:
-  typedef std::vector<glm::vec3>  NormalLst;
-  typedef std::vector<glm::vec3>  VertexLst;
-  typedef std::vector<glm::vec3>  TexCoordLst;
-  typedef std::vector<int>        FaceLst;
-  typedef std::vector<glm::vec4>  BoneWeights;
-  typedef std::vector<glm::ivec4> BoneIndices;
-  typedef std::vector<int>        BoneCounts;
+private:
+  struct Array
+  {
+    enum Type { Integer, Float } type;
+    int size;
+    GLuint vbo;
+
+    Array() : type(), size(), vbo()
+    {}
+
+    Array(Type type_, int size_, GLuint vbo_) :
+      type(type_),
+      size(size_),
+      vbo(vbo_)
+    {}
+  };
 
 private:
   GLenum m_primitive_type;
-
-  NormalLst   m_normals;
-  TexCoordLst m_texcoords;
-  VertexLst   m_vertices;
-  FaceLst     m_faces;
-  BoneWeights m_bone_weights;
-  BoneIndices m_bone_indices;
-  BoneCounts  m_bone_counts;
-
-  glm::vec3 m_location;
-  
-  GLuint m_normals_vbo;
-  GLuint m_texcoords_vbo;
-  GLuint m_vertices_vbo;
-  GLuint m_faces_vbo;
-  GLuint m_bone_weights_vbo;
-  GLuint m_bone_indices_vbo;
-  GLuint m_bone_counts_vbo;
+  std::unordered_map<std::string, Array> m_attribute_arrays;
+  GLuint m_element_array_vbo;
+  int m_element_array_size;
 
 public:
   /** Create a cube with cubemap texture coordinates */
   static std::unique_ptr<Mesh> create_cube(float size);
 
 public:
-  Mesh(GLenum type, 
-       const NormalLst& normals,
-       const TexCoordLst& texcoords,
-       const VertexLst& vertices,
-       const FaceLst&   faces,
-       const BoneWeights& bone_weights = BoneWeights(),
-       const BoneIndices& bone_indices = BoneIndices());
+  Mesh(GLenum primitive_type);
   ~Mesh();
 
   void draw();
 
-  void set_location(const glm::vec3& location) {  m_location = location; }
+  template<typename T>  
+  void attach_float_array(const std::string& name, const std::vector<T>& vec)
+  {
+    assert(m_attribute_arrays.find(name) == m_attribute_arrays.end());
+
+    GLuint vbo = build_vbo(GL_ARRAY_BUFFER, vec);
+    m_attribute_arrays[name] = Array(Array::Float, T::value_size(), vbo);
+  }
+
+  template<typename T>  
+  void attach_int_array(const std::string& name, const std::vector<T>& vec)
+  {
+    assert(m_attribute_arrays.find(name) == m_attribute_arrays.end());
+
+    GLuint vbo = build_vbo(GL_ARRAY_BUFFER, vec);
+    m_attribute_arrays[name] = Array(Array::Integer, T::value_size(), vbo);
+  }
+
+  template<typename T>  
+  void attach_element_array(const std::vector<T>& vec)
+  {
+    assert(m_element_array_vbo == 0);
+    m_element_array_vbo = build_vbo(GL_ELEMENT_ARRAY_BUFFER, vec);
+    m_element_array_size = vec.size();
+  }
 
 private:
   template<typename T>
@@ -83,11 +103,6 @@ private:
     glBufferData(target, sizeof(T) * vec.size(), vec.data(), GL_STATIC_DRAW);
     return vbo;
   }
-
-  void build_vbos();
-
-public:
-  void verify() const;
 
 private:
   Mesh(const Mesh&) = delete;

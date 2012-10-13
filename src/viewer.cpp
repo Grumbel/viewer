@@ -671,30 +671,6 @@ void init()
       if (true)
       {
         auto node = g_scene_manager->get_world()->create_child();
-        node->set_position(glm::vec3(1.0f, -1.0f, 0.0f));
-
-        MaterialPtr material(new Material);
-        material->set_program(program);
-
-        auto texture = Texture::from_file("data/textures/cliff_02_v2.tga");
-
-        UniformGroupPtr ug(new UniformGroup);
-        ug->set_uniform("diffuse", glm::vec4(1.0f, 0.0f, 0.0f, 1.0f));
-        ug->set_uniform("diffuse_texture", 0);
-        material->set_uniform(ug);
-        material->set_texture(0, texture);
-        material->enable(GL_DEPTH_TEST);
-        material->enable(GL_CULL_FACE);
-
-        auto entity = Model::from_file(g_model_filename);
-        entity->set_material(material);
-
-        node->attach_entity(entity);
-      }
-
-      if (true)
-      {
-        auto node = g_scene_manager->get_world()->create_child();
         node->set_position(glm::vec3(1.0f, -1.0f, -5.0f));
 
         MaterialPtr material(new Material);
@@ -716,6 +692,7 @@ void init()
         node->attach_entity(entity);
       }
 
+      if (true)
       {
         auto node = g_scene_manager->get_view()->create_child();
         

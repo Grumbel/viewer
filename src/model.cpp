@@ -47,43 +47,49 @@ Model::from_istream(std::istream& in)
   // inspiration from it: 
   // http://www.martinreddy.net/gfx/3d/OBJ.spec
 
-  Mesh::NormalLst   normals;
-  Mesh::TexCoordLst texcoords;
-  Mesh::VertexLst   vertices;
-  Mesh::FaceLst     faces;
-  Mesh::BoneWeights bone_weights;
-  Mesh::BoneIndices bone_indices;
-  glm::vec3         location;
+  std::vector<glm::vec3>  normal;
+  std::vector<glm::vec3>  vertex;
+  std::vector<glm::vec3>  texcoord;
+  std::vector<int>        index;
+  std::vector<glm::vec4>  bone_weight;
+  std::vector<glm::ivec4> bone_index;
+  std::vector<int>        bone_count;
 
   ModelPtr model = std::make_shared<Model>();
 
   auto commit_object = [&]{
-    if (!vertices.empty())
+    if (!vertex.empty())
     {
       // fill in some texcoords if there aren't enough
-      if (texcoords.size() < vertices.size())
+      if (texcoord.size() < vertex.size())
       {
-        texcoords.resize(vertices.size());
-        for(Mesh::FaceLst::size_type i = vertices.size()-1; i < texcoords.size(); ++i)
+        texcoord.resize(vertex.size());
+        for(FaceLst::size_type i = vertex.size()-1; i < texcoord.size(); ++i)
         {
-          texcoords[i] = glm::vec3(0.0f, 0.0f, 0.0f);
+          texcoord[i] = glm::vec3(0.0f, 0.0f, 0.0f);
         }
       }
 
-      std::unique_ptr<Mesh> mesh(new Mesh(GL_TRIANGLES, normals, texcoords, vertices, faces, bone_weights, bone_indices));
+      std::unique_ptr<Mesh> mesh(new Mesh(GL_TRIANGLES));
 
-      mesh->verify();
+      mesh->attach_float_array("vertex",   vertex);
+      mesh->attach_float_array("texcoord", texcoord);
+      mesh->attach_float_array("normal",   normal);
+      mesh->attach_element_array(index);
 
-      mesh->set_location(location);
+      if (!bone_weight.empty() && !bone_index.empty())
+      {
+        mesh->attach_float_array("bone_weight", bone_weight);
+        mesh->attach_int_array("bone_index", bone_index);
+      }
 
       model->m_meshes.push_back(std::move(mesh));
 
-      // clear for the next
-      location = glm::vec3();
-      normals.clear();
-      texcoords.clear();
-      vertices.clear();
-      faces.clear();
+      // clear for the next mesh
+      normal.clear();
+      texcoord.clear();
+      vertex.clear();
+      index.clear();
     }
   };
 
@@ -119,19 +125,6 @@ Model::from_istream(std::istream& in)
           // object
           commit_object();
         }
-        else if (*it == "loc")
-        {
-          glm::vec3 v;
-
-          INCR_AND_CHECK;
-          v.x = boost::lexical_cast<float>(*it);
-          INCR_AND_CHECK;
-          v.y = boost::lexical_cast<float>(*it);
-          INCR_AND_CHECK;
-          v.z = boost::lexical_cast<float>(*it);
-        
-          location = v;
-        }
         else if (*it == "v")
         {
           glm::vec3 v;
@@ -143,7 +136,7 @@ Model::from_istream(std::istream& in)
           INCR_AND_CHECK;
           v.z = boost::lexical_cast<float>(*it);
           
-          vertices.push_back(v);
+          vertex.push_back(v);
         }
         else if (*it == "vt")
         {
@@ -154,7 +147,7 @@ Model::from_istream(std::istream& in)
           INCR_AND_CHECK;
           vt.t = boost::lexical_cast<float>(*it);
 
-          texcoords.push_back(vt);
+          texcoord.push_back(vt);
         }
         else if (*it == "vn")
         {
@@ -167,7 +160,7 @@ Model::from_istream(std::istream& in)
           INCR_AND_CHECK;
           vn.z = boost::lexical_cast<float>(*it);
 
-          normals.push_back(vn);
+          normal.push_back(vn);
         }
         else if (*it == "bw")
         {
@@ -182,7 +175,7 @@ Model::from_istream(std::istream& in)
           INCR_AND_CHECK;
           bw.w = boost::lexical_cast<float>(*it);
           
-          bone_weights.push_back(bw);
+          bone_weight.push_back(bw);
         }
         else if (*it == "bi")
         {
@@ -197,16 +190,16 @@ Model::from_istream(std::istream& in)
           INCR_AND_CHECK;
           bi.w = boost::lexical_cast<int>(*it);
           
-          bone_indices.push_back(bi);
+          bone_index.push_back(bi);
         }
         else if (*it == "f")
         {
           INCR_AND_CHECK;
-          faces.push_back(boost::lexical_cast<int>(*it));
+          index.push_back(boost::lexical_cast<int>(*it));
           INCR_AND_CHECK;
-          faces.push_back(boost::lexical_cast<int>(*it));
+          index.push_back(boost::lexical_cast<int>(*it));
           INCR_AND_CHECK;
-          faces.push_back(boost::lexical_cast<int>(*it));
+          index.push_back(boost::lexical_cast<int>(*it));
         }
         else if ((*it)[0] == '#')
         {
