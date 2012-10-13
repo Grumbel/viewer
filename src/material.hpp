@@ -24,6 +24,9 @@ private:
 
   std::unordered_map<GLenum, bool> m_capabilities;
 
+  GLenum m_blend_sfactor;
+  GLenum m_blend_dfactor;
+
 public:
   Material() :
     m_diffuse(0.8f, 0.8f, 0.8f, 1.0f),
@@ -34,7 +37,9 @@ public:
     m_program(),
     m_textures(),
     m_uniforms(),
-    m_capabilities()
+    m_capabilities(),
+    m_blend_sfactor(GL_ONE),
+    m_blend_dfactor(GL_ZERO)
   {}
 
   glm::vec4 get_diffuse() const { return m_diffuse; }
@@ -52,6 +57,8 @@ public:
   void set_uniform(UniformGroupPtr uniforms) { m_uniforms = uniforms; }
   void set_program(ProgramPtr program) { m_program = program; }
   void set_texture(int unit, TexturePtr texture) { m_textures[unit] = texture; }
+
+  void blend_func(GLenum sfactor, GLenum dfactor);
 
   void enable(GLenum cap);
   void disable(GLenum cap);

@@ -7,6 +7,13 @@
 #include "assert_gl.hpp"
 
 void
+Material::blend_func(GLenum sfactor, GLenum dfactor)
+{
+  m_blend_sfactor = sfactor;
+  m_blend_dfactor = dfactor;
+}
+
+void
 Material::enable(GLenum cap)
 {
   m_capabilities[cap] = true;
@@ -38,6 +45,8 @@ Material::apply()
       glDisable(cap.first);
     }
   }
+
+  glBlendFunc(m_blend_sfactor, m_blend_dfactor);
 
   for(const auto& it : m_textures)
   {

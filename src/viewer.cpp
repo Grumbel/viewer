@@ -736,6 +736,8 @@ void init()
         material->set_texture(0, texture);
         material->enable(GL_DEPTH_TEST);
         material->enable(GL_CULL_FACE);
+        material->enable(GL_BLEND);
+        material->blend_func(GL_ONE, GL_ONE);
 
         entity->set_material(material);
 
