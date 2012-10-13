@@ -67,10 +67,6 @@ public:
   {
     return get_projection_matrix() * get_view_matrix();
   }
-
-private:
-  Camera(const Camera&);
-  Camera& operator=(const Camera&);
 };
 
 #endif

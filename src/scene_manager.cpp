@@ -39,7 +39,10 @@ SceneManager::render(const Camera& camera)
   m_view->update_transform();
 
   render(camera, m_world.get());
-  render(camera, m_view.get());
+
+  Camera id = camera;
+  id.set_position(glm::vec3(0.0f, 0.0f, 0.0f));
+  render(id, m_view.get());
 }
 
 void

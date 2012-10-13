@@ -717,9 +717,9 @@ void init()
       }
 
       {
-        auto node = g_scene_manager->get_world()->create_child();
+        auto node = g_scene_manager->get_view()->create_child();
         
-        auto mesh = Mesh::create_cube(100.0f);
+        auto mesh = Mesh::create_cube(1.0f);
         ModelPtr entity = std::make_shared<Model>();
         entity->add_mesh(std::move(mesh));
 
