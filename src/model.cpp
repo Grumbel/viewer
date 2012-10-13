@@ -66,11 +66,11 @@ Model::from_istream(std::istream& in)
         texcoords.resize(vertices.size());
         for(Mesh::FaceLst::size_type i = vertices.size()-1; i < texcoords.size(); ++i)
         {
-          texcoords[i] = glm::vec2(0.0f, 0.0f);
+          texcoords[i] = glm::vec3(0.0f, 0.0f, 0.0f);
         }
       }
 
-      std::unique_ptr<Mesh> mesh(new Mesh(normals, texcoords, vertices, faces, bone_weights, bone_indices));
+      std::unique_ptr<Mesh> mesh(new Mesh(GL_TRIANGLES, normals, texcoords, vertices, faces, bone_weights, bone_indices));
 
       mesh->verify();
 
@@ -147,7 +147,7 @@ Model::from_istream(std::istream& in)
         }
         else if (*it == "vt")
         {
-          glm::vec2 vt;
+          glm::vec3 vt;
 
           INCR_AND_CHECK;
           vt.s = boost::lexical_cast<float>(*it);
@@ -201,16 +201,12 @@ Model::from_istream(std::istream& in)
         }
         else if (*it == "f")
         {
-          Face face;
-
           INCR_AND_CHECK;
-          face.vertex1 = boost::lexical_cast<int>(*it);
+          faces.push_back(boost::lexical_cast<int>(*it));
           INCR_AND_CHECK;
-          face.vertex2 = boost::lexical_cast<int>(*it);
+          faces.push_back(boost::lexical_cast<int>(*it));
           INCR_AND_CHECK;
-          face.vertex3 = boost::lexical_cast<int>(*it);
-
-          faces.push_back(face);
+          faces.push_back(boost::lexical_cast<int>(*it));
         }
         else if ((*it)[0] == '#')
         {

@@ -7,6 +7,18 @@
 #include "assert_gl.hpp"
 
 void
+Material::enable(GLenum cap)
+{
+  m_capabilities[cap] = true;
+}
+
+void
+Material::disable(GLenum cap)
+{
+  m_capabilities[cap] = false;
+}
+
+void
 Material::apply()
 {
   glMaterialfv(GL_FRONT, GL_AMBIENT,  glm::value_ptr(m_ambient));
@@ -15,17 +27,32 @@ Material::apply()
   glMaterialfv(GL_FRONT, GL_DIFFUSE,  glm::value_ptr(m_diffuse));
   glMaterialf(GL_FRONT,  GL_SHININESS, m_shininess);
 
+  for(const auto& cap : m_capabilities)
+  {
+    if (cap.second)
+    {
+      glEnable(cap.first);
+    }
+    else
+    {
+      glDisable(cap.first);
+    }
+  }
+
   for(const auto& it : m_textures)
   {
-    log_debug("activate texture");
     glActiveTexture(GL_TEXTURE0 + it.first);
     glBindTexture(it.second->get_target(), it.second->get_id());
   }
 
   if (m_program)
   {
-    log_debug("activate program %d", m_program->get_id());
     glUseProgram(m_program->get_id());
+
+    if (m_uniforms)
+    {
+      m_uniforms->apply(m_program);
+    }
   }
 
   assert_gl("material");

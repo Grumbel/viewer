@@ -24,13 +24,72 @@
 namespace {
 
 } // namespace
+
+std::unique_ptr<Mesh> 
+Mesh::create_cube(float size)
+{
+  NormalLst   vn;
+  TexCoordLst vt;
+  VertexLst   vp;
+  
+  float d = size;
+  float t = 1.0f;
+  float n = 1.0f;
 
-Mesh::Mesh(const NormalLst& normals,
+  // top
+  vn.emplace_back(-n,  n, -n); 
+  vt.emplace_back(-t,  t, -t); 
+  vp.emplace_back(-d,  d, -d);
+
+  vn.emplace_back( n,  n, -n); 
+  vt.emplace_back( t,  t, -t); 
+  vp.emplace_back( d,  d, -d);
+
+  vn.emplace_back( n,  n,  n); 
+  vt.emplace_back( t,  t,  t);
+  vp.emplace_back( d,  d,  d);
+
+  vn.emplace_back(-n,  n,  n); 
+  vt.emplace_back(-t,  t,  t); 
+  vp.emplace_back(-d,  d,  d);
+
+  // bottom
+  vn.emplace_back(-n, -n, -n);
+  vt.emplace_back(-t, -t, -t);
+  vp.emplace_back(-d, -d, -d);
+
+  vn.emplace_back(-n, -n,  n);
+  vt.emplace_back(-t, -t,  t);
+  vp.emplace_back(-d, -d,  d);
+
+  vn.emplace_back( n, -n,  n);
+  vt.emplace_back( t, -t,  t);
+  vp.emplace_back( d, -d,  d);
+
+  vn.emplace_back( n, -n, -n);
+  vt.emplace_back( t, -t, -t);
+  vp.emplace_back( d, -d, -d);
+
+  int faces[] = {
+    0, 1, 2, 3, // top
+    4, 5, 6, 7, // bottom
+    3, 2, 6, 5, // front
+    1, 0, 4, 7, // back
+    2, 1, 7, 6, // left 
+    0, 3, 5, 4  // right 
+  };
+
+  return std::unique_ptr<Mesh>(new Mesh(GL_QUADS, vn, vt, vp, FaceLst(faces, faces + sizeof(faces)/sizeof(faces[0]))));
+}
+
+Mesh::Mesh(GLenum type,
+           const NormalLst& normals,
            const TexCoordLst& texcoords,
            const VertexLst& vertices,
            const FaceLst&   faces,
            const BoneWeights& bone_weights,
            const BoneIndices& bone_indices) :
+  m_primitive_type(type),
   m_normals(normals),
   m_texcoords(texcoords),
   m_vertices(vertices),
@@ -107,12 +166,7 @@ Mesh::verify() const
 
   for (const auto& face : m_faces)
   {
-    if (face.vertex1 < 0 ||
-        face.vertex2 < 0 ||
-        face.vertex3 < 0 ||
-        face.vertex1 >= static_cast<int>(m_vertices.size()) ||
-        face.vertex2 >= static_cast<int>(m_vertices.size()) ||
-        face.vertex3 >= static_cast<int>(m_vertices.size()))
+    if (face < 0 || face >= static_cast<int>(m_vertices.size()))
     {
       throw std::runtime_error("face tries to access non existing vertex");
     }
@@ -145,24 +199,6 @@ Mesh::verify() const
 }
 
 void
-Mesh::display()
-{
-  for (FaceLst::iterator i = m_faces.begin(); i != m_faces.end(); ++i)
-  {
-    std::cout << "Face: " << std::endl;
-    std::cout << m_vertices[i->vertex1].x << " "
-              << m_vertices[i->vertex1].y << " "
-              << m_vertices[i->vertex1].z << std::endl;
-    std::cout << m_vertices[i->vertex2].x << " "
-              << m_vertices[i->vertex2].y << " "
-              << m_vertices[i->vertex2].z << std::endl;
-    std::cout << m_vertices[i->vertex3].x << " "
-              << m_vertices[i->vertex3].y << " "
-              << m_vertices[i->vertex3].z << std::endl;
-  }
-}
-
-void
 Mesh::draw() 
 {
   OpenGLState state;
@@ -174,7 +210,7 @@ Mesh::draw()
     glEnableClientState(GL_NORMAL_ARRAY);
 
     glBindBuffer(GL_ARRAY_BUFFER, m_texcoords_vbo);
-    glTexCoordPointer(2, GL_FLOAT, 0, 0);
+    glTexCoordPointer(3, GL_FLOAT, 0, 0);
     glEnableClientState(GL_TEXTURE_COORD_ARRAY);
 
     glBindBuffer(GL_ARRAY_BUFFER, m_vertices_vbo);
@@ -205,44 +241,11 @@ Mesh::draw()
 
     glPushMatrix();
     glTranslatef(m_location.x, m_location.y, m_location.z);
-    glDrawElements(GL_TRIANGLES, 3*m_faces.size(), GL_UNSIGNED_INT, 0);
+    glDrawElements(m_primitive_type, m_faces.size(), GL_UNSIGNED_INT, 0);
     glPopMatrix();
   }
-  else
-  {
-    for (FaceLst::iterator i = m_faces.begin(); i != m_faces.end(); ++i)
-    {
-      glBegin(GL_TRIANGLES);
-      {
-        glTexCoord2f(0.0f, 0.0f);
-        glNormal3f(m_normals[i->vertex1].x,
-                   m_normals[i->vertex1].y,
-                   m_normals[i->vertex1].z);
-        glVertex3f(m_vertices[i->vertex1].x,
-                   m_vertices[i->vertex1].y,
-                   m_vertices[i->vertex1].z);
-        
 
-        glTexCoord2f(1.0f, 0.0f);
-        glNormal3f(m_normals[i->vertex2].x,
-                   m_normals[i->vertex2].y,
-                   m_normals[i->vertex2].z);
-        glVertex3f(m_vertices[i->vertex2].x,
-                   m_vertices[i->vertex2].y,
-                   m_vertices[i->vertex2].z);
-
-        glTexCoord2f(1.0f, 1.0f);
-        glNormal3f(m_normals[i->vertex3].x,
-                   m_normals[i->vertex3].y,
-                   m_normals[i->vertex3].z);
-        glVertex3f(m_vertices[i->vertex3].x,
-                   m_vertices[i->vertex3].y,
-                   m_vertices[i->vertex3].z);
-      }
-      glEnd();
-    }
-  }
-
+#if 0
   // draw m_normals
   if (false)
   {
@@ -270,6 +273,7 @@ Mesh::draw()
     glEnd();
     glEnable(GL_LIGHTING);
   }
+#endif
 }
 
 /* EOF */

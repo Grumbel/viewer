@@ -2,6 +2,11 @@
 #define HEADER_LIGHT_HPP
 
 #include <glm/glm.hpp>
+#include <memory>
+
+class Light;
+
+typedef std::shared_ptr<Light> LightPtr;
 
 class Light
 {

@@ -8,7 +8,7 @@
 void
 SceneVisitor::visit(SceneManager* manager)
 {
-  SceneNode* node = manager->get_root();
+  SceneNode* node = manager->get_world();
   visit(node, glm::mat4(1));
 }
 

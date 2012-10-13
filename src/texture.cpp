@@ -4,6 +4,8 @@
 #include <SDL_image.h>
 #include <stdexcept>
 #include <assert.h>
+#include <math.h>
+#include <vector>
 
 #include "opengl_state.hpp"
 #include "assert_gl.hpp"
@@ -23,16 +25,110 @@ void flip_rgb(SDL_Surface* surface)
 } // namespace
 
 TexturePtr
+Texture::create_random_noise(int width, int height)
+{
+  OpenGLState state;
+
+  GLuint texture;
+
+  glGenTextures(1, &texture);
+  glBindTexture(GL_TEXTURE_2D, texture);
+   
+  glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
+  glPixelStorei(GL_UNPACK_ROW_LENGTH, width);
+
+  std::vector<uint8_t> data(width*height*3);
+
+  for(size_t i = 0; i < sizeof(data); i+=3)
+  {
+    data[i+0] = data[i+1] = data[i+2] = rand() % 255;
+  }
+
+  gluBuild2DMipmaps(GL_TEXTURE_2D, GL_RGB, width, height, GL_RGB, GL_UNSIGNED_BYTE, data.data());
+  assert_gl("texture0()");
+    
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+  assert_gl("texture-0()");
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+  assert_gl("texture-1()");
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+  assert_gl("texture-2()");
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+  assert_gl("texture1()");
+
+  glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAX_ANISOTROPY_EXT, 8.0f);
+  assert_gl("texture2()");
+
+  return TexturePtr(new Texture(GL_TEXTURE_2D, texture));
+}
+
+TexturePtr
+Texture::create_lightspot(int width, int height)
+{
+  OpenGLState state;
+
+  GLuint texture;
+
+  glGenTextures(1, &texture);
+  glBindTexture(GL_TEXTURE_2D, texture);
+
+  const int pitch = width * 3;
+  glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
+  glPixelStorei(GL_UNPACK_ROW_LENGTH, width);
+
+  std::vector<uint8_t> data(width*height*3);
+  for(int y = 0; y < height; ++y)
+    for(int x = 0; x < width; ++x)
+    {
+      float xf = (static_cast<float>(x) / static_cast<float>(width)  - 0.5f) * 2.0f;
+      float yf = (static_cast<float>(y) / static_cast<float>(height) - 0.5f) * 2.0f;
+        
+      float f = 1.0f - sqrtf(xf*xf + yf*yf);
+
+      data[y * pitch + 3*x+0] = static_cast<uint8_t>(std::max(0.0f, std::min(f * 255.0f, 255.0f)));
+      data[y * pitch + 3*x+1] = static_cast<uint8_t>(std::max(0.0f, std::min(f * 255.0f, 255.0f)));
+      data[y * pitch + 3*x+2] = static_cast<uint8_t>(std::max(0.0f, std::min(f * 255.0f, 255.0f)));
+    }
+
+  gluBuild2DMipmaps(GL_TEXTURE_2D, GL_RGB, width, height, GL_RGB, GL_UNSIGNED_BYTE, data.data());
+  assert_gl("texture0()");
+    
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+
+  glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAX_ANISOTROPY_EXT, 8.0f);
+
+  return TexturePtr(new Texture(GL_TEXTURE_2D, texture));
+}
+
+namespace {
+SDL_Surface* surface_from_file(const std::string& filename)
+{
+  SDL_Surface* surface = IMG_Load(filename.c_str());
+  if (!surface)
+  {
+    throw std::runtime_error("couldn't load " + filename);
+  }
+  else
+  {
+    return surface;
+  }
+}
+} // namespace
+
+TexturePtr
 Texture::cube_from_file(const std::string& filename)
 {
   OpenGLState state;
 
-  SDL_Surface* up = IMG_Load((filename + "_up.tga").c_str());
-  SDL_Surface* dn = IMG_Load((filename + "_dn.tga").c_str());
-  SDL_Surface* ft = IMG_Load((filename + "_ft.tga").c_str());
-  SDL_Surface* bk = IMG_Load((filename + "_bk.tga").c_str());
-  SDL_Surface* lf = IMG_Load((filename + "_lf.tga").c_str());
-  SDL_Surface* rt = IMG_Load((filename + "_rt.tga").c_str());
+  SDL_Surface* up = surface_from_file(filename + "up.png");
+  SDL_Surface* dn = surface_from_file(filename + "dn.png");
+  SDL_Surface* ft = surface_from_file(filename + "ft.png");
+  SDL_Surface* bk = surface_from_file(filename + "bk.png");
+  SDL_Surface* lf = surface_from_file(filename + "lf.png");
+  SDL_Surface* rt = surface_from_file(filename + "rt.png");
 
   assert(up);
   assert(dn);

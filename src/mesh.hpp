@@ -23,25 +23,20 @@
 
 #include "opengl_state.hpp"
 
-struct Face
-{
-  int vertex1;
-  int vertex2;
-  int vertex3;
-};
-
 class Mesh
 {
 public:
   typedef std::vector<glm::vec3>  NormalLst;
   typedef std::vector<glm::vec3>  VertexLst;
-  typedef std::vector<glm::vec2>  TexCoordLst;
-  typedef std::vector<Face>       FaceLst;
+  typedef std::vector<glm::vec3>  TexCoordLst;
+  typedef std::vector<int>        FaceLst;
   typedef std::vector<glm::vec4>  BoneWeights;
   typedef std::vector<glm::ivec4> BoneIndices;
   typedef std::vector<int>        BoneCounts;
 
 private:
+  GLenum m_primitive_type;
+
   NormalLst   m_normals;
   TexCoordLst m_texcoords;
   VertexLst   m_vertices;
@@ -61,7 +56,12 @@ private:
   GLuint m_bone_counts_vbo;
 
 public:
-  Mesh(const NormalLst& normals,
+  /** Create a cube with cubemap texture coordinates */
+  static std::unique_ptr<Mesh> create_cube(float size);
+
+public:
+  Mesh(GLenum type, 
+       const NormalLst& normals,
        const TexCoordLst& texcoords,
        const VertexLst& vertices,
        const FaceLst&   faces,
@@ -69,7 +69,6 @@ public:
        const BoneIndices& bone_indices = BoneIndices());
   ~Mesh();
 
-  void display();
   void draw();
 
   void set_location(const glm::vec3& location) {  m_location = location; }

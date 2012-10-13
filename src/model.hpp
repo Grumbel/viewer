@@ -48,6 +48,10 @@ public:
   void draw();
 
   void set_material(MaterialPtr material) { m_material = material; }
+  void add_mesh(std::unique_ptr<Mesh> mesh)
+  {
+    m_meshes.push_back(std::move(mesh));
+  }
 };
 
 typedef Model Entity;

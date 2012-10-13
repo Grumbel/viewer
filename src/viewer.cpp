@@ -32,6 +32,7 @@
 
 #include "armature.hpp"
 #include "assert_gl.hpp"
+#include "camera.hpp"
 #include "framebuffer.hpp"
 #include "log.hpp"
 #include "menu.hpp"
@@ -52,6 +53,7 @@ namespace {
 
 std::unique_ptr<Menu> g_menu;
 std::unique_ptr<SceneManager> g_scene_manager;
+std::unique_ptr<Camera> g_camera;
 
 bool g_cross_eye = false;
 
@@ -61,16 +63,12 @@ int g_screen_h = 800;
 float g_fov = 70.0f;
 
 float g_near_z = 0.01f;
-float g_far_z  = 1000.0f;
+float g_far_z  = 100000.0f;
 
 int g_spot_halo_samples = 100;
 
 bool g_draw_look_at = false;
-GLuint g_noise_texture = 0;
-GLuint g_light_texture = 0;
-GLuint g_cliff_texture = 0;
-GLuint g_grass_texture = 0;
-TexturePtr g_cube_texture;
+
 float g_light_angle = 0.0f;
 bool g_draw_3d = false;
 bool g_headlights = false;
@@ -175,141 +173,29 @@ void draw_scene(EyeType eye_type)
   glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
 
   glEnable(GL_NORMALIZE);
-
-  glMatrixMode(GL_PROJECTION);
-  glLoadIdentity();
-
-  glMatrixMode(GL_MODELVIEW);
-  glLoadIdentity();
   
-  float ambient[4] = { 0.0f, 0.0f, 0.0f, 1.0f };
-  glLightModelfv(GL_LIGHT_MODEL_AMBIENT, ambient);
-
-  // must be set for correct specular reflections
-  glLightModeli(GL_LIGHT_MODEL_LOCAL_VIEWER, 1);
-
-  if (g_headlights)
-  {
-    //log_debug("headlights");
-    glEnable(GL_LIGHTING);
-    glEnable(GL_LIGHT1);
-
-    glLightf(GL_LIGHT1, GL_CONSTANT_ATTENUATION,  0.0f);
-    glLightf(GL_LIGHT1, GL_LINEAR_ATTENUATION,    0.0f);
-    glLightf(GL_LIGHT1, GL_QUADRATIC_ATTENUATION, 0.25f);
-
-    GLfloat light_pos[] = {0.0f, 0.0f, 0.0f, 1.0f};
-    glLightfv(GL_LIGHT1, GL_POSITION, light_pos);
-   
-    GLfloat light_ambient[] = {0.0f, 0.0f, 0.0f, 1.0f};
-    glLightfv(GL_LIGHT1, GL_AMBIENT, light_ambient);
-
-    GLfloat light_diffuse[] = {2.0f, 2.0f, 2.0f, 1.0f};
-    glLightfv(GL_LIGHT1, GL_DIFFUSE, light_diffuse);
-
-    GLfloat light_specular[] = {0.0f, 0.0f, 0.0f, 1.0f};
-    glLightfv(GL_LIGHT1, GL_SPECULAR, light_specular);
-
-    glLightf( GL_LIGHT1, GL_SPOT_CUTOFF,   g_spot_cutoff );
-    glLightf( GL_LIGHT1, GL_SPOT_EXPONENT, g_spot_exponent );
-
-    GLfloat light_direction[] = { 0.0f, 0.0f, -1.0f, 1.0f };
-    glLightfv(GL_LIGHT1, GL_SPOT_DIRECTION, light_direction);
-  }
-
-  // setup projection
-  glMatrixMode(GL_PROJECTION);
-  glLoadIdentity();
   const float aspect_ratio = static_cast<GLfloat>(g_screen_w)/static_cast<GLfloat>(g_screen_h);
-  gluPerspective(g_fov /** aspect_ratio*/, aspect_ratio, g_near_z, 100000.0f);
+  g_camera->projection(g_fov, aspect_ratio, g_near_z, 100000.0f);
 
-  // setup modelview
-  glMatrixMode(GL_MODELVIEW);
-  glLoadIdentity();
-
+  glm::vec3 sideways = glm::normalize(glm::cross(g_look_at, g_up)) * g_wiggle_offset;
+  switch(eye_type)
   {
-    glm::vec3 sideways = glm::normalize(glm::cross(g_look_at, g_up)) * g_wiggle_offset;
-    switch(eye_type)
-    {
-      case kLeftEye:
-        sideways = sideways;
-        break;
+    case kLeftEye:
+      sideways = sideways;
+      break;
 
-      case kRightEye:
-        sideways = -sideways;
-        break;
+    case kRightEye:
+      sideways = -sideways;
+      break;
 
-      case kCenterEye:
-        sideways = glm::vec3(0);
-        break;
-    }
-
-    //glTranslatef(wiggle_offset, 0.0f, 0.0f);
-    gluLookAt(
-      g_eye.x + sideways.x, 
-      g_eye.y + sideways.y, 
-      g_eye.z + sideways.z, // eye
-      /*wiggle_offset + */g_eye.x + g_look_at.x, g_eye.y + g_look_at.y, g_eye.z + g_look_at.z, // look-at
-      //0.0, 0.0, -100.0, // look-at
-      g_up.x, g_up.y, g_up.z);
-
-    glGetFloatv(GL_MODELVIEW_MATRIX, glm::value_ptr(g_eye_matrix));
+    case kCenterEye:
+      sideways = glm::vec3(0);
+      break;
   }
 
-  // light after gluLookAt() put it in worldspace, light before gluLookAt() puts it in eye space
-  if (false)
-  {
-    GLfloat light_pos[] = {0.0f, 0.0f, 0.0f, 1.0f};
-    glDisable(GL_LIGHTING);
-
-    glPushMatrix();
-
-    glRotatef(g_light_angle, 0.0f, 1.0f, 0.0f);
-    glTranslatef(50.0f,50,0.0f);
-
-    if (false)
-    {
-      glEnable(GL_DEPTH_TEST);
-      glDisable(GL_CULL_FACE);
-
-      glPushMatrix();
-      glTranslatef(light_pos[0], light_pos[1], light_pos[2]);
-      glColor3f(1.0f, 1.0f, 1.0f);
-      glutSolidSphere(1, 12, 12);
-      glPopMatrix();
-    }
-
-    glEnable(GL_LIGHTING);
-    glEnable(GL_LIGHT0);
-
-    //glLightf(GL_LIGHT0, GL_CONSTANT_ATTENUATION,  0.0f);
-    //glLightf(GL_LIGHT0, GL_LINEAR_ATTENUATION,    0.0f);
-    //glLightf(GL_LIGHT0, GL_QUADRATIC_ATTENUATION, 0.05f);
-
-    glLightf(GL_LIGHT0, GL_CONSTANT_ATTENUATION,  0.0f);
-    glLightf(GL_LIGHT0, GL_LINEAR_ATTENUATION,    0.2f);
-    glLightf(GL_LIGHT0, GL_QUADRATIC_ATTENUATION, 0.0f);
-    
-    GLfloat light_ambient[] = {0.0f, 0.0f, 0.0f, 1.0f};
-    glLightfv(GL_LIGHT0, GL_AMBIENT, light_ambient);
-
-    GLfloat light_diffuse[] = { g_light_diffuse, g_light_diffuse, g_light_diffuse, 1.0f};
-    glLightfv(GL_LIGHT0, GL_DIFFUSE, light_diffuse);
-
-    GLfloat light_specular[] = { g_light_specular, g_light_specular, g_light_specular, 1.0f};
-    glLightfv(GL_LIGHT0, GL_SPECULAR, light_specular);
-    
-    glLightfv(GL_LIGHT0, GL_POSITION, light_pos);
-
-    glPopMatrix();
-  }
-
-  //glEnable(GL_DEPTH_TEST);
-  //glDisable(GL_CULL_FACE);
-
-  //draw_models(true);
-
-  g_scene_manager->render();
+  g_camera->look_at(g_eye + sideways, g_eye + g_look_at, g_up);
+  
+  g_scene_manager->render(*g_camera);
 }
 
 void draw_shadowmap()
@@ -360,84 +246,8 @@ void draw_shadowmap()
   draw_models(false); 
 }
 
-void draw_cubemap()
-{
-  OpenGLState state;
-
-  glEnable(GL_NORMALIZE);
-  glDisable(GL_DEPTH_TEST);
-
-  glDisable(GL_LIGHTING);
-
-  glActiveTexture(GL_TEXTURE0);
-  glEnable(GL_TEXTURE_CUBE_MAP);
-  glBindTexture(GL_TEXTURE_CUBE_MAP, g_cube_texture->get_id());
-
-  /*
-    glTexGeni(GL_S, GL_TEXTURE_GEN_MODE, GL_REFLECTION_MAP);
-    glTexGeni(GL_T, GL_TEXTURE_GEN_MODE, GL_REFLECTION_MAP);
-    glTexGeni(GL_R, GL_TEXTURE_GEN_MODE, GL_REFLECTION_MAP);
-    glEnable(GL_TEXTURE_GEN_S);
-    glEnable(GL_TEXTURE_GEN_T);
-    glEnable(GL_TEXTURE_GEN_R);
-  */
-
-  float d = 5.0f;
-  float t = 1.0f;
-  float n = 1.0f;
-  
-  glPushMatrix();
-  glTranslatef(g_eye.x, g_eye.y, g_eye.z);
-  glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
-  glBegin(GL_QUADS);
-  { 
-    // front
-    glNormal3f(-n,  n, -n); glTexCoord3f(-t,  t, -t); glVertex3f(-d,  d, -d);
-    glNormal3f( n,  n, -n); glTexCoord3f( t,  t, -t); glVertex3f( d,  d, -d);
-    glNormal3f( n, -n, -n); glTexCoord3f( t, -t, -t); glVertex3f( d, -d, -d);
-    glNormal3f(-n, -n, -n); glTexCoord3f(-t, -t, -t); glVertex3f(-d, -d, -d);
-
-    // back
-    glNormal3f(-n, -n, n); glTexCoord3f(-t, -t, t); glVertex3f(-d, -d, d);
-    glNormal3f( n, -n, n); glTexCoord3f( t, -t, t); glVertex3f( d, -d, d);
-    glNormal3f( n,  n, n); glTexCoord3f( t,  t, t); glVertex3f( d,  d, d);
-    glNormal3f(-n,  n, n); glTexCoord3f(-t,  t, t); glVertex3f(-d,  d, d);
-
-    // left
-    glNormal3f(-n,  n,  n); glTexCoord3f(-t,  t,  t); glVertex3f(-d,  d,  d);
-    glNormal3f(-n,  n, -n); glTexCoord3f(-t,  t, -t); glVertex3f(-d,  d, -d);
-    glNormal3f(-n, -n, -n); glTexCoord3f(-t, -t, -t); glVertex3f(-d, -d, -d);
-    glNormal3f(-n, -n,  n); glTexCoord3f(-t, -t,  t); glVertex3f(-d, -d,  d);
-
-    // right
-    glNormal3f( n, -n,  n); glTexCoord3f( t, -t,  t); glVertex3f(d, -d,  d);
-    glNormal3f( n, -n, -n); glTexCoord3f( t, -t, -t); glVertex3f(d, -d, -d);
-    glNormal3f( n,  n, -n); glTexCoord3f( t,  t, -t); glVertex3f(d,  d, -d);
-    glNormal3f( n,  n,  n); glTexCoord3f( t,  t,  t); glVertex3f(d,  d,  d);
-
-    // top
-    glNormal3f( n,  n, -n); glTexCoord3f( t,  t, -t); glVertex3f( d,  d, -d);
-    glNormal3f(-n,  n, -n); glTexCoord3f(-t,  t, -t); glVertex3f(-d,  d, -d);
-    glNormal3f(-n,  n,  n); glTexCoord3f(-t,  t,  t); glVertex3f(-d,  d,  d);
-    glNormal3f( n,  n,  n); glTexCoord3f( t,  t,  t); glVertex3f( d,  d,  d);
-
-    // bottom
-    glNormal3f(-n, -n,  n); glTexCoord3f(-t, -t,  t); glVertex3f(-d, -d,  d);
-    glNormal3f( n, -n,  n); glTexCoord3f( t, -t,  t); glVertex3f( d, -d,  d);
-    glNormal3f( n, -n, -n); glTexCoord3f( t, -t, -t); glVertex3f( d, -d, -d);
-    glNormal3f(-n, -n, -n); glTexCoord3f(-t, -t, -t); glVertex3f(-d, -d, -d);
-  }
-  glEnd();
-  glPopMatrix();
-}
-
 void draw_models(bool shader_foo)
 {
-  if (false)
-  {
-    draw_cubemap();
-  }
-
   GLfloat mat_specular[] = { 1.0, 1.0, 1.0, 1.0 };
   GLfloat mat_ambient[]  = { 1.0, 1.0, 1.0, 1.0 };
   GLfloat mat_diffuse[]  = { 1.0, 1.0, 1.0, 1.0 };
@@ -459,306 +269,6 @@ void draw_models(bool shader_foo)
       glutSolidSphere(2.5, 32, 32);
     }
     glPopMatrix();
-  }
-
-  glPushMatrix();
-  {
-    glMultMatrixf(glm::value_ptr(g_object2world));
-
-    // draw the model
-    {
-      OpenGLState state2;
-
-      glEnable(GL_TEXTURE_2D);
-      glBindTexture(GL_TEXTURE_2D, g_noise_texture);
-      glColor3f(1.0, 1.0, 1.0);
-      
-      if (shader_foo)
-      {
-        g_program->validate();
-        if (!g_program->get_validate_status())
-        {
-          log_debug("validation failure: %s", g_program->get_info_log());
-        }
-
-        glActiveTexture(GL_TEXTURE1);
-        //glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_MODE, GL_COMPARE_R_TO_TEXTURE);
-	
-        glBindTexture(GL_TEXTURE_2D, g_shadow_map->get_depth_texture());
-        
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_MODE, GL_COMPARE_R_TO_TEXTURE);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_FUNC, GL_LEQUAL);
-	//glTexParameteri(GL_TEXTURE_2D, GL_DEPTH_TEXTURE_MODE, GL_INTENSITY); 
-        
-        glActiveTexture(GL_TEXTURE2);
-        glEnable(GL_TEXTURE_CUBE_MAP);
-        glBindTexture(GL_TEXTURE_CUBE_MAP, g_cube_texture->get_id());
-
-        glActiveTexture(GL_TEXTURE3);
-        glEnable(GL_TEXTURE_2D);
-        glBindTexture(GL_TEXTURE_2D, g_grass_texture);
-
-        glActiveTexture(GL_TEXTURE4);
-        glEnable(GL_TEXTURE_2D);
-        glBindTexture(GL_TEXTURE_2D, g_cliff_texture);
-
-        assert_gl("use program4");
-        glUseProgram(g_program->get_id());
-        assert_gl("use program5");
-        assert_gl("use program2");
-        
-        if (false)
-        {
-          std::cout << "bone_weight:  " << glGetAttribLocation(g_program->get_id(), "bone_weights") << std::endl;
-          std::cout << "bone_indices: " << glGetAttribLocation(g_program->get_id(), "bone_indices") << std::endl;
-          std::cout << "bone_counts:  " << glGetAttribLocation(g_program->get_id(), "bone_count") << std::endl;
-        }
-
-        glUniform1f(glGetUniformLocation(g_program->get_id(), "shadowmap_bias"), g_shadow_map_bias);
-        glUniform1i(glGetUniformLocation(g_program->get_id(), "tex"), 0);
-        glUniform1i(glGetUniformLocation(g_program->get_id(), "ShadowMap"), 1);
-        glUniform1i(glGetUniformLocation(g_program->get_id(), "cubemap"), 2);
-        glUniform1i(glGetUniformLocation(g_program->get_id(), "grass"), 3);
-        glUniform1i(glGetUniformLocation(g_program->get_id(), "cliff"), 4);
-
-        g_armature->bind_uniform(glGetUniformLocation(g_program->get_id(), "bones"));
-        g_pose->bind_uniform(glGetUniformLocation(g_program->get_id(), "pose_bones"));
-
-        glUniform4fv(glGetUniformLocation(g_program->get_id(), "world_eye_pos"), 4, glm::value_ptr(g_eye));
-        
-        glUniform4fv(glGetUniformLocation(g_program->get_id(), "grid_offset"), 4, glm::value_ptr(g_grid_offset));
-        glUniform1f(glGetUniformLocation(g_program->get_id(), "grid_size"), g_grid_size);
-
-        assert_gl("use program3");
-
-        glUniform1f(glGetUniformLocation(g_program->get_id(), "xPixelOffset"), 1.0f/static_cast<float>(g_shadow_map->get_width()));
-        glUniform1f(glGetUniformLocation(g_program->get_id(), "yPixelOffset"), 1.0f/static_cast<float>(g_shadow_map->get_height()));
-
-        glUniformMatrix4fv(glGetUniformLocation(g_program->get_id(), "ShadowMapMatrix"),
-                           1, GL_FALSE,
-                           glm::value_ptr(g_shadow_map_matrix));
-
-        glUniformMatrix4fv(glGetUniformLocation(g_program->get_id(), "eye_matrix"), 1, GL_FALSE, glm::value_ptr(glm::inverse(g_eye_matrix)));
-      }
-
-      int dim = 0;
-      for(int y = -dim; y <= dim; ++y)
-        for(int x = -dim; x <= dim; ++x)
-        {
-          glPushMatrix();
-          glScalef(g_scale, g_scale, g_scale);
-          glTranslatef(20*x, 0, 20*y);
-          g_model->draw();
-          if (false)
-          {
-            float plane_size = 50.0f;
-            float plane_y = 0.0f;
-            glBegin(GL_QUADS);
-            {
-              glNormal3f(0.0f, 1.0f, 0.0f);
-              glTexCoord2f(0.0f, 0.0f);
-              glVertex3f(-plane_size, plane_y, -plane_size);
-
-              glNormal3f(0.0f, 1.0f, 0.0f);
-              glTexCoord2f(1.0f, 0.0f);
-              glVertex3f(-plane_size, plane_y,  plane_size);
-
-              glNormal3f(0.0f, 1.0f, 0.0f);
-              glTexCoord2f(1.0f, 1.0f);
-              glVertex3f( plane_size, plane_y,  plane_size);
-
-              glNormal3f(0.0f, 1.0f, 0.0f);
-              glTexCoord2f(0.0f, 1.0f);
-              glVertex3f( plane_size, plane_y, -plane_size);
-            }
-            glEnd();
-          }
-          glPopMatrix();
-        }
-
-      if (shader_foo)
-      {
-        glUseProgram(0);
-        glBindTexture(GL_TEXTURE_2D, 0);
-        glActiveTexture(GL_TEXTURE0);
-        glBindTexture(GL_TEXTURE_2D, 0);
-      }
-    }
-
-    if (false)
-    { // draw starfield
-      srand(0);
-      int box = 50;
-      for(int i = 0; i < 200; ++i)
-      {
-        glPushMatrix();  
-        glTranslatef(rand()%box - box/2, 
-                     rand()%box - box/2, 
-                     rand()%box - box/2);
-        glutSolidSphere(0.5, 12, 12);
-        glPopMatrix();
-      }
-    }
-  }
-  glPopMatrix();
-
-  // point sprite
-  if (false)
-  {
-    glPushMatrix();
-
-    //GLfloat fSizes[2];
-    //glGetFloatv(GL_ALIASED_POINT_SIZE_RANGE, fSizes);
-    //log_debug("point size: %f %f", fSizes[0], fSizes[1]);
-    // 1.000000 8192.000000
-
-    OpenGLState save_state;
-    glDisable(GL_LIGHTING);
-    //glDisable(GL_DEPTH_TEST);
-    glDepthMask(GL_FALSE);
-    glEnable(GL_BLEND);
-    glEnable(GL_POINT_SPRITE);
- 
-    glBlendFunc(GL_SRC_ALPHA, GL_ONE);
-
-    glEnable(GL_TEXTURE_2D);
-    glBindTexture(GL_TEXTURE_2D, g_light_texture);
-
-
-    glTexEnvi(GL_POINT_SPRITE, GL_COORD_REPLACE, GL_TRUE);
-
-    glTranslatef(0.0f, 0.0f, 1.0f);
-
-    float quadratic[] =  { 0.0f, 0.0f, 1.0f };
-    glPointParameterfv( GL_POINT_DISTANCE_ATTENUATION, quadratic );
-
-    glPointParameterf(GL_POINT_SIZE_MIN, 16.0f);
-    glPointParameterf(GL_POINT_SIZE_MAX, 1000.0f);
-    
-    glPointSize(200.0f);
-
-    //glPointParameterfARB( GL_POINT_FADE_THRESHOLD_SIZE, 200.0f );
-
-    glColor4f(1.0, 1.0, 1.0, 0.1f);
-    glBegin(GL_POINTS);
-    for(int i = 0; i < 60; ++i)
-    {
-      glVertex3f(i/60.0f,  1.0f, 0.0f);
-    }
-    glEnd();
-    
-    glEnable(GL_LIGHTING);
-
-    glPopMatrix();
-  }
-
-  if (false)
-  {
-    OpenGLState gl_state;
-    glDisable(GL_LIGHTING);
-
-    glPushMatrix();
-    {
-      glm::mat4 mat;
-      glGetFloatv(GL_MODELVIEW_MATRIX, glm::value_ptr(mat));
-
-      //glm::mat3 rot = glm::mat3(mat);
-      //mat = mat * 
-      
-      glTranslatef(0.0f, 0.0f, -3.0f);
-      
-      glDisable(GL_TEXTURE_2D);
-
-      glColor3f(1.0f, 1.0f, 1.0f);
-      glPushMatrix();
-      glutSolidSphere(0.25, 16, 16);
-      glPopMatrix();
-
-      if (true)
-      {
-        glDepthMask(GL_FALSE);
-        glEnable(GL_TEXTURE_2D);
-        glEnable(GL_BLEND);
-        glBlendFunc(GL_SRC_ALPHA, GL_ONE);
-
-        if (false)
-        {
-          // billboard
-          glMultMatrixf(glm::value_ptr(glm::mat4(glm::transpose(glm::mat3(mat)))));
-
-          glBindTexture(GL_TEXTURE_2D, g_light_texture);
-
-          glBegin(GL_QUADS);
-          {
-            glTexCoord2f(0.0f, 0.0f);
-            glVertex3f(-1.0f, -1.0f, 0.0f);
-
-            glTexCoord2f(1.0f, 0.0f);
-            glVertex3f(1.0f, -1.0f, 0.0f);
-
-            glTexCoord2f(1.0f, 1.0f);
-            glVertex3f(1.0f, 1.0f, 0.0f);
-
-            glTexCoord2f(0.0f, 1.0f);
-            glVertex3f(-1.0f, 1.0f, 0.0f);
-          }
-          glEnd();
-        }
-        glDepthMask(GL_TRUE);
-      }
-    }
-    glPopMatrix();
-  }
-
-  if (false)
-  {
-    glm::mat4 mat;
-
-    glDisable(GL_LIGHTING);
-    glEnable(GL_TEXTURE_2D);
-    glDepthMask(GL_FALSE);
-    glEnable(GL_BLEND);
-    glBlendFunc(GL_SRC_ALPHA, GL_ONE);
-    
-    float g_spot_halo_length = 5.0f;
-    int n = g_spot_halo_samples;
-    for(int i = 0; i < n; ++i)
-    {
-      float p = static_cast<float>(i) / static_cast<float>(n-1);
-
-      glPushMatrix();
-      {
-        glGetFloatv(GL_MODELVIEW_MATRIX, glm::value_ptr(mat));
-
-        glScalef(0.1f + 1.0f * p * p,
-                 0.1f + 1.0f * p * p,
-                 0.1f + 1.0f * p * p);
-        glTranslatef(0.0f, 0.0f, g_spot_halo_length * static_cast<float>(i) / static_cast<float>(n));
-
-        // billboard
-        glMultMatrixf(glm::value_ptr(glm::mat4(glm::transpose(glm::mat3(mat)))));
-
-        glBindTexture(GL_TEXTURE_2D, g_light_texture);
-
-        glColor4f(1.0f, 1.0f, 1.0f, 0.25f * (1.0f-p) * (100.0f / g_spot_halo_samples));
-        glBegin(GL_QUADS);
-        {
-          glTexCoord2f(0.0f, 0.0f);
-          glVertex3f(-1.0f, -1.0f, 0.0f);
-
-          glTexCoord2f(1.0f, 0.0f);
-          glVertex3f(1.0f, -1.0f, 0.0f);
-
-          glTexCoord2f(1.0f, 1.0f);
-          glVertex3f(1.0f, 1.0f, 0.0f);
-
-          glTexCoord2f(0.0f, 1.0f);
-          glVertex3f(-1.0f, 1.0f, 0.0f);
-        }
-        glEnd();
-      }
-      glPopMatrix();
-    }
   }
 
   if (g_draw_grid)
@@ -1150,111 +660,88 @@ void init()
 
   {
     g_scene_manager.reset(new SceneManager);
+    const float aspect_ratio = static_cast<GLfloat>(g_screen_w)/static_cast<GLfloat>(g_screen_h);
+    g_camera.reset(new Camera(g_fov, aspect_ratio, g_near_z, 100000.0f));
+
     if (true)
     {
-      auto entity = Model::from_file(g_model_filename);
-      MaterialPtr material(new Material);
-      material->set_diffuse(glm::vec4(1.0f, 1.0f, 1.0f, 1.0f));
-      material->set_program(Program::create(Shader::from_file(GL_VERTEX_SHADER, "src/basic.vert"),
-                                            Shader::from_file(GL_FRAGMENT_SHADER, "src/basic.frag")));
-      UniformGroupPtr ug(new UniformGroup);
-      ug->set_uniform("bone_count", glm::ivec2(0));
-      ug->set_uniform("shadowmatrix", glm::mat4(1));
-      material->set_uniform(ug);
+      auto program = Program::create(Shader::from_file(GL_VERTEX_SHADER, "src/basic.vert"),
+                                     Shader::from_file(GL_FRAGMENT_SHADER, "src/basic.frag"));
 
-      entity->set_material(material);
-
+      if (true)
       {
-        auto node = g_scene_manager->get_root()->create_child();
-        node->set_position(glm::vec3(1.0f, -1.0f, -100.0f));
+        auto node = g_scene_manager->get_world()->create_child();
+        node->set_position(glm::vec3(1.0f, -1.0f, 0.0f));
+
+        MaterialPtr material(new Material);
+        material->set_program(program);
+
+        auto texture = Texture::from_file("data/textures/cliff_02_v2.tga");
+
+        UniformGroupPtr ug(new UniformGroup);
+        ug->set_uniform("diffuse", glm::vec4(1.0f, 0.0f, 0.0f, 1.0f));
+        ug->set_uniform("diffuse_texture", 0);
+        material->set_uniform(ug);
+        material->set_texture(0, texture);
+        material->enable(GL_DEPTH_TEST);
+        material->enable(GL_CULL_FACE);
+
+        auto entity = Model::from_file(g_model_filename);
+        entity->set_material(material);
+
+        node->attach_entity(entity);
+      }
+
+      if (true)
+      {
+        auto node = g_scene_manager->get_world()->create_child();
+        node->set_position(glm::vec3(1.0f, -1.0f, -5.0f));
+
+        MaterialPtr material(new Material);
+        material->set_program(program);
+
+        auto texture = Texture::from_file("data/textures/grass_01_v1.tga");
+
+        UniformGroupPtr ug(new UniformGroup);
+        ug->set_uniform("diffuse", glm::vec4(1.0f, 0.0f, 1.0f, 1.0f));
+        ug->set_uniform("diffuse_texture", 0);
+        material->set_uniform(ug);
+        material->set_texture(0, texture);
+        material->enable(GL_DEPTH_TEST);
+        material->enable(GL_CULL_FACE);
+
+        auto entity = Model::from_file(g_model_filename);
+        entity->set_material(material);
+
         node->attach_entity(entity);
       }
 
       {
-        auto node = g_scene_manager->get_root()->create_child();
-        node->set_position(glm::vec3(1.0f, -1.0f, -50.0f));
-        node->attach_entity(entity);
-      }
-
-      {
-        auto node = g_scene_manager->get_root()->create_child();
-        node->set_position(glm::vec3(1.0f, -1.0f, -25.0f));
-        node->attach_entity(entity);
-      }
-    }
-  }
-
-  { // upload noise texture
-    glGenTextures(1, &g_noise_texture);
-    glBindTexture(GL_TEXTURE_2D, g_noise_texture);
-   
-    const int width = 64;
-    const int height = 64;
-    glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
-    glPixelStorei(GL_UNPACK_ROW_LENGTH, width);
-
-    unsigned char data[width*height*3];
-
-    for(size_t i = 0; i < sizeof(data); i+=3)
-    {
-      data[i+0] = data[i+1] = data[i+2] = rand() % 255;
-    }
-
-    gluBuild2DMipmaps
-      (GL_TEXTURE_2D, GL_RGB,
-       width, height,
-       GL_RGB, GL_UNSIGNED_BYTE, data);
-    assert_gl("texture0()");
-    
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
-    assert_gl("texture-0()");
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-    assert_gl("texture-1()");
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-    assert_gl("texture-2()");
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-    assert_gl("texture1()");
-
-    glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAX_ANISOTROPY_EXT, 8.0f);
-    assert_gl("texture2()");
-  }
-
-  {
-    glGenTextures(1, &g_light_texture);
-    glBindTexture(GL_TEXTURE_2D, g_light_texture);
-
-    const int width = 64;
-    const int height = 64;
-    const int pitch = width * 3;
-    glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
-    glPixelStorei(GL_UNPACK_ROW_LENGTH, width);
-
-    unsigned char data[width*height*3];
-    for(int y = 0; y < height; ++y)
-      for(int x = 0; x < width; ++x)
-      {
-        float xf = (static_cast<float>(x) / static_cast<float>(width)  - 0.5f) * 2.0f;
-        float yf = (static_cast<float>(y) / static_cast<float>(height) - 0.5f) * 2.0f;
+        auto node = g_scene_manager->get_world()->create_child();
         
-        float f = 1.0f - sqrtf(xf*xf + yf*yf);
+        auto mesh = Mesh::create_cube(100.0f);
+        ModelPtr entity = std::make_shared<Model>();
+        entity->add_mesh(std::move(mesh));
 
-        data[y * pitch + 3*x+0] = static_cast<uint8_t>(std::max(0.0f, std::min(f * 255.0f, 255.0f)));
-        data[y * pitch + 3*x+1] = static_cast<uint8_t>(std::max(0.0f, std::min(f * 255.0f, 255.0f)));
-        data[y * pitch + 3*x+2] = static_cast<uint8_t>(std::max(0.0f, std::min(f * 255.0f, 255.0f)));
+        MaterialPtr material(new Material);
+        material->set_program(Program::create(Shader::from_file(GL_VERTEX_SHADER, "src/cubemap.vert"),
+                                              Shader::from_file(GL_FRAGMENT_SHADER, "src/cubemap.frag")));
+
+        auto texture = Texture::cube_from_file("data/textures/wireframe/");
+
+        UniformGroupPtr ug(new UniformGroup);
+        ug->set_uniform("diffuse", glm::vec4(1.0f, 1.0f, 1.0f, 1.0f));
+        ug->set_uniform("diffuse_texture", 0);
+        material->set_uniform(ug);
+        material->set_texture(0, texture);
+        material->enable(GL_DEPTH_TEST);
+        material->enable(GL_CULL_FACE);
+
+        entity->set_material(material);
+
+        node->attach_entity(entity);
       }
-
-    gluBuild2DMipmaps
-      (GL_TEXTURE_2D, GL_RGB,
-       width, height,
-       GL_RGB, GL_UNSIGNED_BYTE, data);
-    assert_gl("texture0()");
-    
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-
-    glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAX_ANISOTROPY_EXT, 8.0f);
+    }
   }
 
   //g_hello_world = TextSurface::create("Hello World", TextProperties()
@@ -1297,81 +784,6 @@ void init()
 
   g_program = Program::create(Shader::from_file(GL_VERTEX_SHADER, "src/phong.vert"),
                               Shader::from_file(GL_FRAGMENT_SHADER, "src/phong.frag"));
-
-  auto uniform_loc_test = [&](const char* name) {
-    std::cout << name << ": " << glGetUniformLocation(g_program->get_id(), name) << std::endl;
-  };
-
-  uniform_loc_test("bones");
-  uniform_loc_test("bones[0]");
-  uniform_loc_test("bones[1]");
-  uniform_loc_test("bones[2]");
-  uniform_loc_test("bones[3]");
-  uniform_loc_test("bones[31]");
-  uniform_loc_test("bones[32]");
-  uniform_loc_test("bones[33]");
-  uniform_loc_test("bones[34]");
-  uniform_loc_test("bones[35]");
-  uniform_loc_test("bones[36]");
-  uniform_loc_test("bones[37]");
-  uniform_loc_test("bones[38]");
-
-  uniform_loc_test("pose_bones");
-  uniform_loc_test("pose_bones[0]");
-  uniform_loc_test("pose_bones[1]");
-  uniform_loc_test("pose_bones[2]");
-  uniform_loc_test("pose_bones[3]");
-  uniform_loc_test("pose_bones[31]");
-  uniform_loc_test("pose_bones[32]");
-  uniform_loc_test("pose_bones[33]");
-  uniform_loc_test("pose_bones[34]");
-  uniform_loc_test("pose_bones[35]");
-  uniform_loc_test("pose_bones[36]");
-  uniform_loc_test("pose_bones[37]");
-  uniform_loc_test("pose_bones[38]");
-
-  {
-    OpenGLState grass_state;
-    SDL_Surface* grass = IMG_Load("data/textures/cliff_02_v2.tga");
-    SDL_Surface* cliff = IMG_Load("data/textures/grass_01_v1.tga");
-
-    flip_rgb(grass);
-    flip_rgb(cliff);
-
-    assert(grass);
-    assert(cliff);
-
-    glPixelStorei(GL_UNPACK_ALIGNMENT, 4);
-    glPixelStorei(GL_UNPACK_ROW_LENGTH, cliff->pitch / cliff->format->BytesPerPixel);
-
-    glActiveTexture(GL_TEXTURE0);
-    glEnable(GL_TEXTURE_2D);
-    glGenTextures(1, &g_grass_texture);
-    glBindTexture(GL_TEXTURE_2D, g_grass_texture);
-
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-
-    gluBuild2DMipmaps(GL_TEXTURE_2D, GL_RGB, grass->w, grass->h, grass->format->BytesPerPixel == 4 ? GL_RGBA : GL_RGB, GL_UNSIGNED_BYTE, grass->pixels);
-
-
-    glGenTextures(1, &g_cliff_texture);
-    glBindTexture(GL_TEXTURE_2D, g_cliff_texture);
-
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-
-    gluBuild2DMipmaps(GL_TEXTURE_2D, GL_RGB, cliff->w, cliff->h, cliff->format->BytesPerPixel == 4 ? GL_RGBA : GL_RGB, GL_UNSIGNED_BYTE, cliff->pixels);
-
-    SDL_FreeSurface(grass);
-    SDL_FreeSurface(cliff);
-  }
-
-  g_cube_texture = Texture::cube_from_file("data/textures/miramar/miramar");
 
   assert_gl("init()");
 }

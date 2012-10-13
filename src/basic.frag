@@ -1,6 +1,9 @@
+uniform sampler2D diffuse_texture;
+uniform vec4 diffuse;
+
 void main(void)
 {
-  gl_FragColor = vec4(1, 1, 0, 0.5); //phong_value();
+  gl_FragColor = diffuse * texture(diffuse_texture, gl_TexCoord[0].st);
 }
 
 /* EOF */
