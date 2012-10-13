@@ -48,7 +48,7 @@ Model::from_istream(std::istream& in)
   // http://www.martinreddy.net/gfx/3d/OBJ.spec
 
   std::vector<glm::vec3>  normal;
-  std::vector<glm::vec3>  vertex;
+  std::vector<glm::vec3>  position;
   std::vector<glm::vec3>  texcoord;
   std::vector<int>        index;
   std::vector<glm::vec4>  bone_weight;
@@ -58,13 +58,13 @@ Model::from_istream(std::istream& in)
   ModelPtr model = std::make_shared<Model>();
 
   auto commit_object = [&]{
-    if (!vertex.empty())
+    if (!position.empty())
     {
       // fill in some texcoords if there aren't enough
-      if (texcoord.size() < vertex.size())
+      if (texcoord.size() < position.size())
       {
-        texcoord.resize(vertex.size());
-        for(FaceLst::size_type i = vertex.size()-1; i < texcoord.size(); ++i)
+        texcoord.resize(position.size());
+        for(FaceLst::size_type i = position.size()-1; i < texcoord.size(); ++i)
         {
           texcoord[i] = glm::vec3(0.0f, 0.0f, 0.0f);
         }
@@ -72,7 +72,7 @@ Model::from_istream(std::istream& in)
 
       std::unique_ptr<Mesh> mesh(new Mesh(GL_TRIANGLES));
 
-      mesh->attach_float_array("vertex",   vertex);
+      mesh->attach_float_array("position",   position);
       mesh->attach_float_array("texcoord", texcoord);
       mesh->attach_float_array("normal",   normal);
       mesh->attach_element_array(index);
@@ -88,7 +88,7 @@ Model::from_istream(std::istream& in)
       // clear for the next mesh
       normal.clear();
       texcoord.clear();
-      vertex.clear();
+      position.clear();
       index.clear();
     }
   };
@@ -136,7 +136,7 @@ Model::from_istream(std::istream& in)
           INCR_AND_CHECK;
           v.z = boost::lexical_cast<float>(*it);
           
-          vertex.push_back(v);
+          position.push_back(v);
         }
         else if (*it == "vt")
         {

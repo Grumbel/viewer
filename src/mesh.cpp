@@ -84,7 +84,7 @@ Mesh::create_cube(float size)
 
   mesh->attach_float_array("normal",   vn);
   mesh->attach_float_array("texcoord", vt);
-  mesh->attach_float_array("vertex",   vp);
+  mesh->attach_float_array("position",   vp);
   mesh->attach_element_array(FaceLst(faces, faces + sizeof(faces)/sizeof(faces[0])));
 
    return mesh;
