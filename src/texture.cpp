@@ -119,7 +119,7 @@ SDL_Surface* surface_from_file(const std::string& filename)
 } // namespace
 
 TexturePtr
-Texture::cube_from_file(const std::string& filename)
+Texture::cubemap_from_file(const std::string& filename)
 {
   OpenGLState state;
 

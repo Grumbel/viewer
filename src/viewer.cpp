@@ -696,7 +696,7 @@ void init()
       {
         auto node = g_scene_manager->get_view()->create_child();
         
-        auto mesh = Mesh::create_cube(1.0f);
+        auto mesh = Mesh::create_skybox(1.0f);
         ModelPtr entity = std::make_shared<Model>();
         entity->add_mesh(std::move(mesh));
 
@@ -704,7 +704,7 @@ void init()
         material->set_program(Program::create(Shader::from_file(GL_VERTEX_SHADER, "src/cubemap.vert"),
                                               Shader::from_file(GL_FRAGMENT_SHADER, "src/cubemap.frag")));
 
-        auto texture = Texture::cube_from_file("data/textures/wireframe/");
+        auto texture = Texture::cubemap_from_file("data/textures/test/");
 
         UniformGroupPtr ug(new UniformGroup);
         ug->set_uniform("diffuse", glm::vec4(1.0f, 1.0f, 1.0f, 1.0f));

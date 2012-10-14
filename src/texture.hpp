@@ -16,7 +16,7 @@ private:
   GLuint m_id;
 
 public:
-  static TexturePtr cube_from_file(const std::string& filename);
+  static TexturePtr cubemap_from_file(const std::string& filename);
   static TexturePtr from_file(const std::string& filename);
   static TexturePtr create_lightspot(int width, int height);
   static TexturePtr create_random_noise(int width, int height);

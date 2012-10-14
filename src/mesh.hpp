@@ -59,7 +59,7 @@ private:
 
 public:
   /** Create a cube with cubemap texture coordinates */
-  static std::unique_ptr<Mesh> create_cube(float size);
+  static std::unique_ptr<Mesh> create_skybox(float size);
 
 public:
   Mesh(GLenum primitive_type);

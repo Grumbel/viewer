@@ -27,7 +27,7 @@ namespace {
 } // namespace
 
 std::unique_ptr<Mesh> 
-Mesh::create_cube(float size)
+Mesh::create_skybox(float size)
 {
   NormalLst   vn;
   TexCoordLst vt;
