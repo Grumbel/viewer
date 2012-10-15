@@ -55,8 +55,8 @@ private:
   GLenum m_primitive_type;
   std::unordered_map<std::string, Array> m_attribute_arrays;
   GLuint m_element_array_vbo;
-  int m_element_array_size;
-
+  int m_element_count;
+  
 public:
   /** Create a cube with cubemap texture coordinates */
   static std::unique_ptr<Mesh> create_skybox(float size);
@@ -67,38 +67,60 @@ public:
 
   void draw();
 
+  void attach_array(const std::string& name, const Array& array, int element_count)
+  {
+    if (m_attribute_arrays.find(name) != m_attribute_arrays.end())
+    {
+      throw std::runtime_error("array '" + name + "' already present");
+    }
+    else if (m_element_count != -1 && m_element_count != element_count)
+    {
+      throw std::runtime_error("element count does not match");
+    }
+    else
+    {
+      m_element_count = element_count;
+      m_attribute_arrays[name] = array;
+    }
+  }
+
   void attach_float_array(const std::string& name, const std::vector<float>& vec)
   {
-    assert(m_attribute_arrays.find(name) == m_attribute_arrays.end());
-
     GLuint vbo = build_vbo(GL_ARRAY_BUFFER, vec);
-    m_attribute_arrays[name] = Array(Array::Float, 1, vbo);
+    attach_array(name, Array(Array::Float, 1, vbo), vec.size());
   }
 
   template<typename T>  
   void attach_float_array(const std::string& name, const std::vector<T>& vec)
   {
-    assert(m_attribute_arrays.find(name) == m_attribute_arrays.end());
-
     GLuint vbo = build_vbo(GL_ARRAY_BUFFER, vec);
-    m_attribute_arrays[name] = Array(Array::Float, T::value_size(), vbo);
+    attach_array(name, Array(Array::Float, T::value_size(), vbo), vec.size());
+  }
+
+  void attach_int_array(const std::string& name, const std::vector<int>& vec)
+  {
+    GLuint vbo = build_vbo(GL_ARRAY_BUFFER, vec);
+    attach_array(name, Array(Array::Integer, 1, vbo), vec.size());
   }
 
   template<typename T>  
   void attach_int_array(const std::string& name, const std::vector<T>& vec)
   {
-    assert(m_attribute_arrays.find(name) == m_attribute_arrays.end());
-
     GLuint vbo = build_vbo(GL_ARRAY_BUFFER, vec);
-    m_attribute_arrays[name] = Array(Array::Integer, T::value_size(), vbo);
+    attach_array(name, Array(Array::Integer, T::value_size(), vbo), vec.size());
   } 
 
-  template<typename T>  
-  void attach_element_array(const std::vector<T>& vec)
+  void attach_element_array(const std::vector<int>& vec)
   {
-    assert(m_element_array_vbo == 0);
-    m_element_array_vbo = build_vbo(GL_ELEMENT_ARRAY_BUFFER, vec);
-    m_element_array_size = vec.size();
+    if (m_element_array_vbo != 0)
+    {
+      throw std::runtime_error("element array already present");
+    }
+    else
+    {
+      m_element_array_vbo = build_vbo(GL_ELEMENT_ARRAY_BUFFER, vec);
+      m_element_count = vec.size();
+    }
   }
 
 private:

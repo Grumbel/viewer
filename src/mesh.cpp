@@ -71,6 +71,7 @@ Mesh::create_skybox(float size)
   vt.emplace_back( t, -t, -t);
   vp.emplace_back( d, -d, -d);
 
+  // skybox
   int faces[] = {
     0, 1, 2, 3, // top
     4, 5, 6, 7, // bottom
@@ -80,11 +81,14 @@ Mesh::create_skybox(float size)
     0, 3, 5, 4  // right 
   };
 
+  // flip front/back faces
+  // std::reverse(faces, faces + sizeof(faces)/sizeof(faces[0]));
+
   std::unique_ptr<Mesh> mesh(new Mesh(GL_QUADS));
 
-  mesh->attach_float_array("normal",   vn);
+  mesh->attach_float_array("normal", vn);
   mesh->attach_float_array("texcoord", vt);
-  mesh->attach_float_array("position",   vp);
+  mesh->attach_float_array("position", vp);
   mesh->attach_element_array(FaceLst(faces, faces + sizeof(faces)/sizeof(faces[0])));
 
    return mesh;
@@ -94,7 +98,7 @@ Mesh::Mesh(GLenum primitive_type) :
   m_primitive_type(primitive_type),
   m_attribute_arrays(),
   m_element_array_vbo(0),
-  m_element_array_size(0)
+  m_element_count(-1)
 {
 }
 
@@ -114,6 +118,9 @@ Mesh::draw()
 
   GLint program;
   glGetIntegerv(GL_CURRENT_PROGRAM, &program);
+
+  assert_gl("Mesh::draw1");
+  //log_debug("Mesh::draw: %d", program);
 
   // activate attribute arrays
   for(const auto& array : m_attribute_arrays)
@@ -139,10 +146,20 @@ Mesh::draw()
       glEnableVertexAttribArray(loc);
     }
   }
+  assert_gl("Mesh::draw2");
 
   // activate element array and draw the mesh
-  glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_element_array_vbo);
-  glDrawElements(m_primitive_type, m_element_array_size, GL_UNSIGNED_INT, 0);
+  if (m_element_array_vbo)
+  {
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_element_array_vbo);
+    glDrawElements(m_primitive_type, m_element_count, GL_UNSIGNED_INT, 0);
+  }
+  else
+  {
+    glDrawArrays(m_primitive_type, 0, m_element_count);
+  }
+
+  assert_gl("Mesh::draw");
 }
 
 /* EOF */
