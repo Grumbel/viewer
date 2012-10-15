@@ -34,6 +34,8 @@ public:
   
   GLuint get_id() const { return m_program; }
 
+  void inspect() const;
+
 private:
   Program(const Program&);
   Program& operator=(const Program&);
