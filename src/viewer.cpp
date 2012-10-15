@@ -661,80 +661,65 @@ void init()
     g_camera.reset(new Camera(g_fov, aspect_ratio, g_near_z, 100000.0f));
 
     if (true)
-    {
-      if (true)
+    { // load a mesh from file
+      auto node = g_scene_manager->get_world()->create_child();
+      node->set_position(glm::vec3(1.0f, -1.0f, -5.0f));
+
+      MaterialPtr material(new Material);
+      material->enable(GL_CULL_FACE);
+      material->enable(GL_DEPTH_TEST);
+      material->set_texture(0, Texture::from_file("data/textures/grass_01_v1.tga"));
+      material->set_uniform("diffuse", glm::vec4(1.0f, 0.0f, 1.0f, 1.0f));
+      material->set_uniform("diffuse_texture", 0);
+      material->set_program(Program::create(Shader::from_file(GL_VERTEX_SHADER, "src/basic.vert"),
+                                            Shader::from_file(GL_FRAGMENT_SHADER, "src/basic.frag")));
+
+      auto entity = Model::from_file(g_model_filename);
+      entity->set_material(material);
+
+      node->attach_entity(entity);
+    }
+
+    if (true)
+    { // create a skybox
+      MaterialPtr material(new Material);
+      material->blend_func(GL_ONE, GL_ONE);
+      material->enable(GL_BLEND);
+      material->enable(GL_CULL_FACE);
+      material->enable(GL_DEPTH_TEST);
+      material->set_texture(0, Texture::cubemap_from_file("data/textures/langholmen/"));
+      material->set_uniform("diffuse", glm::vec4(1.0f, 1.0f, 1.0f, 1.0f));
+      material->set_uniform("diffuse_texture", 0);
+      material->set_program(Program::create(Shader::from_file(GL_VERTEX_SHADER, "src/cubemap.vert"),
+                                            Shader::from_file(GL_FRAGMENT_SHADER, "src/cubemap.frag")));
+
+
+      auto mesh = Mesh::create_skybox(500.0f);
+      ModelPtr entity = std::make_shared<Model>();
+      entity->add_mesh(std::move(mesh));
+      entity->set_material(material);
+
+      auto node = g_scene_manager->get_world()->create_child();
+      node->attach_entity(entity);
+    }
+
+    if (true)
+    { // light cone
+      MaterialPtr material(new Material);     
+      material->blend_func(GL_SRC_ALPHA, GL_ONE);
+      material->depth_mask(false);
+      material->enable(GL_BLEND);
+      material->enable(GL_DEPTH_TEST);
+      material->enable(GL_POINT_SPRITE);
+      material->enable(GL_PROGRAM_POINT_SIZE);
+      material->set_texture(0, Texture::create_lightspot(256, 256));
+      material->set_uniform("diffuse_texture", 0);
+      material->set_program(Program::create(Shader::from_file(GL_VERTEX_SHADER, "src/lightcone.vert"),
+                                            Shader::from_file(GL_FRAGMENT_SHADER, "src/lightcone.frag")));
+
+      auto mesh = std::unique_ptr<Mesh>(new Mesh(GL_POINTS));
+      // generate light cone mesh
       {
-        auto node = g_scene_manager->get_world()->create_child();
-        node->set_position(glm::vec3(1.0f, -1.0f, -5.0f));
-
-        MaterialPtr material(new Material);
-        material->set_program(Program::create(Shader::from_file(GL_VERTEX_SHADER, "src/basic.vert"),
-                                              Shader::from_file(GL_FRAGMENT_SHADER, "src/basic.frag")));
-
-        auto texture = Texture::from_file("data/textures/grass_01_v1.tga");
-
-        material->set_uniform("diffuse", glm::vec4(1.0f, 0.0f, 1.0f, 1.0f));
-        material->set_uniform("diffuse_texture", 0);
-        material->set_texture(0, texture);
-        material->enable(GL_DEPTH_TEST);
-        material->enable(GL_CULL_FACE);
-
-        auto entity = Model::from_file(g_model_filename);
-        entity->set_material(material);
-
-        node->attach_entity(entity);
-      }
-
-      if (true)
-      {
-        auto node = g_scene_manager->get_world()->create_child();
-        
-        auto mesh = Mesh::create_skybox(500.0f);
-        ModelPtr entity = std::make_shared<Model>();
-        entity->add_mesh(std::move(mesh));
-
-        MaterialPtr material(new Material);
-        material->set_program(Program::create(Shader::from_file(GL_VERTEX_SHADER, "src/cubemap.vert"),
-                                              Shader::from_file(GL_FRAGMENT_SHADER, "src/cubemap.frag")));
-
-        auto texture = Texture::cubemap_from_file("data/textures/langholmen/");
-
-        material->set_uniform("diffuse", glm::vec4(1.0f, 1.0f, 1.0f, 1.0f));
-        material->set_uniform("diffuse_texture", 0);
-        material->set_texture(0, texture);
-        material->enable(GL_DEPTH_TEST);
-        material->enable(GL_CULL_FACE);
-        material->enable(GL_BLEND);
-        material->blend_func(GL_ONE, GL_ONE);
-
-        entity->set_material(material);
-
-        node->attach_entity(entity);
-      }
-
-      if (true)
-      { // light cone
-        auto node = g_scene_manager->get_world()->create_child();
-        node->set_position(glm::vec3(1.0f, -1.0f, -1.0f));
-
-        MaterialPtr material(new Material);     
-        auto texture = Texture::create_lightspot(256, 256);
-
-        material->set_uniform("diffuse_texture", 0);
-        material->set_texture(0, texture);
-        material->enable(GL_PROGRAM_POINT_SIZE);
-        material->enable(GL_BLEND);
-        material->blend_func(GL_SRC_ALPHA, GL_ONE);
-        material->enable(GL_POINT_SPRITE);
-        material->enable(GL_DEPTH_TEST);
-        material->depth_mask(false);
-
-        glTexEnvi(GL_POINT_SPRITE, GL_COORD_REPLACE, GL_TRUE);
-        
-        material->set_program(Program::create(Shader::from_file(GL_VERTEX_SHADER, "src/lightcone.vert"),
-                                              Shader::from_file(GL_FRAGMENT_SHADER, "src/lightcone.frag")));
-
-        auto mesh = std::unique_ptr<Mesh>(new Mesh(GL_POINTS));
         std::vector<glm::vec3> position;
         std::vector<float> point_size;
         std::vector<float> alpha;
@@ -754,11 +739,17 @@ void init()
         mesh->attach_float_array("position", position);
         mesh->attach_float_array("point_size", point_size);
         mesh->attach_float_array("alpha", alpha);
+      }
 
-        ModelPtr entity = std::make_shared<Model>();
-        entity->add_mesh(std::move(mesh));
+      ModelPtr entity = std::make_shared<Model>();
+      entity->add_mesh(std::move(mesh));
+      entity->set_material(material);
 
-        entity->set_material(material);
+      for(int i = 0; i < 10; ++i)
+      {
+        auto node = g_scene_manager->get_world()->create_child();
+        node->set_position(glm::vec3(1.0f, i * 5.0f, -1.0f));
+        node->set_orientation(glm::quat());
         node->attach_entity(entity);
       }
     }
