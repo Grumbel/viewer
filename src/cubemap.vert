@@ -1,9 +1,11 @@
-attribute vec3 texcoord;
-attribute vec3 normal;
-attribute vec3 position;
+#version 420
 
-varying vec3 texcoord_var;
-varying vec3 normal_var;
+in vec3 texcoord;
+in vec3 normal;
+in vec3 position;
+
+out vec3 texcoord_var;
+out vec3 normal_var;
 
 void main(void)
 {
