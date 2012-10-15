@@ -24,23 +24,13 @@ private:
 
   std::unordered_map<GLenum, bool> m_capabilities;
 
+  bool m_depth_mask;
+
   GLenum m_blend_sfactor;
   GLenum m_blend_dfactor;
 
 public:
-  Material() :
-    m_diffuse(0.8f, 0.8f, 0.8f, 1.0f),
-    m_ambient(0.2f, 0.2f, 0.2f, 1.0f),
-    m_specular(0.0f, 0.0f, 0.0f, 1.0f),
-    m_emission(0.0f, 0.0f, 0.0f, 1.0f),
-    m_shininess(0),
-    m_program(),
-    m_textures(),
-    m_uniforms(),
-    m_capabilities(),
-    m_blend_sfactor(GL_ONE),
-    m_blend_dfactor(GL_ZERO)
-  {}
+  Material();
 
   glm::vec4 get_diffuse() const { return m_diffuse; }
   glm::vec4 get_ambient() const { return m_ambient; }
@@ -54,14 +44,20 @@ public:
   void set_emission(const glm::vec4& c) { m_emission = c; }
   void set_shininess(float s) { m_shininess = s; }
 
-  void set_uniform(UniformGroupPtr uniforms) { m_uniforms = uniforms; }
   void set_program(ProgramPtr program) { m_program = program; }
   void set_texture(int unit, TexturePtr texture) { m_textures[unit] = texture; }
 
+  void depth_mask(bool flag);
   void blend_func(GLenum sfactor, GLenum dfactor);
 
   void enable(GLenum cap);
   void disable(GLenum cap);
+
+  template<typename T>
+  void set_uniform(const std::string& name, const T& value)
+  {
+    m_uniforms->set_uniform(name, value);
+  }
   
   void apply();
 

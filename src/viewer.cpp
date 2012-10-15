@@ -44,7 +44,6 @@
 #include "scene_manager.hpp"
 #include "shader.hpp"
 #include "text_surface.hpp"
-#include "uniform_group.hpp"
 
 void draw_models(bool shader_foo);
 
@@ -674,10 +673,8 @@ void init()
 
         auto texture = Texture::from_file("data/textures/grass_01_v1.tga");
 
-        UniformGroupPtr ug(new UniformGroup);
-        ug->set_uniform("diffuse", glm::vec4(1.0f, 0.0f, 1.0f, 1.0f));
-        ug->set_uniform("diffuse_texture", 0);
-        material->set_uniform(ug);
+        material->set_uniform("diffuse", glm::vec4(1.0f, 0.0f, 1.0f, 1.0f));
+        material->set_uniform("diffuse_texture", 0);
         material->set_texture(0, texture);
         material->enable(GL_DEPTH_TEST);
         material->enable(GL_CULL_FACE);
@@ -702,10 +699,8 @@ void init()
 
         auto texture = Texture::cubemap_from_file("data/textures/langholmen/");
 
-        UniformGroupPtr ug(new UniformGroup);
-        ug->set_uniform("diffuse", glm::vec4(1.0f, 1.0f, 1.0f, 1.0f));
-        ug->set_uniform("diffuse_texture", 0);
-        material->set_uniform(ug);
+        material->set_uniform("diffuse", glm::vec4(1.0f, 1.0f, 1.0f, 1.0f));
+        material->set_uniform("diffuse_texture", 0);
         material->set_texture(0, texture);
         material->enable(GL_DEPTH_TEST);
         material->enable(GL_CULL_FACE);
@@ -724,25 +719,17 @@ void init()
 
         MaterialPtr material(new Material);     
         auto texture = Texture::create_lightspot(256, 256);
-        UniformGroupPtr ug(new UniformGroup);
 
-        //ug->set_uniform("diffuse_texture", 0);
-        material->set_uniform(ug);
+        material->set_uniform("diffuse_texture", 0);
         material->set_texture(0, texture);
         material->enable(GL_PROGRAM_POINT_SIZE);
         material->enable(GL_BLEND);
         material->blend_func(GL_SRC_ALPHA, GL_ONE);
         material->enable(GL_POINT_SPRITE);
-        material->enable(GL_VERTEX_PROGRAM_POINT_SIZE);
-        //material->enable(GL_DEPTH_TEST);
-        //glDepthMask(GL_FALSE);
+        material->enable(GL_DEPTH_TEST);
+        material->depth_mask(false);
 
         glTexEnvi(GL_POINT_SPRITE, GL_COORD_REPLACE, GL_TRUE);
-        //float quadratic[] =  { 0.0f, 0.0f, 1.0f };
-        //glPointParameterfv( GL_POINT_DISTANCE_ATTENUATION, quadratic );
-        //glPointParameterf(GL_POINT_SIZE_MIN, 16.0f);
-        //glPointParameterf(GL_POINT_SIZE_MAX, 1000.0f);
-        //glPointParameterfARB( GL_POINT_FADE_THRESHOLD_SIZE, 200.0f );
         
         material->set_program(Program::create(Shader::from_file(GL_VERTEX_SHADER, "src/lightcone.vert"),
                                               Shader::from_file(GL_FRAGMENT_SHADER, "src/lightcone.frag")));
@@ -751,7 +738,6 @@ void init()
         std::vector<glm::vec3> position;
         std::vector<float> point_size;
         std::vector<float> alpha;
-        std::vector<int> index;
         int steps = 70;
         float length = 3.0f;
         float size   = 1000.0f;
@@ -761,7 +747,6 @@ void init()
           float progress = static_cast<float>(i) / static_cast<float>(steps-1);
           progress = progress * progress;
 
-          index.push_back(i - start);
           point_size.push_back(size * progress);
           position.emplace_back(length * progress, 0.0f, 0.0f);
           alpha.push_back(0.25 * (1.0f - progress));
@@ -769,7 +754,6 @@ void init()
         mesh->attach_float_array("position", position);
         mesh->attach_float_array("point_size", point_size);
         mesh->attach_float_array("alpha", alpha);
-        mesh->attach_element_array(index);
 
         ModelPtr entity = std::make_shared<Model>();
         entity->add_mesh(std::move(mesh));

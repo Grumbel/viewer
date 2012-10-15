@@ -6,6 +6,28 @@
 #include "log.hpp"
 #include "assert_gl.hpp"
 
+Material::Material() :
+  m_diffuse(0.8f, 0.8f, 0.8f, 1.0f),
+  m_ambient(0.2f, 0.2f, 0.2f, 1.0f),
+  m_specular(0.0f, 0.0f, 0.0f, 1.0f),
+  m_emission(0.0f, 0.0f, 0.0f, 1.0f),
+  m_shininess(0),
+  m_program(),
+  m_textures(),
+  m_uniforms(std::make_shared<UniformGroup>()),
+  m_capabilities(),
+  m_depth_mask(true),
+  m_blend_sfactor(GL_ONE),
+  m_blend_dfactor(GL_ZERO)
+{
+}
+
+void
+Material::depth_mask(bool flag)
+{
+  m_depth_mask = flag;
+}
+
 void
 Material::blend_func(GLenum sfactor, GLenum dfactor)
 {
@@ -45,6 +67,8 @@ Material::apply()
       glDisable(cap.first);
     }
   }
+
+  glDepthMask(m_depth_mask);
 
   glBlendFunc(m_blend_sfactor, m_blend_dfactor);
 
