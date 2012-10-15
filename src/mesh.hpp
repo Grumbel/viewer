@@ -67,6 +67,14 @@ public:
 
   void draw();
 
+  void attach_float_array(const std::string& name, const std::vector<float>& vec)
+  {
+    assert(m_attribute_arrays.find(name) == m_attribute_arrays.end());
+
+    GLuint vbo = build_vbo(GL_ARRAY_BUFFER, vec);
+    m_attribute_arrays[name] = Array(Array::Float, 1, vbo);
+  }
+
   template<typename T>  
   void attach_float_array(const std::string& name, const std::vector<T>& vec)
   {
@@ -83,7 +91,7 @@ public:
 
     GLuint vbo = build_vbo(GL_ARRAY_BUFFER, vec);
     m_attribute_arrays[name] = Array(Array::Integer, T::value_size(), vbo);
-  }
+  } 
 
   template<typename T>  
   void attach_element_array(const std::vector<T>& vec)
