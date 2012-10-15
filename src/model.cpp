@@ -72,7 +72,7 @@ Model::from_istream(std::istream& in)
 
       std::unique_ptr<Mesh> mesh(new Mesh(GL_TRIANGLES));
 
-      mesh->attach_float_array("position",   position);
+      mesh->attach_float_array("position", position);
       mesh->attach_float_array("texcoord", texcoord);
       mesh->attach_float_array("normal",   normal);
       mesh->attach_element_array(index);
