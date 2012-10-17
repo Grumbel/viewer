@@ -8,32 +8,32 @@ Uniform<UniformSymbol>::apply(ProgramPtr prog, const RenderContext& ctx)
 {
   switch(m_value)
   {
-    case kUniformNormalMatrix:
+    case UniformSymbol::NormalMatrix:
       prog->set_uniform(m_name, glm::mat3(ctx.get_view_matrix() * ctx.get_model_matrix()));
       break;
 
-    case kUniformViewMatrix:
+    case UniformSymbol::ViewMatrix:
       prog->set_uniform(m_name, ctx.get_view_matrix());
       break;
       
-    case kUniformModelMatrix:
+    case UniformSymbol::ModelMatrix:
       prog->set_uniform(m_name, ctx.get_model_matrix());
       break;
       
-    case kUniformModelViewMatrix:
+    case UniformSymbol::ModelViewMatrix:
       prog->set_uniform(m_name, ctx.get_view_matrix() * ctx.get_model_matrix());
       break;
 
-    case kUniformProjectionMatrix:
+    case UniformSymbol::ProjectionMatrix:
       prog->set_uniform(m_name, ctx.get_projection_matrix());
       break;
 
-    case kUniformModelViewProjectionMatrix:
+    case UniformSymbol::ModelViewProjectionMatrix:
       prog->set_uniform(m_name, ctx.get_projection_matrix() * ctx.get_view_matrix() * ctx.get_model_matrix());
       break;
       
     default:
-      log_error("unknown UniformSymbol %s", m_value);
+      log_error("unknown UniformSymbol %d", static_cast<int>(m_value));
       break;
   }
 }

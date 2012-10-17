@@ -13,14 +13,13 @@
 class RenderContext;
 class UniformGroup;
 
-enum UniformSymbol
-{
-  kUniformNormalMatrix,
-  kUniformViewMatrix,
-  kUniformModelMatrix,
-  kUniformModelViewMatrix,
-  kUniformProjectionMatrix,
-  kUniformModelViewProjectionMatrix
+enum class UniformSymbol {
+  NormalMatrix,
+  ViewMatrix,
+  ModelMatrix,
+  ModelViewMatrix,
+  ProjectionMatrix,
+  ModelViewProjectionMatrix
 };
 
 class UniformBase
