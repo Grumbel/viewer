@@ -128,7 +128,7 @@ Mesh::draw()
     int loc = glGetAttribLocation(program, array.first.c_str());
     if (loc == -1)
     {
-      log_error("%s: attribute not found", array.first);
+      //log_error("%s: attribute not found", array.first);
     }
     else
     {

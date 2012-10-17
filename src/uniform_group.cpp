@@ -3,7 +3,7 @@
 #include "log.hpp"
 
 void
-UniformGroup::apply(ProgramPtr prog)
+UniformGroup::apply(ProgramPtr prog, const RenderContext& context)
 {
   for(auto& uniform : m_uniforms)
   {
@@ -14,7 +14,7 @@ UniformGroup::apply(ProgramPtr prog)
     }
     else
     {
-      uniform->apply(loc);
+      uniform->apply(loc, context);
     }
   }
 }

@@ -19,6 +19,7 @@ private:
 public:
   static ProgramPtr create(ShaderPtr shader);
   static ProgramPtr create(ShaderPtr shader1, ShaderPtr shader2);
+  static ProgramPtr create(ShaderPtr shader1, ShaderPtr shader2, ShaderPtr shader3);
 
 public:
   Program();

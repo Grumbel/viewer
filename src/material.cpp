@@ -48,7 +48,7 @@ Material::disable(GLenum cap)
 }
 
 void
-Material::apply()
+Material::apply(const RenderContext& context)
 {
   glMaterialfv(GL_FRONT, GL_AMBIENT,  glm::value_ptr(m_ambient));
   glMaterialfv(GL_FRONT, GL_SPECULAR, glm::value_ptr(m_specular));
@@ -84,7 +84,8 @@ Material::apply()
 
     if (m_uniforms)
     {
-      m_uniforms->apply(m_program);
+      m_uniforms->apply(m_program, context);
+      assert_gl("apply uniforms");
     }
   }
 

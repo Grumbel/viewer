@@ -41,6 +41,7 @@
 #include "opengl_state.hpp"
 #include "pose.hpp"
 #include "program.hpp"
+#include "render_context.hpp"
 #include "scene_manager.hpp"
 #include "shader.hpp"
 #include "text_surface.hpp"
@@ -668,11 +669,42 @@ void init()
       MaterialPtr material(new Material);
       material->enable(GL_CULL_FACE);
       material->enable(GL_DEPTH_TEST);
-      material->set_texture(0, Texture::from_file("data/textures/grass_01_v1.tga"));
-      material->set_uniform("diffuse", glm::vec4(1.0f, 0.0f, 1.0f, 1.0f));
-      material->set_uniform("diffuse_texture", 0);
-      material->set_program(Program::create(Shader::from_file(GL_VERTEX_SHADER, "src/basic.vert"),
-                                            Shader::from_file(GL_FRAGMENT_SHADER, "src/basic.frag")));
+      //material->set_texture(0, Texture::from_file("data/textures/grass_01_v1.tga"));
+      //material->set_uniform("diffuse", glm::vec4(1.0f, 0.0f, 1.0f, 1.0f));
+      //material->set_uniform("diffuse_texture", 0);
+
+      material->set_uniform("light.diffuse",   glm::vec3(1.0f, 1.0f, 1.0f));
+      material->set_uniform("light.ambient",   glm::vec3(0.2f, 0.2f, 0.2f));
+      material->set_uniform("light.specular",  glm::vec3(1.3f, 1.3f, 1.3f));
+      //material->set_uniform("light.shininess", 3.0f);
+      //material->set_uniform("light.position",  glm::vec3(5.0f, 5.0f, 5.0f));
+        material->set_uniform("light.position", [](GLint loc, const RenderContext& ctx) {
+          set_uniform(loc, ctx, glm::vec3(ctx.get_view_matrix() * glm::vec4(50.0f, 50.0f, 50.0f, 1.0f)));
+        });
+
+      material->set_uniform("material.diffuse",   glm::vec3(0.5f, 0.5f, 0.5f));
+      material->set_uniform("material.ambient",   glm::vec3(0.2f, 0.2f, 0.2f));
+      material->set_uniform("material.specular",  glm::vec3(1.0f, 1.0f, 1.0f));
+      material->set_uniform("material.shininess", 160.0f);
+
+      material->set_uniform("ModelViewMatrix", [](GLint loc, const RenderContext& ctx) {
+          set_uniform(loc, ctx, ctx.get_view_matrix() * ctx.get_model_matrix());
+        });
+      material->set_uniform("NormalMatrix", [](GLint loc, const RenderContext& ctx) {
+          set_uniform(loc, ctx, glm::mat3(ctx.get_view_matrix() * ctx.get_model_matrix()));
+        });
+      /*
+      material->set_uniform("ProjectionMatrix", [](GLint loc, const RenderContext& ctx) {
+          set_uniform(loc, ctx, ctx.get_projection_matrix());
+        });
+      */
+      material->set_uniform("MVP", [](GLint loc, const RenderContext& ctx) {
+          set_uniform(loc, ctx, 
+                      ctx.get_projection_matrix() * ctx.get_view_matrix() * ctx.get_model_matrix());
+        });
+
+      material->set_program(Program::create(Shader::from_file(GL_VERTEX_SHADER, "src/phong.vert"),
+                                            Shader::from_file(GL_FRAGMENT_SHADER, "src/phong.frag")));
 
       auto entity = Model::from_file(g_model_filename);
       entity->set_material(material);

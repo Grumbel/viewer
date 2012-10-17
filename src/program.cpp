@@ -30,6 +30,20 @@ Program::create(ShaderPtr shader1, ShaderPtr shader2)
   return program;
 }
 
+ProgramPtr
+Program::create(ShaderPtr shader1, ShaderPtr shader2, ShaderPtr shader3)
+{
+  ProgramPtr program = std::make_shared<Program>();
+  program->attach(shader1);
+  program->attach(shader2);
+  program->attach(shader3);
+  program->link();
+
+  program->inspect();
+
+  return program;
+}
+
 Program::Program() :
   m_program()
 {

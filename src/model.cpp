@@ -223,13 +223,18 @@ Model::from_istream(std::istream& in)
 }
 
 void 
-Model::draw()
+Model::draw(const RenderContext& context)
 {
   OpenGLState state;
 
-  if (m_material)
+  if (!m_material)
   {
-    m_material->apply();
+    log_error("Model::draw: no material set");
+  }
+  else
+  {
+    m_material->apply(context);
+    
   }
 
   for (MeshLst::iterator i = m_meshes.begin(); i != m_meshes.end(); ++i)

@@ -1,6 +1,7 @@
 #include "scene_manager.hpp"
 
 #include "camera.hpp"
+#include "render_context.hpp"
 
 SceneManager::SceneManager() :
   m_world(new SceneNode),
@@ -50,24 +51,11 @@ SceneManager::render(const Camera& camera, SceneNode* node)
 {
   OpenGLState state;
 
-  glMatrixMode(GL_PROJECTION);
-  glLoadIdentity();
-
-  glMatrixMode(GL_MODELVIEW);
-  glLoadIdentity();
-
-  glMultMatrixf(glm::value_ptr(camera.get_matrix()));
-    
-  glPushMatrix();
+  RenderContext context(camera, node);
+  for(auto& entity : node->get_entities())
   {
-    glMultMatrixf(glm::value_ptr(node->get_transform()));
-
-    for(auto& entity : node->get_entities())
-    {
-      entity->draw();
-    }
+    entity->draw(context);
   }
-  glPopMatrix();
 
   for(auto& child : node->get_children())
   {

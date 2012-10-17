@@ -9,6 +9,8 @@
 #include "texture.hpp"
 #include "uniform_group.hpp"
 
+class RenderContext;
+
 class Material
 {
 private:
@@ -59,7 +61,7 @@ public:
     m_uniforms->set_uniform(name, value);
   }
   
-  void apply();
+  void apply(const RenderContext& context);
 
 private:
   Material(const Material&);
