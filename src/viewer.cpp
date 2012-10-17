@@ -690,9 +690,9 @@ void init()
       material->set_uniform("material.specular",  glm::vec3(1.0f, 1.0f, 1.0f));
       material->set_uniform("material.shininess", 15.0f);
 
-      material->set_uniform("ModelViewMatrix", kUniformModelViewMatrix);
-      material->set_uniform("NormalMatrix", kUniformNormalMatrix);
-      material->set_uniform("MVP", kUniformModelViewProjectionMatrix);
+      material->set_uniform("ModelViewMatrix", UniformSymbol::ModelViewMatrix);
+      material->set_uniform("NormalMatrix", UniformSymbol::NormalMatrix);
+      material->set_uniform("MVP", UniformSymbol::ModelViewProjectionMatrix);
 
       material->set_program(Program::create(Shader::from_file(GL_VERTEX_SHADER, "src/phong.vert"),
                                             Shader::from_file(GL_FRAGMENT_SHADER, "src/phong.frag")));
@@ -713,7 +713,7 @@ void init()
       material->set_texture(0, Texture::cubemap_from_file("data/textures/langholmen/"));
       material->set_uniform("diffuse", glm::vec4(1.0f, 1.0f, 1.0f, 1.0f));
       material->set_uniform("diffuse_texture", 0);
-      material->set_uniform("MVP", kUniformModelViewProjectionMatrix);
+      material->set_uniform("MVP", UniformSymbol::ModelViewProjectionMatrix);
       material->set_program(Program::create(Shader::from_file(GL_VERTEX_SHADER, "src/cubemap.vert"),
                                             Shader::from_file(GL_FRAGMENT_SHADER, "src/cubemap.frag")));
 
@@ -738,6 +738,8 @@ void init()
       material->enable(GL_PROGRAM_POINT_SIZE);
       material->set_texture(0, Texture::create_lightspot(256, 256));
       material->set_uniform("diffuse_texture", 0);
+      material->set_uniform("ModelViewMatrix", UniformSymbol::ModelViewMatrix);
+      material->set_uniform("MVP", UniformSymbol::ModelViewProjectionMatrix);
       material->set_program(Program::create(Shader::from_file(GL_VERTEX_SHADER, "src/lightcone.vert"),
                                             Shader::from_file(GL_FRAGMENT_SHADER, "src/lightcone.frag")));
 
