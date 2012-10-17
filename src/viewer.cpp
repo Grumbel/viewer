@@ -674,8 +674,8 @@ void init()
       //material->set_uniform("diffuse_texture", 0);
 
       material->set_uniform("light.diffuse",   glm::vec3(1.0f, 1.0f, 1.0f));
-      material->set_uniform("light.ambient",   glm::vec3(0.2f, 0.2f, 0.2f));
-      material->set_uniform("light.specular",  glm::vec3(1.3f, 1.3f, 1.3f));
+      material->set_uniform("light.ambient",   glm::vec3(0.0f, 0.0f, 0.0f));
+      material->set_uniform("light.specular",  glm::vec3(0.6f, 0.6f, 0.6f));
       //material->set_uniform("light.shininess", 3.0f);
       //material->set_uniform("light.position",  glm::vec3(5.0f, 5.0f, 5.0f));
       material->set_uniform("light.position", 
@@ -686,29 +686,13 @@ void init()
                               }));
 
       material->set_uniform("material.diffuse",   glm::vec3(0.5f, 0.5f, 0.5f));
-      material->set_uniform("material.ambient",   glm::vec3(0.2f, 0.2f, 0.2f));
+      material->set_uniform("material.ambient",   glm::vec3(1.0f, 1.0f, 1.0f));
       material->set_uniform("material.specular",  glm::vec3(1.0f, 1.0f, 1.0f));
-      material->set_uniform("material.shininess", 160.0f);
+      material->set_uniform("material.shininess", 15.0f);
 
-      material->set_uniform("ModelViewMatrix", 
-                            UniformCallback(
-                              [](ProgramPtr prog, const std::string& name, const RenderContext& ctx) {
-                                prog->set_uniform(name, ctx.get_view_matrix() * ctx.get_model_matrix());
-                              }));
-      material->set_uniform("NormalMatrix",
-                            UniformCallback([](ProgramPtr prog, const std::string& name, const RenderContext& ctx) {
-                                prog->set_uniform(name, glm::mat3(ctx.get_view_matrix() * ctx.get_model_matrix()));
-                              }));
-      /*
-        material->set_uniform("ProjectionMatrix", [](GLint loc, const RenderContext& ctx) {
-        set_uniform(loc, ctx, ctx.get_projection_matrix());
-        });
-      */
-      material->set_uniform("MVP", 
-                            UniformCallback([](ProgramPtr prog, const std::string& name, const RenderContext& ctx) {
-                                prog->set_uniform(name,
-                                                  ctx.get_projection_matrix() * ctx.get_view_matrix() * ctx.get_model_matrix());
-                              }));
+      material->set_uniform("ModelViewMatrix", kUniformModelViewMatrix);
+      material->set_uniform("NormalMatrix", kUniformNormalMatrix);
+      material->set_uniform("MVP", kUniformModelViewProjectionMatrix);
 
       material->set_program(Program::create(Shader::from_file(GL_VERTEX_SHADER, "src/phong.vert"),
                                             Shader::from_file(GL_FRAGMENT_SHADER, "src/phong.frag")));

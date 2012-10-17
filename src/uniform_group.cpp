@@ -21,7 +21,7 @@ Uniform<UniformSymbol>::apply(ProgramPtr prog, const RenderContext& ctx)
       break;
       
     case kUniformModelViewMatrix:
-      prog->set_uniform(m_name, ctx.get_model_matrix() * ctx.get_model_matrix());
+      prog->set_uniform(m_name, ctx.get_view_matrix() * ctx.get_model_matrix());
       break;
 
     case kUniformProjectionMatrix:
