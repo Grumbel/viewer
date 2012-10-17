@@ -1,4 +1,4 @@
-#version 420
+#version 420 core
 
 uniform samplerCube diffuse_texture;
 uniform vec4 diffuse;
