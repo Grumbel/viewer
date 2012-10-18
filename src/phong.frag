@@ -35,6 +35,13 @@ uniform sampler2DShadow ShadowMap;
 uniform float shadowmap_bias;
 in vec4 shadow_position;
 
+float shadow_value_1()
+{
+  return textureProj(ShadowMap, shadow_position - vec4(0, shadowmap_bias, 0, 0));
+}
+
+#if 0
+
 float offset_lookup(sampler2DShadow map,
                     vec4 loc,
                     vec2 offset)
@@ -43,15 +50,10 @@ float offset_lookup(sampler2DShadow map,
   //vec2 texmapscale = vec2(1.0/1600.0, 1.0/1000.0);
   //vec2 texmapscale = vec2(0.02, 0.02) / loc.q;
   
-  return shadow2DProj(map, vec4(loc.st + offset * texmapscale * loc.q, 
-                                //loc.p-0.0001,//ortho
-                                loc.p + shadowmap_bias, //perspective
-                                loc.q)).z;
-}
-
-float shadow_value_1()
-{
-  return shadow2DProj(ShadowMap, shadow_position - vec4(0, 0, shadowmap_bias, 0)).z;
+  return textureProj(map, vec4(loc.st + offset * texmapscale * loc.q, 
+                               //loc.p-0.0001,//ortho
+                               loc.p + shadowmap_bias, //perspective
+                               loc.q));
 }
 
 float shadow_value_16()
@@ -89,7 +91,7 @@ float shadow_value_4()
     offset_lookup(ShadowMap, shadow_position, offset + vec2( 0.5, -1.5)) 
     ) * 0.25;
 }
-
+#endif
 // ---------------------------------------------------------------------------
 vec3 phong_model(vec3 position, vec3 normal)
 {

@@ -6,14 +6,16 @@ in vec3 normal;
 out vec3 frag_normal;
 out vec3 frag_position;
 
-uniform mat4 ModelViewMatrix;
-uniform mat3 NormalMatrix;
-uniform mat4 ProjectionMatrix;
-uniform mat4 MVP;
 // ---------------------------------------------------------------------------
 uniform mat4 ShadowMapMatrix;
 out vec4 shadow_position;
 // ---------------------------------------------------------------------------
+
+uniform mat4 ModelViewMatrix;
+uniform mat3 NormalMatrix;
+uniform mat4 ProjectionMatrix;
+uniform mat4 MVP;
+
 void main(void)
 {
   shadow_position = ShadowMapMatrix * vec4(position, 1.0);

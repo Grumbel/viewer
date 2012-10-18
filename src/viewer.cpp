@@ -79,7 +79,7 @@ bool g_render_shadow_map = true;
 int g_shadow_map_resolution = 512;
 
 float g_shadow_map_bias = -0.015f;
-float g_shadow_map_fov = 70.0f;
+float g_shadow_map_fov = 45.0f;
 float g_light_diffuse = 1.0f;
 float g_light_specular = 1.0f;
 float g_material_shininess = 10.0f;
@@ -145,7 +145,6 @@ void reshape(int w, int h)
 
   g_framebuffer1.reset(new Framebuffer(g_screen_w, g_screen_h));
   g_framebuffer2.reset(new Framebuffer(g_screen_w, g_screen_h));
-  g_shadow_map.reset(new Framebuffer(g_shadow_map_resolution, g_shadow_map_resolution));
 
   assert_gl("reshape");
 }
@@ -203,13 +202,14 @@ void draw_shadowmap()
   glClearColor(1.0, 0.0, 1.0, 1.0);
   glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
 
-  glm::vec3 light_pos = glm::rotate(glm::vec3(15.0f, 15.0f, 15.0f), g_light_angle, glm::vec3(0.0f, 1.0f, 0.0f));
+  glm::vec3 light_pos = glm::rotate(glm::vec3(10.0f, 10.0f, 10.0f), g_light_angle, glm::vec3(0.0f, 1.0f, 0.0f));
   glm::vec3 up = glm::rotate(glm::vec3(0.0f, 1.0f, 0.0f), g_light_up, glm::vec3(0.0f, 0.0f, 1.0f));
   glm::vec3 look_at(0.0f, 0.0f, 0.0f);
 
   Camera camera(g_shadow_map_fov, 1.0f, g_near_z, g_far_z);
   // needs bias tweaking to work
   // glOrtho(-10.0f, 10.0f, -10.0f, 10.0f, g_near_z, 1000.0f);
+  
   camera.look_at(light_pos, look_at, up);
 
   g_shadow_map_matrix = glm::mat4(0.5, 0.0, 0.0, 0.0, 
@@ -217,7 +217,7 @@ void draw_shadowmap()
                                   0.0, 0.0, 0.5, 0.0,
                                   0.5, 0.5, 0.5, 1.0);
 
-  g_shadow_map_matrix = g_shadow_map_matrix * camera.get_projection_matrix() * camera.get_view_matrix();
+  g_shadow_map_matrix = g_shadow_map_matrix * camera.get_matrix();
 
   g_scene_manager->render(camera, true);
 }
@@ -380,7 +380,7 @@ void display()
       if (g_show_menu)
       {
         glDisable(GL_BLEND);
-        g_shadow_map->draw_depth(g_screen_w - 266, 10, 256, 256, -20.0f);
+        //g_shadow_map->draw_depth(g_screen_w - 266, 10, 256, 256, -20.0f);
         g_shadow_map->draw(g_screen_w - 266 - 276, 10, 256, 256, -20.0f);
       }
     }
@@ -689,15 +689,21 @@ void init()
                               [](ProgramPtr prog, const std::string& name, const RenderContext& ctx) {
                                 if (false)
                                 {
-                                  for(int i = 0; i < 16; ++i)
+                                  for(int j = 0; j < 4; ++j)
                                   {
-                                    std::cout << glm::value_ptr(g_shadow_map_matrix)[i] << " ";
+                                    for(int i = 0; i < 4; ++i)
+                                    {
+                                      std::cout << g_shadow_map_matrix[i][j] << " ";
+                                    }
+                                    std::cout << std::endl;
                                   }
                                   std::cout << std::endl;
+                                  std::cout << "--------------------" << std::endl;
                                 }
                                 prog->set_uniform(name, g_shadow_map_matrix);
                               }));
       material->set_texture(0, g_shadow_map->get_depth_texture());
+      //material->set_texture(0, Texture::create_lightspot(256, 256));
       material->set_uniform("ShadowMap", 0);
       material->set_uniform("shadowmap_bias", g_shadow_map_bias);
 

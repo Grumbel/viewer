@@ -19,33 +19,12 @@ Framebuffer::Framebuffer(int width, int height) :
   glBindFramebuffer(GL_FRAMEBUFFER, m_fbo);
   assert_gl("framebuffer");
 
-#if 0
-  // create color buffer texture
-  glGenTextures(1, &m_color_buffer);
-  glBindTexture(GL_TEXTURE_2D, m_color_buffer);
-  glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB16F,  width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, NULL);
-  glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-  glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-  glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-  glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-  assert_gl("framebuffer");
-
-  // create depth buffer texture
-  glGenTextures(1, &m_depth_buffer);
-  glBindTexture(GL_TEXTURE_2D, m_depth_buffer);
-  glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT,  width, height, 0, GL_DEPTH_COMPONENT, GL_UNSIGNED_BYTE, NULL);
-  glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-  glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-  glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-  glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-  assert_gl("framebuffer");
-#endif
   m_color_buffer = Texture::create_empty(GL_TEXTURE_2D, GL_RGB16F, width, height);
-  m_depth_buffer = Texture::create_empty(GL_TEXTURE_2D, GL_DEPTH_COMPONENT, width, height);
+  m_depth_buffer = Texture::create_shadowmap(width, height);
     
   // attach color and depth buffer
-  glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, m_color_buffer->get_id(), 0);
-  glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT,  GL_TEXTURE_2D, m_depth_buffer->get_id(), 0);
+  glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, m_color_buffer->get_target(), m_color_buffer->get_id(), 0);
+  glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT,  m_depth_buffer->get_target(), m_depth_buffer->get_id(), 0);
   assert_gl("framebuffer");
 
   GLenum complete = glCheckFramebufferStatus(GL_FRAMEBUFFER);
@@ -101,6 +80,8 @@ Framebuffer::draw(float x, float y, float w, float h, float z)
 void
 Framebuffer::draw_depth(float x, float y, float w, float h, float z)
 {
+  assert(!"Never touch");
+
   OpenGLState state;
     
   glEnable(GL_TEXTURE_2D);

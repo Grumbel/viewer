@@ -34,23 +34,44 @@ Texture::create_empty(GLenum target, GLenum format, int width, int height)
   GLuint texture;
   glGenTextures(1, &texture);
   glBindTexture(target, texture);
-  if (format == GL_DEPTH_COMPONENT)
-  {
-    glTexImage2D(target, 0, format,  width, height, 0, format, GL_UNSIGNED_BYTE, NULL);
-    glTexParameteri(target, GL_TEXTURE_COMPARE_MODE, GL_COMPARE_R_TO_TEXTURE);
-    glTexParameteri(target, GL_TEXTURE_COMPARE_FUNC, GL_LEQUAL);
-  }
-  else
-  {
-    glTexImage2D(target, 0, format,  width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, NULL);
-  }
+  glTexImage2D(target, 0, format,  width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, NULL);
   glTexParameterf(target, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
   glTexParameterf(target, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
   glTexParameterf(target, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
   glTexParameterf(target, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
   assert_gl("framebuffer");
-
+  
   return std::make_shared<Texture>(target, texture);
+}
+
+TexturePtr
+Texture::create_shadowmap(int width, int height)
+{
+  OpenGLState state;
+
+  GLuint texture;
+
+  assert_gl("Texture::create_shadowmap: start");
+  glGenTextures(1, &texture);
+  glBindTexture(GL_TEXTURE_2D, texture);
+  
+  glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT,  width, height, 0, GL_DEPTH_COMPONENT, GL_UNSIGNED_BYTE, NULL);
+
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
+
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_FUNC, GL_LESS);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_MODE, GL_COMPARE_REF_TO_TEXTURE);
+
+  GLfloat border_color[] = { 1.0f, 0.0f, 0.0f, 0.0f };
+  glTexParameterfv(GL_TEXTURE_2D, GL_TEXTURE_BORDER_COLOR, border_color);
+
+  assert_gl("Texture::create_shadowmap");
+
+  return std::make_shared<Texture>(GL_TEXTURE_2D, texture);
 }
 
 TexturePtr
