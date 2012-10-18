@@ -23,6 +23,7 @@
 #include <boost/format.hpp>
 
 #include "log.hpp"
+#include "render_context.hpp"
 
 ModelPtr
 Model::from_file(const std::string& filename)
@@ -233,8 +234,14 @@ Model::draw(const RenderContext& context)
   }
   else
   {
-    m_material->apply(context);
-    
+    if (context.get_override_material())
+    {
+      context.get_override_material()->apply(context);
+    }
+    else
+    {
+      m_material->apply(context);
+    }
   }
 
   for (MeshLst::iterator i = m_meshes.begin(); i != m_meshes.end(); ++i)

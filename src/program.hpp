@@ -60,6 +60,7 @@ public:
  void set_uniform(GLint loc, const glm::vec4& v) { glUniform4f(loc, v.x, v.y, v.z, v.w); }
 
  void set_uniform(GLint loc, int v) { glUniform1i(loc, v); }
+ void set_uniform(GLint loc, unsigned int v) { glUniform1i(loc, v); }
  void set_uniform(GLint loc, const glm::ivec2& v) { glUniform2i(loc, v.x, v.y); }
  void set_uniform(GLint loc, const glm::ivec3& v) { glUniform3i(loc, v.x, v.y, v.z); }
  void set_uniform(GLint loc, const glm::ivec4& v) { glUniform4i(loc, v.x, v.y, v.z, v.w); }

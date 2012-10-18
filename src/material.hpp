@@ -26,6 +26,7 @@ private:
 
   std::unordered_map<GLenum, bool> m_capabilities;
 
+  glm::bvec4 m_color_mask;
   bool m_depth_mask;
 
   GLenum m_blend_sfactor;
@@ -49,6 +50,7 @@ public:
   void set_program(ProgramPtr program) { m_program = program; }
   void set_texture(int unit, TexturePtr texture) { m_textures[unit] = texture; }
 
+  void color_mask(bool r, bool g, bool b, bool a);
   void depth_mask(bool flag);
   void blend_func(GLenum sfactor, GLenum dfactor);
 

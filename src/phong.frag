@@ -29,6 +29,68 @@ uniform mat4 MVP;
 in vec3 frag_normal;
 in vec3 frag_position;
 
+// ---------------------------------------------------------------------------
+// shadow map
+uniform sampler2DShadow ShadowMap;
+uniform float shadowmap_bias;
+in vec4 shadow_position;
+
+float offset_lookup(sampler2DShadow map,
+                    vec4 loc,
+                    vec2 offset)
+{
+  vec2 texmapscale = vec2(1.0/textureSize(map, 0).x, 1.0/textureSize(map, 0).y);
+  //vec2 texmapscale = vec2(1.0/1600.0, 1.0/1000.0);
+  //vec2 texmapscale = vec2(0.02, 0.02) / loc.q;
+  
+  return shadow2DProj(map, vec4(loc.st + offset * texmapscale * loc.q, 
+                                //loc.p-0.0001,//ortho
+                                loc.p + shadowmap_bias, //perspective
+                                loc.q)).z;
+}
+
+float shadow_value_1()
+{
+  return shadow2DProj(ShadowMap, shadow_position - vec4(0, 0, shadowmap_bias, 0)).z;
+}
+
+float shadow_value_16()
+{
+  float shadowCoeff = 1.0f;
+  if (shadow_position.w)
+  {
+    float sum = 0;
+    for (float y = -1.5; y <= 1.5; y += 1.0)
+      for (float x = -1.5; x <= 1.5; x += 1.0)
+      {
+        sum += offset_lookup(ShadowMap, shadow_position, vec2(x, y));
+      }
+
+    shadowCoeff = sum / 16;
+  }
+  return shadowCoeff;
+}
+
+float shadow_value_4()
+{
+  vec2 offset = vec2(greaterThan(fract(gl_FragCoord.xy * 0.5),
+                                 vec2(0.25, 0.25)));
+  //vec2 offset;
+  //offset.x = fract(gl_FragCoord.xy * 0.5);
+  //offset.y = fract(gl_FragCoord.xy * 0.5);
+  offset.y += offset.x;  // y ^= x in floating point
+
+  if (offset.y > 1.1)
+    offset.y = 0;
+  return (
+    offset_lookup(ShadowMap, shadow_position, offset + vec2(-1.5,  0.5)) +
+    offset_lookup(ShadowMap, shadow_position, offset + vec2( 0.5,  0.5)) +
+    offset_lookup(ShadowMap, shadow_position, offset + vec2(-1.5, -1.5)) +
+    offset_lookup(ShadowMap, shadow_position, offset + vec2( 0.5, -1.5)) 
+    ) * 0.25;
+}
+
+// ---------------------------------------------------------------------------
 vec3 phong_model(vec3 position, vec3 normal)
 {
   vec3 intensity = light.ambient * material.ambient;
@@ -52,10 +114,10 @@ vec3 phong_model(vec3 position, vec3 normal)
 
   return intensity;
 }
-
+// ---------------------------------------------------------------------------
 void main(void)
 {
-  gl_FragColor = vec4(phong_model(frag_position, frag_normal), 1.0);
+  gl_FragColor = vec4(phong_model(frag_position, frag_normal) * shadow_value_1(), 1.0);
 }
 
 /* EOF */

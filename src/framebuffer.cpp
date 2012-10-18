@@ -6,8 +6,8 @@ Framebuffer::Framebuffer(int width, int height) :
   m_width(width),
   m_height(height),
   m_fbo(0),
-  m_color_buffer(0),
-  m_depth_buffer(0)
+  m_color_buffer(),
+  m_depth_buffer()
 {
   log_info("Framebuffer(%d, %d)", width, height);
   OpenGLState state;
@@ -19,6 +19,7 @@ Framebuffer::Framebuffer(int width, int height) :
   glBindFramebuffer(GL_FRAMEBUFFER, m_fbo);
   assert_gl("framebuffer");
 
+#if 0
   // create color buffer texture
   glGenTextures(1, &m_color_buffer);
   glBindTexture(GL_TEXTURE_2D, m_color_buffer);
@@ -38,10 +39,13 @@ Framebuffer::Framebuffer(int width, int height) :
   glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
   glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
   assert_gl("framebuffer");
+#endif
+  m_color_buffer = Texture::create_empty(GL_TEXTURE_2D, GL_RGB16F, width, height);
+  m_depth_buffer = Texture::create_empty(GL_TEXTURE_2D, GL_DEPTH_COMPONENT, width, height);
     
   // attach color and depth buffer
-  glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, m_color_buffer, 0);
-  glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT,  GL_TEXTURE_2D, m_depth_buffer, 0);
+  glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, m_color_buffer->get_id(), 0);
+  glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT,  GL_TEXTURE_2D, m_depth_buffer->get_id(), 0);
   assert_gl("framebuffer");
 
   GLenum complete = glCheckFramebufferStatus(GL_FRAMEBUFFER);
@@ -64,8 +68,8 @@ Framebuffer::~Framebuffer()
   glBindFramebuffer(GL_FRAMEBUFFER, 0);
   log_info("~Framebuffer()");
   glDeleteFramebuffers(1, &m_fbo);
-  glDeleteTextures(1, &m_depth_buffer);
-  glDeleteTextures(1, &m_color_buffer);
+  //glDeleteTextures(1, &m_depth_buffer);
+  //glDeleteTextures(1, &m_color_buffer);
   assert_gl("~Framebuffer()");
 }
 
@@ -76,7 +80,7 @@ Framebuffer::draw(float x, float y, float w, float h, float z)
     
   glEnable(GL_TEXTURE_2D);
 
-  glBindTexture(GL_TEXTURE_2D, m_color_buffer);
+  glBindTexture(GL_TEXTURE_2D, m_color_buffer->get_id());
   glBegin(GL_QUADS);
   {
     glTexCoord2f(0.0f, 0.0f);
@@ -101,7 +105,7 @@ Framebuffer::draw_depth(float x, float y, float w, float h, float z)
     
   glEnable(GL_TEXTURE_2D);
 
-  glBindTexture(GL_TEXTURE_2D, m_depth_buffer);
+  glBindTexture(GL_TEXTURE_2D, m_depth_buffer->get_id());
 
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_MODE, GL_NONE);
   //glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_FUNC, GL_LEQUAL);

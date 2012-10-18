@@ -20,6 +20,7 @@ public:
   static TexturePtr from_file(const std::string& filename);
   static TexturePtr create_lightspot(int width, int height);
   static TexturePtr create_random_noise(int width, int height);
+  static TexturePtr create_empty(GLenum target, GLenum format, int width, int height);
 
 public:
   Texture(GLenum target, GLuint id);

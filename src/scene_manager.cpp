@@ -6,7 +6,8 @@
 SceneManager::SceneManager() :
   m_world(new SceneNode),
   m_view(new SceneNode),
-  m_lights()
+  m_lights(),
+  m_override_material()
 {}
 
 SceneManager::~SceneManager()
@@ -34,24 +35,29 @@ SceneManager::create_light()
 }
 
 void
-SceneManager::render(const Camera& camera)
+SceneManager::render(const Camera& camera, bool geometry_pass)
 {
   m_world->update_transform();
   m_view->update_transform();
 
-  render(camera, m_world.get());
+  render_node(camera, m_world.get(), geometry_pass);
 
   Camera id = camera;
   id.set_position(glm::vec3(0.0f, 0.0f, 0.0f));
-  render(id, m_view.get());
+  render_node(id, m_view.get(), geometry_pass);
 }
 
 void
-SceneManager::render(const Camera& camera, SceneNode* node)
+SceneManager::render_node(const Camera& camera, SceneNode* node, bool geometry_pass)
 {
   OpenGLState state;
 
   RenderContext context(camera, node);
+  if (geometry_pass)
+  {
+    context.set_override_material(m_override_material);
+  }
+
   for(auto& entity : node->get_entities())
   {
     entity->draw(context);
@@ -59,8 +65,14 @@ SceneManager::render(const Camera& camera, SceneNode* node)
 
   for(auto& child : node->get_children())
   {
-    render(camera, child);
+    render_node(camera, child, geometry_pass);
   }
+}
+
+void
+SceneManager::set_override_material(MaterialPtr material)
+{
+  m_override_material = material;
 }
 
 /* EOF */

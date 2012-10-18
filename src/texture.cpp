@@ -24,6 +24,35 @@ void flip_rgb(SDL_Surface* surface)
 
 } // namespace
 
+
+TexturePtr
+Texture::create_empty(GLenum target, GLenum format, int width, int height)
+{
+  OpenGLState state;
+
+  assert_gl("framebuffer");
+  GLuint texture;
+  glGenTextures(1, &texture);
+  glBindTexture(target, texture);
+  if (format == GL_DEPTH_COMPONENT)
+  {
+    glTexImage2D(target, 0, format,  width, height, 0, format, GL_UNSIGNED_BYTE, NULL);
+    glTexParameteri(target, GL_TEXTURE_COMPARE_MODE, GL_COMPARE_R_TO_TEXTURE);
+    glTexParameteri(target, GL_TEXTURE_COMPARE_FUNC, GL_LEQUAL);
+  }
+  else
+  {
+    glTexImage2D(target, 0, format,  width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, NULL);
+  }
+  glTexParameterf(target, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+  glTexParameterf(target, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+  glTexParameterf(target, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+  glTexParameterf(target, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+  assert_gl("framebuffer");
+
+  return std::make_shared<Texture>(target, texture);
+}
+
 TexturePtr
 Texture::create_random_noise(int width, int height)
 {

@@ -19,6 +19,7 @@
 
 #include <GL/glew.h>
 
+#include "texture.hpp"
 #include "log.hpp"
 
 class Framebuffer
@@ -28,8 +29,9 @@ private:
   int m_height;
 
   GLuint m_fbo;
-  GLuint m_color_buffer;
-  GLuint m_depth_buffer;
+
+  TexturePtr m_color_buffer;
+  TexturePtr m_depth_buffer;
 
 public:
   Framebuffer(int width, int height);  
@@ -41,7 +43,8 @@ public:
   void bind();
   void unbind();
 
-  GLuint get_depth_texture() const { return m_depth_buffer; }
+  TexturePtr get_color_texture() const { return m_color_buffer; }
+  TexturePtr get_depth_texture() const { return m_depth_buffer; }
 
   int get_width()  const { return m_width; }
   int get_height() const { return m_height; }

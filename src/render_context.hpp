@@ -2,6 +2,7 @@
 #define HEADER_RENDER_CONTEXT_HPP
 
 #include "camera.hpp"
+#include "material.hpp"
 #include "scene_node.hpp"
 
 class RenderContext
@@ -9,12 +10,16 @@ class RenderContext
 private:
   Camera m_camera;
   SceneNode* m_node;
+  bool m_geometry_pass;
+  MaterialPtr m_override_material;
 
 public:
   RenderContext(const Camera& camera,
                 SceneNode* node) :
     m_camera(camera),
-    m_node(node)
+    m_node(node),
+    m_geometry_pass(false),
+    m_override_material()
   {
   }
 
@@ -31,6 +36,26 @@ public:
   glm::mat4 get_projection_matrix() const
   {
     return m_camera.get_projection_matrix();
+  }
+  
+  void set_geometry_pass()
+  {
+    m_geometry_pass = true;
+  }
+
+  bool is_geometry_pass() const
+  {
+    return m_geometry_pass;
+  }
+
+  void set_override_material(MaterialPtr material)
+  {
+    m_override_material = material;
+  }
+
+  MaterialPtr get_override_material() const
+  {
+    return m_override_material;
   }
 
 private:

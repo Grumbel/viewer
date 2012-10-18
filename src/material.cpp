@@ -16,10 +16,17 @@ Material::Material() :
   m_textures(),
   m_uniforms(std::make_shared<UniformGroup>()),
   m_capabilities(),
+  m_color_mask(true, true, true, true),
   m_depth_mask(true),
   m_blend_sfactor(GL_ONE),
   m_blend_dfactor(GL_ZERO)
 {
+}
+
+void
+Material::color_mask(bool r, bool g, bool b, bool a)
+{
+  m_color_mask = glm::bvec4(r, g, b, a);
 }
 
 void
@@ -68,6 +75,7 @@ Material::apply(const RenderContext& context)
     }
   }
 
+  glColorMask(m_color_mask.r, m_color_mask.g, m_color_mask.b, m_color_mask.a); 
   glDepthMask(m_depth_mask);
 
   glBlendFunc(m_blend_sfactor, m_blend_dfactor);
