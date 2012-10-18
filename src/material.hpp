@@ -31,6 +31,8 @@ private:
 
   GLenum m_blend_sfactor;
   GLenum m_blend_dfactor;
+  
+  GLenum m_cull_face;
 
 public:
   Material();
@@ -53,6 +55,7 @@ public:
   void color_mask(bool r, bool g, bool b, bool a);
   void depth_mask(bool flag);
   void blend_func(GLenum sfactor, GLenum dfactor);
+  void cull_face(GLenum mode);
 
   void enable(GLenum cap);
   void disable(GLenum cap);

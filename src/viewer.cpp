@@ -640,6 +640,7 @@ void init()
 
     {
       MaterialPtr material(new Material);
+      material->cull_face(GL_FRONT);
       material->enable(GL_CULL_FACE);
       material->enable(GL_DEPTH_TEST);
       material->set_uniform("MVP", UniformSymbol::ModelViewProjectionMatrix);
@@ -705,7 +706,11 @@ void init()
       material->set_texture(0, g_shadow_map->get_depth_texture());
       //material->set_texture(0, Texture::create_lightspot(256, 256));
       material->set_uniform("ShadowMap", 0);
-      material->set_uniform("shadowmap_bias", g_shadow_map_bias);
+      material->set_uniform("shadowmap_bias", 
+                            UniformCallback(
+                              [](ProgramPtr prog, const std::string& name, const RenderContext& ctx) {
+                                prog->set_uniform(name, g_shadow_map_bias);
+                              }));
 
       material->set_program(Program::create(Shader::from_file(GL_VERTEX_SHADER, "src/phong.vert"),
                                             Shader::from_file(GL_FRAGMENT_SHADER, "src/phong.frag")));

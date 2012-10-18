@@ -19,7 +19,8 @@ Material::Material() :
   m_color_mask(true, true, true, true),
   m_depth_mask(true),
   m_blend_sfactor(GL_ONE),
-  m_blend_dfactor(GL_ZERO)
+  m_blend_dfactor(GL_ZERO),
+  m_cull_face(GL_BACK)
 {
 }
 
@@ -40,6 +41,12 @@ Material::blend_func(GLenum sfactor, GLenum dfactor)
 {
   m_blend_sfactor = sfactor;
   m_blend_dfactor = dfactor;
+}
+
+void
+Material::cull_face(GLenum mode)
+{
+  m_cull_face = mode;
 }
 
 void
@@ -77,6 +84,7 @@ Material::apply(const RenderContext& context)
 
   glColorMask(m_color_mask.r, m_color_mask.g, m_color_mask.b, m_color_mask.a); 
   glDepthMask(m_depth_mask);
+  glCullFace(m_cull_face);
 
   glBlendFunc(m_blend_sfactor, m_blend_dfactor);
 

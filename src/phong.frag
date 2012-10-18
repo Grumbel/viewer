@@ -35,13 +35,6 @@ uniform sampler2DShadow ShadowMap;
 uniform float shadowmap_bias;
 in vec4 shadow_position;
 
-float shadow_value_1()
-{
-  return textureProj(ShadowMap, shadow_position - vec4(0, shadowmap_bias, 0, 0));
-}
-
-#if 0
-
 float offset_lookup(sampler2DShadow map,
                     vec4 loc,
                     vec2 offset)
@@ -54,6 +47,11 @@ float offset_lookup(sampler2DShadow map,
                                //loc.p-0.0001,//ortho
                                loc.p + shadowmap_bias, //perspective
                                loc.q));
+}
+
+float shadow_value_1()
+{
+  return textureProj(ShadowMap, shadow_position - vec4(0, shadowmap_bias, 0, 0));
 }
 
 float shadow_value_16()
@@ -91,7 +89,7 @@ float shadow_value_4()
     offset_lookup(ShadowMap, shadow_position, offset + vec2( 0.5, -1.5)) 
     ) * 0.25;
 }
-#endif
+
 // ---------------------------------------------------------------------------
 vec3 phong_model(vec3 position, vec3 normal)
 {
@@ -119,7 +117,8 @@ vec3 phong_model(vec3 position, vec3 normal)
 // ---------------------------------------------------------------------------
 void main(void)
 {
-  gl_FragColor = vec4(phong_model(frag_position, frag_normal) * shadow_value_1(), 1.0);
+  float shadow = max(0.5, shadow_value_4());
+  gl_FragColor = vec4(phong_model(frag_position, frag_normal) * shadow, 1.0);
 }
 
 /* EOF */
