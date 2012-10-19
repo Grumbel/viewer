@@ -32,6 +32,17 @@ typedef std::vector<glm::vec4>  BoneWeights;
 typedef std::vector<glm::ivec4> BoneIndices;
 typedef std::vector<int>        BoneCounts;
 
+template<typename C> 
+inline size_t glm_vec_length() 
+{
+  assert(!"glm_vec_length not implemented");
+  return 0;
+}
+
+template<> inline size_t glm_vec_length<glm::vec2>() { return 2; }
+template<> inline size_t glm_vec_length<glm::vec3>() { return 3; }
+template<> inline size_t glm_vec_length<glm::vec4>() { return 4; }
+
 class Mesh
 {
 private:
@@ -94,7 +105,7 @@ public:
   void attach_float_array(const std::string& name, const std::vector<T>& vec)
   {
     GLuint vbo = build_vbo(GL_ARRAY_BUFFER, vec);
-    attach_array(name, Array(Array::Float, T::value_size(), vbo), vec.size());
+    attach_array(name, Array(Array::Float, glm_vec_length<T>(), vbo), vec.size());
   }
 
   void attach_int_array(const std::string& name, const std::vector<int>& vec)
@@ -107,7 +118,7 @@ public:
   void attach_int_array(const std::string& name, const std::vector<T>& vec)
   {
     GLuint vbo = build_vbo(GL_ARRAY_BUFFER, vec);
-    attach_array(name, Array(Array::Integer, T::value_size(), vbo), vec.size());
+    attach_array(name, Array(Array::Integer, glm_vec_length<T>(), vbo), vec.size());
   } 
 
   void attach_element_array(const std::vector<int>& vec)
