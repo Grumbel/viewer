@@ -32,7 +32,6 @@ in vec3 frag_position;
 // ---------------------------------------------------------------------------
 // shadow map
 uniform sampler2DShadow ShadowMap;
-uniform float shadowmap_bias;
 in vec4 shadow_position;
 
 float offset_lookup(sampler2DShadow map,
@@ -45,13 +44,13 @@ float offset_lookup(sampler2DShadow map,
   
   return textureProj(map, vec4(loc.st + offset * texmapscale * loc.q, 
                                //loc.p-0.0001,//ortho
-                               loc.p + shadowmap_bias, //perspective
+                               loc.p, //perspective
                                loc.q));
 }
 
 float shadow_value_1()
 {
-  return textureProj(ShadowMap, shadow_position - vec4(0, shadowmap_bias, 0, 0));
+  return textureProj(ShadowMap, shadow_position);
 }
 
 float shadow_value_16()

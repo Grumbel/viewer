@@ -78,7 +78,6 @@ bool g_render_shadow_map = true;
 
 int g_shadow_map_resolution = 512;
 
-float g_shadow_map_bias = -0.015f;
 float g_shadow_map_fov = 45.0f;
 float g_light_diffuse = 1.0f;
 float g_light_specular = 1.0f;
@@ -706,12 +705,6 @@ void init()
       material->set_texture(0, g_shadow_map->get_depth_texture());
       //material->set_texture(0, Texture::create_lightspot(256, 256));
       material->set_uniform("ShadowMap", 0);
-      material->set_uniform("shadowmap_bias", 
-                            UniformCallback(
-                              [](ProgramPtr prog, const std::string& name, const RenderContext& ctx) {
-                                prog->set_uniform(name, g_shadow_map_bias);
-                              }));
-
       material->set_program(Program::create(Shader::from_file(GL_VERTEX_SHADER, "src/phong.vert"),
                                             Shader::from_file(GL_FRAGMENT_SHADER, "src/phong.frag")));
 
@@ -721,14 +714,14 @@ void init()
       node->attach_entity(entity);
     }
 
-    if (false)
+    if (true)
     { // create a skybox
       MaterialPtr material(new Material);
       material->blend_func(GL_ONE, GL_ONE);
       material->enable(GL_BLEND);
       material->enable(GL_CULL_FACE);
       material->enable(GL_DEPTH_TEST);
-      material->set_texture(0, Texture::cubemap_from_file("data/textures/langholmen/"));
+      material->set_texture(0, Texture::cubemap_from_file("data/textures/miramar/"));
       material->set_uniform("diffuse", glm::vec4(1.0f, 1.0f, 1.0f, 1.0f));
       material->set_uniform("diffuse_texture", 0);
       material->set_uniform("MVP", UniformSymbol::ModelViewProjectionMatrix);
@@ -745,7 +738,7 @@ void init()
       node->attach_entity(entity);
     }
 
-    if (false)
+    if (true)
     { // light cone
       MaterialPtr material(new Material);     
       material->blend_func(GL_SRC_ALPHA, GL_ONE);
@@ -810,7 +803,6 @@ void init()
   g_menu->add_item("depth.near_z", &g_near_z, 0.01, 0.0f);
   g_menu->add_item("depth.far_z",  &g_far_z, 1.0f);
 
-  g_menu->add_item("shadowmap.bias", &g_shadow_map_bias, 0.005f);
   g_menu->add_item("shadowmap.fov", &g_shadow_map_fov, 1.0f);
 
   g_menu->add_item("spot_halo_samples",  &g_spot_halo_samples, 1, 0);
