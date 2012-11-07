@@ -43,9 +43,10 @@ public:
   void update_transform(const glm::mat4& parent_transform = glm::mat4(1))
   {
     m_global_transform = 
+      parent_transform *
       glm::mat4_cast(m_orientation) * 
-      glm::translate(m_position) * 
-      parent_transform;
+      glm::scale(m_scale) * 
+      glm::translate(m_position);
     
     for(auto& child : m_children)
     {
