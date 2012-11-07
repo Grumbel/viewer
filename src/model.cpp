@@ -226,30 +226,40 @@ Model::from_istream(std::istream& in)
 void 
 Model::draw(const RenderContext& context)
 {
-  OpenGLState state;
-
   if (!m_material)
   {
     log_error("Model::draw: no material set");
   }
   else
   {
+    OpenGLState state;
+
+    MaterialPtr material;
+
     if (context.get_override_material())
     {
-      context.get_override_material()->apply(context);
+      if (m_material->cast_shadow())
+      {
+        material = context.get_override_material();
+      }
     }
     else
     {
-      m_material->apply(context);
+      material = m_material;
     }
-  }
 
-  for (MeshLst::iterator i = m_meshes.begin(); i != m_meshes.end(); ++i)
-  {
-    (*i)->draw();
-  }
+    if (material)
+    {
+      material->apply(context);
 
-  glUseProgram(0);
+      for (MeshLst::iterator i = m_meshes.begin(); i != m_meshes.end(); ++i)
+      {
+        (*i)->draw();
+      }
+    }
+
+    glUseProgram(0);
+  }
 }
 
 /* EOF */

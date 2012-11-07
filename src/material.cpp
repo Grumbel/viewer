@@ -12,6 +12,7 @@ Material::Material() :
   m_specular(0.0f, 0.0f, 0.0f, 1.0f),
   m_emission(0.0f, 0.0f, 0.0f, 1.0f),
   m_shininess(0),
+  m_cast_shadow(true),
   m_program(),
   m_textures(),
   m_uniforms(std::make_shared<UniformGroup>()),

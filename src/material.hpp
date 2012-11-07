@@ -20,6 +20,8 @@ private:
   glm::vec4 m_emission;
   float m_shininess;
 
+  bool m_cast_shadow;
+
   ProgramPtr m_program;
   std::unordered_map<int, TexturePtr> m_textures;
   UniformGroupPtr m_uniforms;
@@ -48,6 +50,9 @@ public:
   void set_specular(const glm::vec4& c) { m_specular = c; }
   void set_emission(const glm::vec4& c) { m_emission = c; }
   void set_shininess(float s) { m_shininess = s; }
+
+  void cast_shadow(bool v) { m_cast_shadow = v; }
+  bool cast_shadow() const { return m_cast_shadow; }
 
   void set_program(ProgramPtr program) { m_program = program; }
   void set_texture(int unit, TexturePtr texture) { m_textures[unit] = texture; }
