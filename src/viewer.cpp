@@ -58,8 +58,8 @@ std::unique_ptr<Camera> g_camera;
 bool g_cross_eye = false;
 
 float g_ipd = 0.0f;
-int g_screen_w = 1280;
-int g_screen_h = 800;
+int g_screen_w = 640;
+int g_screen_h = 480;
 float g_fov = 70.0f;
 
 float g_near_z = 0.1f;
@@ -71,28 +71,30 @@ bool g_draw_look_at = false;
 
 float g_light_angle = 0.0f;
 bool g_draw_3d = false;
+bool g_helmet_3d = true;
 bool g_headlights = false;
 bool g_draw_grid = false;
 bool g_draw_depth = false;
-bool g_render_shadow_map = true;
+bool g_render_shadowmap = true;
 
-int g_shadow_map_resolution = 512;
+int g_shadowmap_resolution = 512;
 
-float g_shadow_map_fov = 45.0f;
+float g_shadowmap_fov = 45.0f;
 float g_light_diffuse = 1.0f;
 float g_light_specular = 1.0f;
 float g_material_shininess = 10.0f;
 float g_light_up = 0.0f;
 
+float g_aspect_ratio = static_cast<GLfloat>(g_screen_w)/static_cast<GLfloat>(g_screen_h);
 float g_spot_cutoff   = 60.0f;
 float g_spot_exponent = 30.0f;
 
 bool g_show_menu = true;
 
-glm::vec3 g_eye(0.0f, 0.0f, 15.0f);
+glm::vec3 g_eye(0.0f, 5.0f, 15.0f);
 glm::vec3 g_look_at(0.0f, 0.0f, -100.0f);
 glm::vec3 g_up(0.0f, 1.0f, 0.0f);
-glm::mat4 g_shadow_map_matrix;
+glm::mat4 g_shadowmap_matrix;
 glm::vec4 g_grid_offset;
 float g_grid_size = 2.0f;
 
@@ -103,7 +105,7 @@ std::unique_ptr<Pose> g_pose;
 
 std::unique_ptr<Framebuffer> g_framebuffer1;
 std::unique_ptr<Framebuffer> g_framebuffer2;
-std::unique_ptr<Framebuffer> g_shadow_map;
+std::unique_ptr<Framebuffer> g_shadowmap;
 
 float g_scale = 1.0f;
 
@@ -118,6 +120,10 @@ glm::mat4 g_last_object2world;
 glm::mat4 g_eye_matrix;
 
 TextSurfacePtr g_hello_world;
+
+ProgramPtr m_composition_prog;
+
+std::vector<SceneNode*> g_nodes;
 
 } // namespace
 
@@ -168,8 +174,7 @@ void draw_scene(EyeType eye_type)
   glClearColor(0.0, 0.0, 0.0, 1.0);
   glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
 
-  const float aspect_ratio = static_cast<GLfloat>(g_screen_w)/static_cast<GLfloat>(g_screen_h);
-  g_camera->projection(g_fov, aspect_ratio, g_near_z, g_far_z);
+  g_camera->perspective(g_fov, g_aspect_ratio, g_near_z, g_far_z);
 
   glm::vec3 sideways = glm::normalize(glm::cross(g_look_at, g_up)) * g_wiggle_offset;
   switch(eye_type)
@@ -196,7 +201,7 @@ void draw_shadowmap()
 {
   OpenGLState state;
 
-  glViewport(0, 0, g_shadow_map->get_width(), g_shadow_map->get_height());
+  glViewport(0, 0, g_shadowmap->get_width(), g_shadowmap->get_height());
 
   glClearColor(1.0, 0.0, 1.0, 1.0);
   glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
@@ -205,18 +210,18 @@ void draw_shadowmap()
   glm::vec3 up = glm::rotate(glm::vec3(0.0f, 1.0f, 0.0f), g_light_up, glm::vec3(0.0f, 0.0f, 1.0f));
   glm::vec3 look_at(0.0f, 0.0f, 0.0f);
 
-  Camera camera(g_shadow_map_fov, 1.0f, g_near_z, g_far_z);
-  // needs bias tweaking to work
-  // glOrtho(-10.0f, 10.0f, -10.0f, 10.0f, g_near_z, 1000.0f);
+  Camera camera;
+  //camera.perspective(g_shadowmap_fov, 1.0f, g_near_z, g_far_z);
+  camera.ortho(-25.0f, 25.0f, -25.0f, 25.0f, g_near_z, g_far_z);
   
   camera.look_at(light_pos, look_at, up);
 
-  g_shadow_map_matrix = glm::mat4(0.5, 0.0, 0.0, 0.0, 
+  g_shadowmap_matrix = glm::mat4(0.5, 0.0, 0.0, 0.0, 
                                   0.0, 0.5, 0.0, 0.0,
                                   0.0, 0.0, 0.5, 0.0,
                                   0.5, 0.5, 0.5, 1.0);
 
-  g_shadow_map_matrix = g_shadow_map_matrix * camera.get_matrix();
+  g_shadowmap_matrix = g_shadowmap_matrix * camera.get_matrix();
 
   g_scene_manager->render(camera, true);
 }
@@ -305,14 +310,14 @@ void display()
   {
     OpenGLState state;
 
-    if (g_render_shadow_map)
+    if (g_render_shadowmap)
     {
-      g_shadow_map->bind();
+      g_shadowmap->bind();
       draw_shadowmap();
-      g_shadow_map->unbind();
+      g_shadowmap->unbind();
     }
 
-    if (g_draw_3d || g_cross_eye)
+    if (g_draw_3d || g_cross_eye || g_helmet_3d)
     {
       g_framebuffer1->bind();
       draw_scene(kLeftEye);
@@ -343,9 +348,18 @@ void display()
       glClearColor(0.0, 0.0, 0.0, 1.0);
       glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
 
-      glEnable(GL_BLEND);
+      if (g_helmet_3d)
+      {
+        glUseProgram(m_composition_prog->get_id());
+        m_composition_prog->set_uniform("tex", 0);
+        m_composition_prog->set_uniform("offset", 0);
+        g_framebuffer1->draw(0.0f, 0.0f, g_screen_w, g_screen_h, -20.0f);
 
-      if (g_cross_eye)
+        m_composition_prog->set_uniform("offset", 1);
+        g_framebuffer2->draw(0.0f, 0.0f, g_screen_w, g_screen_h, -20.0f);
+        glUseProgram(0);
+      }
+      else if (g_cross_eye)
       {
         glColor3f(1.0f, 1.0f, 1.0f);
         g_framebuffer1->draw(0.0f, 0.0f, g_screen_w/2.0f, g_screen_h, -20.0f);
@@ -353,6 +367,7 @@ void display()
       }
       else if (g_draw_3d)
       {
+        glEnable(GL_BLEND);
         glBlendFunc(GL_SRC_ALPHA, GL_ONE);
 
         glColor3f(0.0f, 0.7f, 0.0f);
@@ -363,6 +378,7 @@ void display()
       }
       else
       {
+        glEnable(GL_BLEND);
         glBlendFunc(GL_ONE, GL_ZERO);
 
         glColor3f(1.0f, 1.0f, 1.0f);
@@ -379,8 +395,8 @@ void display()
       if (g_show_menu)
       {
         glDisable(GL_BLEND);
-        //g_shadow_map->draw_depth(g_screen_w - 266, 10, 256, 256, -20.0f);
-        g_shadow_map->draw(g_screen_w - 266 - 276, 10, 256, 256, -20.0f);
+        //g_shadowmap->draw_depth(g_screen_w - 266, 10, 256, 256, -20.0f);
+        g_shadowmap->draw(g_screen_w - 266 - 276, 10, 256, 256, -20.0f);
       }
     }
   }
@@ -627,7 +643,7 @@ void init()
   assert_gl("init()");
   g_framebuffer1.reset(new Framebuffer(g_screen_w, g_screen_h));
   g_framebuffer2.reset(new Framebuffer(g_screen_w, g_screen_h));
-  g_shadow_map.reset(new Framebuffer(g_shadow_map_resolution, g_shadow_map_resolution));
+  g_shadowmap.reset(new Framebuffer(g_shadowmap_resolution, g_shadowmap_resolution));
   assert_gl("init()");
 
   g_model = Model::from_file(g_model_filename);
@@ -648,68 +664,97 @@ void init()
       g_scene_manager->set_override_material(material);
     }
 
-    const float aspect_ratio = static_cast<GLfloat>(g_screen_w)/static_cast<GLfloat>(g_screen_h);
-    g_camera.reset(new Camera(g_fov, aspect_ratio, g_near_z, 100000.0f));
+    g_camera.reset(new Camera);
+    g_camera->perspective(g_fov, g_aspect_ratio, g_near_z, 100000.0f);
+
+    MaterialPtr phong_material(new Material);
+    {
+      phong_material->enable(GL_CULL_FACE);
+      phong_material->enable(GL_DEPTH_TEST);
+      //phong_material->set_texture(0, Texture::from_file("data/textures/grass_01_v1.tga"));
+      //phong_material->set_uniform("diffuse", glm::vec4(1.0f, 0.0f, 1.0f, 1.0f));
+      //phong_material->set_uniform("diffuse_texture", 0);
+
+      phong_material->set_uniform("light.diffuse",   glm::vec3(1.0f, 1.0f, 1.0f));
+      phong_material->set_uniform("light.ambient",   glm::vec3(0.0f, 0.0f, 0.0f));
+      phong_material->set_uniform("light.specular",  glm::vec3(0.6f, 0.6f, 0.6f));
+      //phong_material->set_uniform("light.shininess", 3.0f);
+      //phong_material->set_uniform("light.position",  glm::vec3(5.0f, 5.0f, 5.0f));
+      phong_material->set_uniform("light.position", 
+                                  UniformCallback(
+                                    [](ProgramPtr prog, const std::string& name, const RenderContext& ctx) {
+                                      glm::vec3 pos(ctx.get_view_matrix() * glm::vec4(50.0f, 50.0f, 50.0f, 1.0f));
+                                      prog->set_uniform(name, pos);
+                                    }));
+
+      phong_material->set_uniform("material.diffuse",   glm::vec3(0.5f, 0.5f, 0.5f));
+      phong_material->set_uniform("material.ambient",   glm::vec3(1.0f, 1.0f, 1.0f));
+      phong_material->set_uniform("material.specular",  glm::vec3(1.0f, 1.0f, 1.0f));
+      phong_material->set_uniform("material.shininess", 15.0f);
+
+      phong_material->set_uniform("ModelViewMatrix", UniformSymbol::ModelViewMatrix);
+      phong_material->set_uniform("NormalMatrix", UniformSymbol::NormalMatrix);
+      phong_material->set_uniform("MVP", UniformSymbol::ModelViewProjectionMatrix);
+
+      phong_material->set_uniform("ShadowMapMatrix",
+                                  UniformCallback(
+                                    [](ProgramPtr prog, const std::string& name, const RenderContext& ctx) {
+                                      prog->set_uniform(name, g_shadowmap_matrix * ctx.get_model_matrix());
+                                    }));
+      phong_material->set_texture(0, g_shadowmap->get_depth_texture());
+      phong_material->set_uniform("ShadowMap", 0);
+      phong_material->set_texture(1, Texture::cubemap_from_file("data/textures/miramar/"));
+      phong_material->set_uniform("LightMap", 1);
+      phong_material->set_program(Program::create(Shader::from_file(GL_VERTEX_SHADER, "src/phong.vert"),
+                                                  Shader::from_file(GL_FRAGMENT_SHADER, "src/phong.frag")));
+    }
+
+    {
+      {
+        auto node = g_scene_manager->get_world()->create_child();
+        node->set_position(glm::vec3(0, 0, 0));
+        auto mesh = Mesh::create_plane(75.0f);
+        ModelPtr entity = std::make_shared<Model>();
+        entity->add_mesh(std::move(mesh));
+        entity->set_material(phong_material);
+        node->attach_entity(entity);
+      }
+
+      auto mesh = Mesh::create_sphere(0.2, 8, 16);
+      ModelPtr entity = std::make_shared<Model>();
+      entity->add_mesh(std::move(mesh));
+      entity->set_material(phong_material);
+
+      auto origin = g_scene_manager->get_world()->create_child();
+      origin->set_position(glm::vec3(5, 5, 5));
+
+      auto sun = origin->create_child();
+      sun->set_scale(glm::vec3(3.0f, 3.0f, 3.0f));
+      sun->attach_entity(entity);
+      g_nodes.push_back(origin);
+
+      auto earth = origin->create_child();
+      earth->set_scale(glm::vec3(0.5f, 0.5f, 0.5f));
+      earth->set_position(glm::vec3(5, 0, 0));
+      earth->attach_entity(entity);
+      //g_nodes.push_back(earth);
+
+      /*
+      auto moon = earth->create_child();
+      moon->set_scale(glm::vec3(0.25f, 0.25f, 0.25f));
+      moon->set_position(glm::vec3(2, 0, 0));
+      moon->attach_entity(entity);
+      g_nodes.push_back(moon);
+*/
+    }
 
     if (true)
     { // load a mesh from file
       auto node = g_scene_manager->get_world()->create_child();
       node->set_position(glm::vec3(0.0f, 0.0f, 0.0f));
 
-      MaterialPtr material(new Material);
-      material->enable(GL_CULL_FACE);
-      material->enable(GL_DEPTH_TEST);
-      //material->set_texture(0, Texture::from_file("data/textures/grass_01_v1.tga"));
-      //material->set_uniform("diffuse", glm::vec4(1.0f, 0.0f, 1.0f, 1.0f));
-      //material->set_uniform("diffuse_texture", 0);
-
-      material->set_uniform("light.diffuse",   glm::vec3(1.0f, 1.0f, 1.0f));
-      material->set_uniform("light.ambient",   glm::vec3(0.0f, 0.0f, 0.0f));
-      material->set_uniform("light.specular",  glm::vec3(0.6f, 0.6f, 0.6f));
-      //material->set_uniform("light.shininess", 3.0f);
-      //material->set_uniform("light.position",  glm::vec3(5.0f, 5.0f, 5.0f));
-      material->set_uniform("light.position", 
-                            UniformCallback(
-                              [](ProgramPtr prog, const std::string& name, const RenderContext& ctx) {
-                                glm::vec3 pos(ctx.get_view_matrix() * glm::vec4(50.0f, 50.0f, 50.0f, 1.0f));
-                                prog->set_uniform(name, pos);
-                              }));
-
-      material->set_uniform("material.diffuse",   glm::vec3(0.5f, 0.5f, 0.5f));
-      material->set_uniform("material.ambient",   glm::vec3(1.0f, 1.0f, 1.0f));
-      material->set_uniform("material.specular",  glm::vec3(1.0f, 1.0f, 1.0f));
-      material->set_uniform("material.shininess", 15.0f);
-
-      material->set_uniform("ModelViewMatrix", UniformSymbol::ModelViewMatrix);
-      material->set_uniform("NormalMatrix", UniformSymbol::NormalMatrix);
-      material->set_uniform("MVP", UniformSymbol::ModelViewProjectionMatrix);
-
-      material->set_uniform("ShadowMapMatrix",
-                            UniformCallback(
-                              [](ProgramPtr prog, const std::string& name, const RenderContext& ctx) {
-                                if (false)
-                                {
-                                  for(int j = 0; j < 4; ++j)
-                                  {
-                                    for(int i = 0; i < 4; ++i)
-                                    {
-                                      std::cout << g_shadow_map_matrix[i][j] << " ";
-                                    }
-                                    std::cout << std::endl;
-                                  }
-                                  std::cout << std::endl;
-                                  std::cout << "--------------------" << std::endl;
-                                }
-                                prog->set_uniform(name, g_shadow_map_matrix);
-                              }));
-      material->set_texture(0, g_shadow_map->get_depth_texture());
-      //material->set_texture(0, Texture::create_lightspot(256, 256));
-      material->set_uniform("ShadowMap", 0);
-      material->set_program(Program::create(Shader::from_file(GL_VERTEX_SHADER, "src/phong.vert"),
-                                            Shader::from_file(GL_FRAGMENT_SHADER, "src/phong.frag")));
-
       auto entity = Model::from_file(g_model_filename);
-      entity->set_material(material);
+      entity->set_material(phong_material);
 
       node->attach_entity(entity);
     }
@@ -743,6 +788,7 @@ void init()
       MaterialPtr material(new Material);     
       material->blend_func(GL_SRC_ALPHA, GL_ONE);
       material->depth_mask(false);
+      material->cast_shadow(false);
       material->enable(GL_BLEND);
       material->enable(GL_DEPTH_TEST);
       material->enable(GL_POINT_SPRITE);
@@ -760,7 +806,7 @@ void init()
         std::vector<glm::vec3> position;
         std::vector<float> point_size;
         std::vector<float> alpha;
-        int steps = 70;
+        int steps = 30;
         float length = 3.0f;
         float size   = 1000.0f;
         int start = 10; // skip the first few sprites to avoid a spiky look
@@ -792,6 +838,8 @@ void init()
     }
   }
 
+  m_composition_prog = Program::create(Shader::from_file(GL_FRAGMENT_SHADER, "src/composite.frag"));
+
   //g_hello_world = TextSurface::create("Hello World", TextProperties()
   //                                    .set_line_width(3.0f));
 
@@ -803,11 +851,12 @@ void init()
   g_menu->add_item("depth.near_z", &g_near_z, 0.01, 0.0f);
   g_menu->add_item("depth.far_z",  &g_far_z, 1.0f);
 
-  g_menu->add_item("shadowmap.fov", &g_shadow_map_fov, 1.0f);
+  g_menu->add_item("shadowmap.fov", &g_shadowmap_fov, 1.0f);
 
   g_menu->add_item("spot_halo_samples",  &g_spot_halo_samples, 1, 0);
 
   g_menu->add_item("FOV", &g_fov);
+  g_menu->add_item("AspectRatio", &g_aspect_ratio, 0.05f, 0.5f, 4.0f);
 
   g_menu->add_item("scale", &g_scale, 0.5f, 0.0f);
   g_menu->add_item("eye3D.dist", &g_wiggle_offset, 0.1f);
@@ -826,7 +875,7 @@ void init()
   g_menu->add_item("Headlights", &g_headlights);
   g_menu->add_item("Look At Sphere", &g_draw_look_at);
   g_menu->add_item("draw depth", &g_draw_depth);
-  g_menu->add_item("shadow map", &g_render_shadow_map);
+  g_menu->add_item("shadow map", &g_render_shadowmap);
   g_menu->add_item("grid.size", &g_grid_size, 0.5f);
 
   assert_gl("init()");
@@ -875,6 +924,16 @@ glm::vec3 get_arcball_vector(glm::ivec2 mouse)
 
 void idle_func()
 {
+  {
+    int i = 1; 
+    for(auto& node :  g_nodes)
+    {
+      float f = SDL_GetTicks()/1000.0f;
+      node->set_orientation(glm::quat(glm::vec3(0.0f, f*i*1.3, 0.0f)));
+      i += 1;
+    }
+  }
+
   if (g_arcball_active && g_mouse != g_last_mouse)
   {
     glm::mat4 camera_matrix;// = g_object2world;
