@@ -58,8 +58,8 @@ std::unique_ptr<Camera> g_camera;
 bool g_cross_eye = false;
 
 float g_ipd = 0.0f;
-int g_screen_w = 640;
-int g_screen_h = 480;
+int g_screen_w = 960;
+int g_screen_h = 600;
 float g_fov = 70.0f;
 
 float g_near_z = 0.1f;
@@ -71,7 +71,7 @@ bool g_draw_look_at = false;
 
 float g_light_angle = 0.0f;
 bool g_draw_3d = false;
-bool g_helmet_3d = true;
+bool g_helmet_3d = false;
 bool g_headlights = false;
 bool g_draw_grid = false;
 bool g_draw_depth = false;
@@ -388,6 +388,8 @@ void display()
         }
         else
         {
+          glUseProgram(m_composition_prog->get_id());
+          m_composition_prog->set_uniform("tex", 0);
           g_framebuffer1->draw(0.0f, 0.0f, g_screen_w, g_screen_h, -20.0f);
         }
       }
@@ -838,7 +840,7 @@ void init()
     }
   }
 
-  m_composition_prog = Program::create(Shader::from_file(GL_FRAGMENT_SHADER, "src/composite.frag"));
+  m_composition_prog = Program::create(Shader::from_file(GL_FRAGMENT_SHADER, "src/newsprint.frag"));
 
   //g_hello_world = TextSurface::create("Hello World", TextProperties()
   //                                    .set_line_width(3.0f));
