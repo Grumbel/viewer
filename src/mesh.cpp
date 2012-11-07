@@ -93,6 +93,88 @@ Mesh::create_skybox(float size)
 
    return mesh;
 }
+
+std::unique_ptr<Mesh>
+Mesh::create_plane(float size, glm::vec3 center)
+{
+  std::unique_ptr<Mesh> mesh(new Mesh(GL_QUADS));
+
+  NormalLst   vn;
+  TexCoordLst vt;
+  VertexLst   vp;
+
+  vn.emplace_back(0.0f, 1.0f, 0.0f);
+  vn.emplace_back(0.0f, 1.0f, 0.0f);
+  vn.emplace_back(0.0f, 1.0f, 0.0f);
+  vn.emplace_back(0.0f, 1.0f, 0.0f);
+
+  vt.emplace_back(0.0f, 0.0f, 0.0f);
+  vt.emplace_back(0.1f, 0.0f, 0.0f);
+  vt.emplace_back(0.1f, 1.0f, 0.0f);
+  vt.emplace_back(0.0f, 1.0f, 0.0f);
+
+  vp.emplace_back(-size, 0, +size);
+  vp.emplace_back(+size, 0, +size);
+  vp.emplace_back(+size, 0, -size);
+  vp.emplace_back(-size, 0, -size);
+
+  mesh->attach_float_array("normal", vn);
+  mesh->attach_float_array("texcoord", vt);
+  mesh->attach_float_array("position", vp);
+
+  return mesh;  
+}
+
+std::unique_ptr<Mesh>
+Mesh::create_box(float size)
+{
+  std::unique_ptr<Mesh> mesh(new Mesh(GL_QUADS));
+  return mesh;
+}
+
+std::unique_ptr<Mesh>
+Mesh::create_sphere(float size, int rings, int segments)
+{
+  std::unique_ptr<Mesh> mesh(new Mesh(GL_QUADS));
+
+  NormalLst   vn;
+  TexCoordLst vt;
+  VertexLst   vp;
+
+  const float tau = 2 * M_PI;
+
+  // FIXME: should use indexed array instead to save some vertices
+  auto add_point = [&](int ring, int seg) {
+    float r = static_cast<float>(ring) / rings;
+    float s = static_cast<float>(seg)  / segments;
+
+    float f = sinf(r * M_PI);
+    glm::vec3 p(cosf(s * 2.0f * M_PI) * f, 
+                cosf(r * M_PI), 
+                sinf(s * 2.0f * M_PI) * f);
+
+    vn.push_back(p);
+    vt.emplace_back(r, s, 0.0f);
+    vp.push_back(p * size);
+  };
+
+  for(int ring = 0; ring < rings; ++ring)
+  {
+    for(int seg = 0; seg < segments; ++seg)
+    {
+      add_point(ring, seg);
+      add_point(ring, seg+1);
+      add_point(ring+1, seg+1);
+      add_point(ring+1, seg);
+    }
+  }
+
+  mesh->attach_float_array("normal", vn);
+  mesh->attach_float_array("texcoord", vt);
+  mesh->attach_float_array("position", vp);
+
+  return mesh;  
+}
 
 Mesh::Mesh(GLenum primitive_type) :
   m_primitive_type(primitive_type),

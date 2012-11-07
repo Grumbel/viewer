@@ -71,6 +71,9 @@ private:
 public:
   /** Create a cube with cubemap texture coordinates */
   static std::unique_ptr<Mesh> create_skybox(float size);
+  static std::unique_ptr<Mesh> create_plane(float size, glm::vec3 center = glm::vec3(0.0f, 0.0f, 0.0f));
+  static std::unique_ptr<Mesh> create_box(float size);
+  static std::unique_ptr<Mesh> create_sphere(float size, int rings = 16, int segments = 32);
 
 public:
   Mesh(GLenum primitive_type);
