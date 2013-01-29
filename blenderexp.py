@@ -65,6 +65,9 @@ def write_mesh(obj):
     outfile.write("o %s\n" % obj.name)
     outfile.write("loc %f %f %f\n" % vec3(obj.location))
 
+    print("vertices: %d" % len(vertices))
+    print("faces: %d" % len(faces))
+
     for v in vertices:
         outfile.write("vn %f %f %f\n" % v.n)
         if v.uv:
@@ -129,7 +132,10 @@ def collect_faces(obj):
     mesh = obj.data
 
     uv_faces = None
-    faces = mesh.faces
+    print(dir(mesh))
+    mesh.update(calc_tessface=True)
+    faces = mesh.tessfaces
+    print("Faces: ", faces)
     if mesh.uv_textures.active:
         uv_faces = mesh.uv_textures.active.data
 
