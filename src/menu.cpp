@@ -23,7 +23,7 @@ Menu::draw(float x, float y)
 
     (*it)->draw(x, y);
     
-    y += 24.0f;
+    y += m_text_prop.get_font_size() + 2.0f;
   }
 }
 
