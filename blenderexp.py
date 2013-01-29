@@ -33,14 +33,14 @@ Vertex = namedtuple('Vertex', ['co', 'n', 'uv', 'bones'])
 
 # "B2OGL * vec" results in OpenGL coordinates
 if True:
-    B2OGL4 = Matrix(((1, 0,  0, 0),
-                     (0, 0, -1, 0),
-                     (0, 1,  0, 0),
-                     (0, 0,  0, 1)))
+    B2OGL4 = Matrix(((1,  0,  0, 0),
+                     (0,  0,  1, 0),
+                     (0, -1,  0, 0),
+                     (0,  0,  0, 1)))
 
-    B2OGL3 = Matrix(((1, 0,  0),
-                     (0, 0, -1),
-                     (0, 1,  0)))
+    B2OGL3 = Matrix(((1,  0, 0),
+                     (0,  0, 1),
+                     (0, -1, 0)))
 else:
     B2OGL4 = Matrix(((1, 0,  0, 0),
                      (0, 1,  0, 0),
@@ -137,7 +137,7 @@ def collect_faces(obj):
     faces = mesh.tessfaces
     print("Faces: ", faces)
     if mesh.uv_textures.active:
-        uv_faces = mesh.uv_textures.active.data
+        uv_faces = mesh.tessface_uv_textures.active.data
 
     out_faces = []
 
