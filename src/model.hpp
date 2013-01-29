@@ -34,10 +34,6 @@ private:
   MeshLst m_meshes;
 
   MaterialPtr m_material;
-
-public:
-  static ModelPtr from_istream(std::istream& in);
-  static ModelPtr from_file(const std::string& filename);
   
 public:
   Model() :
