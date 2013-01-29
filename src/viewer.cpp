@@ -14,21 +14,22 @@
 //  You should have received a copy of the GNU General Public License
 //  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+#include <GL/glew.h>
+#include <GL/freeglut.h>
 #include <SDL.h>
 #include <SDL_image.h>
 #include <cmath>
-#include <memory>
-#include <unistd.h>
 #include <cmath>
-#include <GL/glew.h>
-#include <GL/freeglut.h>
-#include <vector>
+#include <cwiid.h>
 #include <fstream>
+#include <glm/ext.hpp>
+#include <glm/glm.hpp>
 #include <iostream>
+#include <memory>
 #include <sstream>
 #include <stdexcept>
-#include <glm/glm.hpp>
-#include <glm/ext.hpp>
+#include <unistd.h>
+#include <vector>
 
 #include "armature.hpp"
 #include "assert_gl.hpp"
@@ -42,6 +43,7 @@
 #include "pose.hpp"
 #include "program.hpp"
 #include "render_context.hpp"
+#include "scene.hpp"
 #include "scene_manager.hpp"
 #include "shader.hpp"
 #include "text_surface.hpp"
@@ -58,9 +60,9 @@ std::unique_ptr<Camera> g_camera;
 bool g_cross_eye = false;
 
 float g_ipd = 0.0f;
-int g_screen_w = 960;
-int g_screen_h = 600;
-float g_fov = 70.0f;
+int g_screen_w = 640;
+int g_screen_h = 480;
+float g_fov = 56.0f;
 
 float g_near_z = 0.1f;
 float g_far_z  = 1000.0f;
@@ -71,7 +73,7 @@ bool g_draw_look_at = false;
 
 float g_light_angle = 0.0f;
 bool g_draw_3d = false;
-bool g_helmet_3d = false;
+bool g_helmet_3d = true;
 bool g_headlights = false;
 bool g_draw_grid = false;
 bool g_draw_depth = false;
@@ -94,12 +96,14 @@ bool g_show_menu = true;
 glm::vec3 g_eye(0.0f, 5.0f, 15.0f);
 glm::vec3 g_look_at(0.0f, 0.0f, -100.0f);
 glm::vec3 g_up(0.0f, 1.0f, 0.0f);
+float g_pitch_offset = 0.0f;
+float g_roll_offset  = 0.0f;
+float g_yaw_offset   = 0.0f;
 glm::mat4 g_shadowmap_matrix;
 glm::vec4 g_grid_offset;
 float g_grid_size = 2.0f;
 
 std::string g_model_filename;
-ModelPtr g_model;
 std::unique_ptr<Armature> g_armature;
 std::unique_ptr<Pose> g_pose;
 
@@ -110,7 +114,7 @@ std::unique_ptr<Framebuffer> g_shadowmap;
 float g_scale = 1.0f;
 
 enum EyeType { kLeftEye, kRightEye, kCenterEye };
-float g_wiggle_offset = 0.3f;
+float g_wiggle_offset = 0.065f * 2.0f;
 
 bool g_arcball_active = false;
 glm::ivec2 g_mouse;
@@ -119,11 +123,15 @@ glm::mat4 g_object2world;
 glm::mat4 g_last_object2world;
 glm::mat4 g_eye_matrix;
 
-TextSurfacePtr g_hello_world;
+TextSurfacePtr g_dot_surface;
+glm::vec2 g_wiimote_dot1;
+glm::vec2 g_wiimote_dot2;
 
 ProgramPtr m_composition_prog;
 
 std::vector<SceneNode*> g_nodes;
+
+cwiid_wiimote_t* g_wiimote = 0;
 
 } // namespace
 
@@ -176,7 +184,16 @@ void draw_scene(EyeType eye_type)
 
   g_camera->perspective(g_fov, g_aspect_ratio, g_near_z, g_far_z);
 
-  glm::vec3 sideways = glm::normalize(glm::cross(g_look_at, g_up)) * g_wiggle_offset;
+  glm::vec3 look_at = g_look_at;
+  glm::vec3 up = g_up;
+
+  glm::vec3 sideways_ = glm::normalize(glm::cross(look_at, up));
+
+  look_at = glm::rotate(look_at, glm::degrees(g_yaw_offset), up);
+  look_at = glm::rotate(look_at, glm::degrees(-g_pitch_offset), sideways_);
+  up = glm::rotate(up, glm::degrees(-g_roll_offset), look_at);
+
+  glm::vec3 sideways = glm::normalize(glm::cross(look_at, up)) * g_wiggle_offset;
   switch(eye_type)
   {
     case kLeftEye:
@@ -191,8 +208,7 @@ void draw_scene(EyeType eye_type)
       sideways = glm::vec3(0);
       break;
   }
-
-  g_camera->look_at(g_eye + sideways, g_eye + g_look_at, g_up);
+  g_camera->look_at(g_eye + sideways, g_eye + look_at, up);
   
   g_scene_manager->render(*g_camera);
 }
@@ -426,8 +442,11 @@ void display()
 
     if (g_show_menu)
     {
-      g_menu->draw(100.0f, 100.0f);
+      g_menu->draw(32.0f, 32.0f);
     }
+
+    g_dot_surface->draw(g_wiimote_dot1.x * g_screen_w, g_wiimote_dot1.y * g_screen_h);
+    g_dot_surface->draw(g_wiimote_dot2.x * g_screen_w, g_wiimote_dot2.y * g_screen_h);
   }
 
   glutSwapBuffers();
@@ -495,11 +514,11 @@ void special(int key, int x, int y)
       break;
 
     case GLUT_KEY_UP:
-      g_look_at += glm::normalize(g_look_at);
+      g_look_at *= 1.1f;
       break;
 
     case GLUT_KEY_DOWN:
-      g_look_at -= glm::normalize(g_look_at);
+      g_look_at /= 1.1f;
       break;
 
     case GLUT_KEY_LEFT:
@@ -527,17 +546,21 @@ void special(int key, int x, int y)
 void keyboard(unsigned char key, int x, int y)
 {
   switch (key) {
+    case '\t':
+      g_show_menu = !g_show_menu;
+      break;
+
     case 27:
     case 'q':
       exit(EXIT_SUCCESS);
       break;
 
     case 'n':
-      g_wiggle_offset += 0.1f;
+      g_wiggle_offset += 0.01f;
       break;
 
     case 't':
-      g_wiggle_offset -= 0.1f;
+      g_wiggle_offset -= 0.01f;
       break;
 
     case ' ':
@@ -648,7 +671,6 @@ void init()
   g_shadowmap.reset(new Framebuffer(g_shadowmap_resolution, g_shadowmap_resolution));
   assert_gl("init()");
 
-  g_model = Model::from_file(g_model_filename);
   g_armature = Armature::from_file("/tmp/blender.bones");
   g_pose = Pose::from_file("/tmp/blender.pose");
 
@@ -752,13 +774,14 @@ void init()
 
     if (true)
     { // load a mesh from file
-      auto node = g_scene_manager->get_world()->create_child();
-      node->set_position(glm::vec3(0.0f, 0.0f, 0.0f));
+      //auto node = g_scene_manager->get_world()->create_child();
+      //entity->set_material(phong_material);
+      //node->attach_entity(entity);
 
-      auto entity = Model::from_file(g_model_filename);
-      entity->set_material(phong_material);
+      // FIXME: fix material
 
-      node->attach_entity(entity);
+      auto node = Scene::from_file(phong_material, g_model_filename);
+      g_scene_manager->get_world()->attach_child(node);
     }
 
     if (true)
@@ -785,7 +808,7 @@ void init()
       node->attach_entity(entity);
     }
 
-    if (true)
+    if (false)
     { // light cone
       MaterialPtr material(new Material);     
       material->blend_func(GL_SRC_ALPHA, GL_ONE);
@@ -840,12 +863,12 @@ void init()
     }
   }
 
-  m_composition_prog = Program::create(Shader::from_file(GL_FRAGMENT_SHADER, "src/newsprint.frag"));
+  //m_composition_prog = Program::create(Shader::from_file(GL_FRAGMENT_SHADER, "src/newsprint.frag"));
+  m_composition_prog = Program::create(Shader::from_file(GL_FRAGMENT_SHADER, "src/composite.frag"));
 
-  //g_hello_world = TextSurface::create("Hello World", TextProperties()
-  //                                    .set_line_width(3.0f));
+  g_dot_surface = TextSurface::create("+", TextProperties().set_line_width(3.0f));
 
-  g_menu.reset(new Menu(TextProperties().set_line_width(4.0f)));
+  g_menu.reset(new Menu(TextProperties().set_font_size(14.0f).set_line_width(4.0f)));
   g_menu->add_item("eye.x", &g_eye.x);
   g_menu->add_item("eye.y", &g_eye.y);
   g_menu->add_item("eye.z", &g_eye.z);
@@ -953,7 +976,7 @@ void idle_func()
   }
 
   display();
-  usleep(10000);
+  usleep(5000);
 
   g_grid_offset += glm::vec4(0.0f, 0.0f, 0.001f, 0.0f);
 
@@ -1125,8 +1148,99 @@ void mouse_motion(int x, int y)
   }
 }
 
+void update_offsets(glm::vec2 p1, glm::vec2 p2)
+{
+  if (p1.x > p2.x)
+  {
+    std::swap(p1, p2);
+  }
+
+  glm::vec2 r = p2 - p1;
+  float angle = glm::atan(-r.y, r.x);
+  g_roll_offset = angle;
+  glm::vec2 c = (p1+p2)/2.0f;
+  g_yaw_offset   = ((c.x / 1024.0f) - 0.5f) * M_PI/2.0f;
+  g_pitch_offset = ((c.y /  768.0f) - 0.5f) * (M_PI/2.0f) * 0.75f;
+
+  g_wiimote_dot1.x = p1.x / 1024.0f;
+  g_wiimote_dot1.y = 1.0f - (p1.y /  768.0f);
+  g_wiimote_dot2.x = p2.x / 1024.0f;
+  g_wiimote_dot2.y = 1.0f - (p2.y /  768.0f);
+
+  //std::cout << "offset: " << boost::format("%4.2f %4.2f %4.2f") % g_roll_offset % g_yaw_offset % g_pitch_offset << std::endl;
+}
+
+void
+wiimote_mesg_callback(cwiid_wiimote_t*, int mesg_count, union cwiid_mesg msg[], timespec*)
+{
+  // WARNING: the mesg_callback() comes from another thread, so
+  // syncronize with SDL_PushEvent
+  for (int i=0; i < mesg_count; ++i)
+  {
+    switch (msg[i].type) 
+    {
+      case CWIID_MESG_STATUS:
+        std::cout << "wiimote mesg status" << std::endl;
+        break;
+
+      case CWIID_MESG_BTN:
+        //g_wiimote->on_button(msg[i].btn_mesg);
+        break;
+
+      case CWIID_MESG_ACC:
+        //s_wiimote->on_acc(msg[i].acc_mesg);
+        break;
+
+      case CWIID_MESG_IR:
+        {
+          cwiid_ir_mesg& ir = msg[i].ir_mesg;
+          //std::cout << "wiimote mesg ir: ";
+          glm::vec2 p[2];
+          int j = 0;
+          for(; j < 2 /*CWIID_IR_SRC_COUNT*/; ++j)
+          {
+            if (ir.src[j].valid)
+            {
+              if (false)
+              {
+                std::cout << j << "[ "
+                          << ir.src[j].pos[0] << "," << ir.src[j].pos[1] << " - " 
+                          << static_cast<int>(ir.src[j].size)
+                          << "] ";
+              }
+              p[j].x = ir.src[j].pos[0];
+              p[j].y = ir.src[j].pos[1];
+            }
+          }
+
+          if (j == 2)
+          {
+            update_offsets(p[0], p[1]);
+          }
+          //std::cout << std::endl;
+        }
+        break;
+        
+      case CWIID_MESG_ERROR:
+        std::cout << "wiimote mesg error" << std::endl;
+        break;
+
+      default:
+        log_error("unknown report");
+        break;
+    }
+  }
+}
+
+struct Options
+{
+  bool wiimote = true;
+};
+
 int main(int argc, char** argv)
 {
+  Options opts;
+
   if (argc != 2)
   {
     puts("Usage: viewer [MODELFILE]");
@@ -1172,6 +1286,33 @@ int main(int argc, char** argv)
     glutIdleFunc(idle_func);
     glutKeyboardFunc(keyboard);
     glutSpecialFunc(special);
+
+    if (opts.wiimote)
+    {
+      std::cout  << "Put Wiimote in discoverable mode now (press 1+2)..." << std::endl;
+
+      bdaddr_t addr_any = {{0, 0, 0, 0, 0, 0}};
+      g_wiimote = cwiid_open_timeout(&addr_any, CWIID_FLAG_MESG_IFC, -1);
+
+      if (g_wiimote)
+      {
+        std::cout << "Wiimote connected: " << g_wiimote << std::endl;
+        if (cwiid_set_mesg_callback(g_wiimote, &wiimote_mesg_callback)) 
+        {
+          std::cerr << "Unable to set message callback" << std::endl;
+        }
+      
+        if (cwiid_command(g_wiimote, CWIID_CMD_RPT_MODE, 
+                          CWIID_RPT_STATUS  |
+                          //CWIID_RPT_ACC   |
+                          CWIID_RPT_IR      |
+                          CWIID_RPT_BTN))
+        {
+          std::cerr << "Wiimote: Error setting report mode" << std::endl;
+        }
+      }
+    }
+
     glutMainLoop();
 
     if (joystick)
