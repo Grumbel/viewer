@@ -14,12 +14,6 @@ class RenderContext;
 class Material
 {
 private:
-  glm::vec4 m_diffuse;
-  glm::vec4 m_ambient;
-  glm::vec4 m_specular;
-  glm::vec4 m_emission;
-  float m_shininess;
-
   bool m_cast_shadow;
 
   ProgramPtr m_program;
@@ -38,18 +32,6 @@ private:
 
 public:
   Material();
-
-  glm::vec4 get_diffuse() const { return m_diffuse; }
-  glm::vec4 get_ambient() const { return m_ambient; }
-  glm::vec4 get_specular() const { return m_specular; }
-  glm::vec4 get_emission() const { return m_emission; }
-  float get_shininess() const { return m_shininess; }
-
-  void set_diffuse(const glm::vec4& c)  { m_diffuse = c; }
-  void set_ambient(const glm::vec4& c) { m_ambient = c; }
-  void set_specular(const glm::vec4& c) { m_specular = c; }
-  void set_emission(const glm::vec4& c) { m_emission = c; }
-  void set_shininess(float s) { m_shininess = s; }
 
   void cast_shadow(bool v) { m_cast_shadow = v; }
   bool cast_shadow() const { return m_cast_shadow; }

@@ -7,11 +7,6 @@
 #include "assert_gl.hpp"
 
 Material::Material() :
-  m_diffuse(0.8f, 0.8f, 0.8f, 1.0f),
-  m_ambient(0.2f, 0.2f, 0.2f, 1.0f),
-  m_specular(0.0f, 0.0f, 0.0f, 1.0f),
-  m_emission(0.0f, 0.0f, 0.0f, 1.0f),
-  m_shininess(0),
   m_cast_shadow(true),
   m_program(),
   m_textures(),
@@ -65,12 +60,6 @@ Material::disable(GLenum cap)
 void
 Material::apply(const RenderContext& context)
 {
-  glMaterialfv(GL_FRONT, GL_AMBIENT,  glm::value_ptr(m_ambient));
-  glMaterialfv(GL_FRONT, GL_SPECULAR, glm::value_ptr(m_specular));
-  glMaterialfv(GL_FRONT, GL_EMISSION, glm::value_ptr(m_emission));
-  glMaterialfv(GL_FRONT, GL_DIFFUSE,  glm::value_ptr(m_diffuse));
-  glMaterialf(GL_FRONT,  GL_SHININESS, m_shininess);
-
   for(const auto& cap : m_capabilities)
   {
     if (cap.second)
