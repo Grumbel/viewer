@@ -36,6 +36,7 @@
 #include "camera.hpp"
 #include "framebuffer.hpp"
 #include "log.hpp"
+#include "material_factory.hpp"
 #include "menu.hpp"
 #include "mesh.hpp"
 #include "model.hpp"
@@ -99,7 +100,6 @@ glm::vec3 g_up(0.0f, 1.0f, 0.0f);
 float g_pitch_offset = 0.0f;
 float g_roll_offset  = 0.0f;
 float g_yaw_offset   = 0.0f;
-glm::mat4 g_shadowmap_matrix;
 glm::vec4 g_grid_offset;
 float g_grid_size = 2.0f;
 
@@ -109,7 +109,6 @@ std::unique_ptr<Pose> g_pose;
 
 std::unique_ptr<Framebuffer> g_framebuffer1;
 std::unique_ptr<Framebuffer> g_framebuffer2;
-std::unique_ptr<Framebuffer> g_shadowmap;
 
 float g_scale = 1.0f;
 
@@ -134,6 +133,9 @@ std::vector<SceneNode*> g_nodes;
 cwiid_wiimote_t* g_wiimote = 0;
 
 } // namespace
+
+std::unique_ptr<Framebuffer> g_shadowmap;
+glm::mat4 g_shadowmap_matrix;
 
 struct Stick
 {
@@ -691,48 +693,7 @@ void init()
     g_camera.reset(new Camera);
     g_camera->perspective(g_fov, g_aspect_ratio, g_near_z, 100000.0f);
 
-    MaterialPtr phong_material(new Material);
-    {
-      phong_material->enable(GL_CULL_FACE);
-      phong_material->enable(GL_DEPTH_TEST);
-      //phong_material->set_texture(0, Texture::from_file("data/textures/grass_01_v1.tga"));
-      //phong_material->set_uniform("diffuse", glm::vec4(1.0f, 0.0f, 1.0f, 1.0f));
-      //phong_material->set_uniform("diffuse_texture", 0);
-
-      phong_material->set_uniform("light.diffuse",   glm::vec3(1.0f, 1.0f, 1.0f));
-      phong_material->set_uniform("light.ambient",   glm::vec3(0.0f, 0.0f, 0.0f));
-      phong_material->set_uniform("light.specular",  glm::vec3(0.6f, 0.6f, 0.6f));
-      //phong_material->set_uniform("light.shininess", 3.0f);
-      //phong_material->set_uniform("light.position",  glm::vec3(5.0f, 5.0f, 5.0f));
-      phong_material->set_uniform("light.position", 
-                                  UniformCallback(
-                                    [](ProgramPtr prog, const std::string& name, const RenderContext& ctx) {
-                                      glm::vec3 pos(ctx.get_view_matrix() * glm::vec4(50.0f, 50.0f, 50.0f, 1.0f));
-                                      prog->set_uniform(name, pos);
-                                    }));
-
-      phong_material->set_uniform("material.diffuse",   glm::vec3(0.5f, 0.5f, 0.5f));
-      phong_material->set_uniform("material.ambient",   glm::vec3(1.0f, 1.0f, 1.0f));
-      phong_material->set_uniform("material.specular",  glm::vec3(1.0f, 1.0f, 1.0f));
-      phong_material->set_uniform("material.shininess", 15.0f);
-
-      phong_material->set_uniform("ModelViewMatrix", UniformSymbol::ModelViewMatrix);
-      phong_material->set_uniform("NormalMatrix", UniformSymbol::NormalMatrix);
-      phong_material->set_uniform("MVP", UniformSymbol::ModelViewProjectionMatrix);
-
-      phong_material->set_uniform("ShadowMapMatrix",
-                                  UniformCallback(
-                                    [](ProgramPtr prog, const std::string& name, const RenderContext& ctx) {
-                                      prog->set_uniform(name, g_shadowmap_matrix * ctx.get_model_matrix());
-                                    }));
-      phong_material->set_texture(0, g_shadowmap->get_depth_texture());
-      phong_material->set_uniform("ShadowMap", 0);
-      phong_material->set_texture(1, Texture::cubemap_from_file("data/textures/miramar/"));
-      phong_material->set_uniform("LightMap", 1);
-      phong_material->set_program(Program::create(Shader::from_file(GL_VERTEX_SHADER, "src/phong.vert"),
-                                                  Shader::from_file(GL_FRAGMENT_SHADER, "src/phong.frag")));
-    }
-
+    MaterialPtr phong_material = MaterialFactory::get().create("phong");
     {
       {
         auto node = g_scene_manager->get_world()->create_child();
@@ -780,29 +741,16 @@ void init()
 
       // FIXME: fix material
 
-      auto node = Scene::from_file(phong_material, g_model_filename);
+      auto node = Scene::from_file(g_model_filename);
       g_scene_manager->get_world()->attach_child(node);
     }
 
     if (true)
     { // create a skybox
-      MaterialPtr material(new Material);
-      material->blend_func(GL_ONE, GL_ONE);
-      material->enable(GL_BLEND);
-      material->enable(GL_CULL_FACE);
-      material->enable(GL_DEPTH_TEST);
-      material->set_texture(0, Texture::cubemap_from_file("data/textures/miramar/"));
-      material->set_uniform("diffuse", glm::vec4(1.0f, 1.0f, 1.0f, 1.0f));
-      material->set_uniform("diffuse_texture", 0);
-      material->set_uniform("MVP", UniformSymbol::ModelViewProjectionMatrix);
-      material->set_program(Program::create(Shader::from_file(GL_VERTEX_SHADER, "src/cubemap.vert"),
-                                            Shader::from_file(GL_FRAGMENT_SHADER, "src/cubemap.frag")));
-
-
       auto mesh = Mesh::create_skybox(500.0f);
       ModelPtr entity = std::make_shared<Model>();
       entity->add_mesh(std::move(mesh));
-      entity->set_material(material);
+      entity->set_material(MaterialFactory::get().create("skybox"));
 
       auto node = g_scene_manager->get_world()->create_child();
       node->attach_entity(entity);
@@ -1234,14 +1182,33 @@ wiimote_mesg_callback(cwiid_wiimote_t*, int mesg_count, union cwiid_mesg msg[], 
 
 struct Options
 {
-  bool wiimote = true;
+  bool wiimote = false;
 };
 
 int main(int argc, char** argv)
 {
   Options opts;
 
-  if (argc != 2)
+  for(int i = 1; i < argc; ++i)
+  {
+    if (argv[i][0] == '-')
+    {
+      if (strcmp("--wiimote", argv[i]) == 0)
+      {
+        opts.wiimote = true;
+      }
+      else
+      {
+        throw std::runtime_error("unknown option: " + std::string(argv[i]));
+      }
+    }
+    else
+    {
+      g_model_filename = argv[i];
+    }
+  }
+
+  if (g_model_filename.empty())
   {
     puts("Usage: viewer [MODELFILE]");
     return EXIT_FAILURE;
@@ -1265,8 +1232,6 @@ int main(int argc, char** argv)
     {
       joystick = SDLCALL SDL_JoystickOpen(0);
     }
-
-    g_model_filename = argv[1];
 
     log_info("glutInit()");
     glutInit(&argc, argv);

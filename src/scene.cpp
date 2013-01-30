@@ -4,11 +4,12 @@
 #include <fstream>
 
 #include "scene_node.hpp"
+#include "material_factory.hpp"
 
 #include "scene.hpp"
 
 SceneNode*
-Scene::from_file(MaterialPtr material, const std::string& filename)
+Scene::from_file(const std::string& filename)
 {
   std::ifstream in(filename.c_str());
   if(!in)
@@ -18,18 +19,19 @@ Scene::from_file(MaterialPtr material, const std::string& filename)
   }
   else
   {
-    return Scene::from_istream(material, in);
+    return Scene::from_istream(in);
   }
 }
 
 SceneNode*
-Scene::from_istream(MaterialPtr material, std::istream& in)
+Scene::from_istream(std::istream& in)
 {
   // This is not a fully featured .obj file reader, it just takes some
   // inspiration from it: 
   // http://www.martinreddy.net/gfx/3d/OBJ.spec
   std::unique_ptr<SceneNode> root(new SceneNode);
 
+  std::string material = "phong";
   glm::vec3 location(0.0f, 0.0f, 0.0f);
   std::vector<glm::vec3>  normal;
   std::vector<glm::vec3>  position;
@@ -69,7 +71,7 @@ Scene::from_istream(MaterialPtr material, std::istream& in)
       // create Model
       ModelPtr model = std::make_shared<Model>();
       model->add_mesh(std::move(mesh));
-      model->set_material(material);
+      model->set_material(MaterialFactory::get().create(material));
 
       // create SceneNode
       SceneNode* node = root->create_child();
@@ -105,7 +107,12 @@ Scene::from_istream(MaterialPtr material, std::istream& in)
 
       try
       {  
-        if (*it == "loc")
+        if (*it == "mat")
+        {
+          INCR_AND_CHECK;
+          material = *it;
+        }
+        else if (*it == "loc")
         {
           INCR_AND_CHECK;
           location.x = boost::lexical_cast<float>(*it);
