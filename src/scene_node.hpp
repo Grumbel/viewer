@@ -44,9 +44,9 @@ public:
   {
     m_global_transform = 
       parent_transform *
+      glm::translate(m_position) *
       glm::mat4_cast(m_orientation) * 
-      glm::scale(m_scale) * 
-      glm::translate(m_position);
+      glm::scale(m_scale);    
     
     for(auto& child : m_children)
     {

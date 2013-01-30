@@ -33,6 +33,8 @@ Scene::from_istream(std::istream& in)
 
   std::string material = "phong";
   glm::vec3 location(0.0f, 0.0f, 0.0f);
+  glm::quat rotation(1.0f, 0.0f, 0.0f, 0.0f);
+  glm::vec3 scale(1.0f, 1.0f, 1.0f);
   std::vector<glm::vec3>  normal;
   std::vector<glm::vec3>  position;
   std::vector<glm::vec3>  texcoord;
@@ -76,6 +78,8 @@ Scene::from_istream(std::istream& in)
       // create SceneNode
       SceneNode* node = root->create_child();
       node->set_position(location);
+      node->set_orientation(rotation);
+      node->set_scale(scale);
       node->attach_entity(model);
 
       // clear for the next mesh
@@ -84,6 +88,8 @@ Scene::from_istream(std::istream& in)
       position.clear();
       index.clear();
       location = glm::vec3(0.0f, 0.0f, 0.0f);
+      rotation = glm::quat(1.0f, 0.0f, 0.0f, 0.0f);
+      scale = glm::vec3(1.0f, 1.0f, 1.0f);
     }
   };
 
@@ -120,6 +126,26 @@ Scene::from_istream(std::istream& in)
           location.y = boost::lexical_cast<float>(*it);
           INCR_AND_CHECK;
           location.z = boost::lexical_cast<float>(*it);
+        }
+        else if (*it == "rot")
+        {
+          INCR_AND_CHECK;
+          rotation.w = boost::lexical_cast<float>(*it);
+          INCR_AND_CHECK;
+          rotation.x = boost::lexical_cast<float>(*it);
+          INCR_AND_CHECK;
+          rotation.y = boost::lexical_cast<float>(*it);
+          INCR_AND_CHECK;
+          rotation.z = boost::lexical_cast<float>(*it);
+        }
+        else if (*it == "scale")
+        {
+          INCR_AND_CHECK;
+          scale.x = boost::lexical_cast<float>(*it);
+          INCR_AND_CHECK;
+          scale.y = boost::lexical_cast<float>(*it);
+          INCR_AND_CHECK;
+          scale.z = boost::lexical_cast<float>(*it);
         }
         else if (*it == "g")
         {

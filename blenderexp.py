@@ -31,32 +31,10 @@ def pm(mat):
 Face   = namedtuple('Face',   ['v1', 'v2', 'v3'])
 Vertex = namedtuple('Vertex', ['co', 'n', 'uv', 'bones'])
 
-# "B2OGL * vec" results in OpenGL coordinates
-if True:
-    B2OGL4 = Matrix(((1,  0,  0, 0),
-                     (0,  0,  1, 0),
-                     (0, -1,  0, 0),
-                     (0,  0,  0, 1)))
-
-    B2OGL3 = Matrix(((1,  0, 0),
-                     (0,  0, 1),
-                     (0, -1, 0)))
-else:
-    B2OGL4 = Matrix(((1, 0,  0, 0),
-                     (0, 1,  0, 0),
-                     (0, 0,  1, 0),
-                     (0, 0,  0, 1)))
-
-    B2OGL3 = Matrix(((1, 0, 0),
-                     (0, 1, 0),
-                     (0, 0, 1)))
-
-
 def vec3(v):
     """Convert Blender vector into tuple, swaps Y and Z"""
     # return (v.x, v.z, -v.y)
-    v = B2OGL3 * v
-    return (v.x, v.y, v.z)
+    return (v.x, v.z, -v.y)
 
 def write_mesh(obj):
     faces = collect_faces(obj)
@@ -64,6 +42,18 @@ def write_mesh(obj):
 
     outfile.write("o %s\n" % obj.name)
     outfile.write("loc %f %f %f\n" % vec3(obj.location))
+
+    if obj.rotation_mode == 'XYZ':
+        w, x, y, z = obj.rotation_euler.to_quaternion()
+    elif obj.rotation_mode == 'QUATERNION':
+        w, x, y, z = obj.rotation_quaternion
+    else:
+        raise Exception("unsupported rotation mode: %s" % obj.rotation_mode)
+
+    outfile.write("rot %f %f %f %f\n" % (w, x, z, -y))
+
+    x, y, z = obj.scale
+    outfile.write("scale %f %f %f\n" % (x, z, -y))
 
     print("vertices: %d" % len(vertices))
     print("faces: %d" % len(faces))
@@ -174,19 +164,15 @@ def collect_faces(obj):
     return out_faces
 
 def vec3_str(v):
-    v = B2OGL3 * v
-    return "%6.2f %6.2f %6.2f" % (v.x, v.y, v.z)
+    return "%6.2f %6.2f %6.2f" % (v.x, v.z, -v.y)
 
 def vec4_str(v):
-    v = B2OGL4 * v
-    return "%6.2f %6.2f %6.2f %6.2f" % (v.x, v.y, v.z, v.w)
+    return "%6.2f %6.2f %6.2f %6.2f" % (v.x, v.z, -v.y, v.w)
 
 def mat3_str(m):
-    # m = B2OGL3 * m
     return "%s %s %s" % (vec3_str(m[0]), vec3_str(m[1]), vec3_str(m[2]))
 
 def mat4_str(m):
-    # m = B2OGL4 * m
     return "%s %s %s %s" % (vec4_str(m[0]), vec4_str(m[1]), vec4_str(m[2]), vec4_str(m[3]))
 
 def write_armature(obj):
