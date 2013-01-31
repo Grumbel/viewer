@@ -41,7 +41,12 @@ def write_mesh(obj):
     faces, vertices = index_vertices(faces)
 
     outfile.write("o %s\n" % obj.name)
-    outfile.write("loc %f %f %f\n" % vec3(obj.location))
+    # http://wiki.blender.org/index.php/User:Pepribal/Ref/Appendices/ParentInverse
+    if obj.parent:
+        outfile.write("parent %s\n" % obj.parent.name)
+        outfile.write("loc %f %f %f\n" % vec3(obj.matrix_parent_inverse * obj.location))
+    else:
+        outfile.write("loc %f %f %f\n" % vec3(obj.location))
 
     if obj.rotation_mode == 'XYZ':
         w, x, y, z = obj.rotation_euler.to_quaternion()
@@ -53,7 +58,7 @@ def write_mesh(obj):
     outfile.write("rot %f %f %f %f\n" % (w, x, z, -y))
 
     x, y, z = obj.scale
-    outfile.write("scale %f %f %f\n" % (x, z, -y))
+    outfile.write("scale %f %f %f\n" % (x, y, z))
 
     print("vertices: %d" % len(vertices))
     print("faces: %d" % len(faces))
@@ -151,14 +156,14 @@ def collect_faces(obj):
         bones = tuple(bones)
 
         out_faces.append(
-            Face(Vertex(vec3(v[1].co), vec3(v[1].normal), uv[1], bones[1]),
-                 Vertex(vec3(v[0].co), vec3(v[0].normal), uv[0], bones[0]),
+            Face(Vertex(vec3(v[0].co), vec3(v[0].normal), uv[0], bones[0]),
+                 Vertex(vec3(v[1].co), vec3(v[1].normal), uv[1], bones[1]),
                  Vertex(vec3(v[2].co), vec3(v[2].normal), uv[2], bones[2])))
        
         if num_vertices == 4:
             out_faces.append(
-                Face(Vertex(vec3(v[2].co), vec3(v[2].normal), uv[2], bones[2]),
-                     Vertex(vec3(v[0].co), vec3(v[0].normal), uv[0], bones[0]),
+                Face(Vertex(vec3(v[0].co), vec3(v[0].normal), uv[0], bones[0]),
+                     Vertex(vec3(v[2].co), vec3(v[2].normal), uv[2], bones[2]),
                      Vertex(vec3(v[3].co), vec3(v[3].normal), uv[3], bones[3])))
 
     return out_faces
