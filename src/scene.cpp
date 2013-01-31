@@ -2,13 +2,14 @@
 #include <boost/lexical_cast.hpp>
 #include <boost/format.hpp>
 #include <fstream>
+#include <stdexcept>
 
 #include "scene_node.hpp"
 #include "material_factory.hpp"
 
 #include "scene.hpp"
 
-SceneNode*
+std::unique_ptr<SceneNode>
 Scene::from_file(const std::string& filename)
 {
   std::ifstream in(filename.c_str());
@@ -23,14 +24,19 @@ Scene::from_file(const std::string& filename)
   }
 }
 
-SceneNode*
+std::unique_ptr<SceneNode>
 Scene::from_istream(std::istream& in)
 {
   // This is not a fully featured .obj file reader, it just takes some
   // inspiration from it: 
   // http://www.martinreddy.net/gfx/3d/OBJ.spec
   std::unique_ptr<SceneNode> root(new SceneNode);
+  
+  std::unordered_map<std::string, SceneNode*> nodes;
+  std::unordered_map<std::string, std::unique_ptr<SceneNode> > unattached_children;
 
+  std::string name;
+  std::string parent;
   std::string material = "phong";
   glm::vec3 location(0.0f, 0.0f, 0.0f);
   glm::quat rotation(1.0f, 0.0f, 0.0f, 0.0f);
@@ -76,13 +82,32 @@ Scene::from_istream(std::istream& in)
       model->set_material(MaterialFactory::get().create(material));
 
       // create SceneNode
-      SceneNode* node = root->create_child();
-      node->set_position(location);
-      node->set_orientation(rotation);
-      node->set_scale(scale);
-      node->attach_entity(model);
+      {
+        std::unique_ptr<SceneNode> node(new SceneNode);
+        node->set_position(location);
+        node->set_orientation(rotation);
+        node->set_scale(scale);
+        node->attach_entity(model);
+        
+        if (nodes.find(name) != nodes.end())
+        {
+          throw std::runtime_error("duplicate object name: " + name);
+        }
+
+        nodes[name] = node.get();
+        if (parent.empty())
+        {
+          root->attach_child(std::move(node));
+        }
+        else
+        {
+          unattached_children[parent] = std::move(node);
+        }
+      }
 
       // clear for the next mesh
+      name.clear();
+      parent.clear();
       normal.clear();
       texcoord.clear();
       position.clear();
@@ -113,7 +138,25 @@ Scene::from_istream(std::istream& in)
 
       try
       {  
-        if (*it == "mat")
+        if (*it == "o")
+        {
+          // object
+          commit_object();
+
+          INCR_AND_CHECK;
+          log_debug("object: '%s'", *it);
+          name = *it;
+        }
+        else if (*it == "g")
+        {
+          // group
+        }
+        else if (*it == "parent")
+        {
+          INCR_AND_CHECK;
+          parent = *it;
+        }
+        else if (*it == "mat")
         {
           INCR_AND_CHECK;
           material = *it;
@@ -146,18 +189,6 @@ Scene::from_istream(std::istream& in)
           scale.y = boost::lexical_cast<float>(*it);
           INCR_AND_CHECK;
           scale.z = boost::lexical_cast<float>(*it);
-        }
-        else if (*it == "g")
-        {
-          // group
-        }
-        else if (*it == "o")
-        {
-          INCR_AND_CHECK;
-          log_debug("object: %s", *it);
-
-          // object
-          commit_object();
         }
         else if (*it == "v")
         {
@@ -253,7 +284,21 @@ Scene::from_istream(std::istream& in)
 
   commit_object();
 
-  return root.release();
+  // reconstruct parent/child relationships
+  for(auto& it : unattached_children)
+  {
+    auto p = nodes.find(it.first);
+    if (p == nodes.end())
+    {
+      throw std::runtime_error("parent not found: " + it.first);
+    }
+    else
+    {
+      p->second->attach_child(std::move(it.second));
+    }
+  }
+
+  return std::move(root);
 }
 
 /* EOF */

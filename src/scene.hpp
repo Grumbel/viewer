@@ -9,8 +9,8 @@ class SceneNode;
 class Scene
 {
 public:
-  static SceneNode* from_istream(std::istream& in);
-  static SceneNode* from_file(const std::string& filename);
+  static std::unique_ptr<SceneNode> from_istream(std::istream& in);
+  static std::unique_ptr<SceneNode> from_file(const std::string& filename);
 
 private:
   Scene(const Scene&);

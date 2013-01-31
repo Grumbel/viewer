@@ -63,9 +63,9 @@ SceneManager::render_node(const Camera& camera, SceneNode* node, bool geometry_p
     entity->draw(context);
   }
 
-  for(auto& child : node->get_children())
+  for(const auto& child : node->get_children())
   {
-    render_node(camera, child, geometry_pass);
+    render_node(camera, child.get(), geometry_pass);
   }
 }
 

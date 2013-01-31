@@ -16,7 +16,7 @@ private:
 
   glm::mat4 m_global_transform;
 
-  std::vector<SceneNode*> m_children;
+  std::vector<std::unique_ptr<SceneNode> > m_children;
   std::vector<ModelPtr> m_entities;
 
 public:
@@ -28,6 +28,10 @@ public:
     m_children(),
     m_entities()
   {}
+
+  ~SceneNode()
+  {
+  }
 
   void set_position(const glm::vec3& p) { m_position = p; }
   glm::vec3 get_position() const { return m_position; }
@@ -46,7 +50,7 @@ public:
       parent_transform *
       glm::translate(m_position) *
       glm::mat4_cast(m_orientation) * 
-      glm::scale(m_scale);    
+      glm::scale(m_scale);
     
     for(auto& child : m_children)
     {
@@ -59,21 +63,21 @@ public:
     m_entities.push_back(entity);
   }
 
-  void attach_child(SceneNode* child)
+  void attach_child(std::unique_ptr<SceneNode> child)
   {
-    m_children.push_back(child);
+    m_children.push_back(std::move(child));
   }
 
   SceneNode* create_child() 
   {
-    SceneNode* child = new SceneNode; 
-    attach_child(child);
-    return child;
+    std::unique_ptr<SceneNode> child(new SceneNode); 
+    SceneNode* ptr = child.get();
+    attach_child(std::move(child));
+    return ptr;
   }
 
-  const std::vector<SceneNode*>& get_children() const { return m_children; }
+  const std::vector<std::unique_ptr<SceneNode> >& get_children() const { return m_children; }
   const std::vector<ModelPtr>&   get_entities() const { return m_entities; }
- 
 
 private:
   SceneNode(const SceneNode&);
