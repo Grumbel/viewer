@@ -51,6 +51,39 @@
 
 void draw_models(bool shader_foo);
 
+std::string to_string(const glm::vec3& v)
+{
+  std::ostringstream str;
+  str << "vec3(" << v.x << ", "  << v.y << ", " << v.z << ")";
+  return str.str();
+}
+
+std::string to_string(const glm::vec4& v)
+{
+  std::ostringstream str;
+  str << "vec4(" << v.x << ", "  << v.y << ", " << v.z << ", "  << v.w << ")";
+  return str.str();
+}
+
+std::string to_string(const glm::quat& q)
+{
+  std::ostringstream str;
+  str << "quat(" << q.w << ", " << q.x << ", "  << q.y << ", " << q.x << ", "  << q.z << ")";
+  return str.str();
+}
+
+void print_scene_graph(SceneNode* node, int depth = 0)
+{
+  std::cout << std::string(depth, ' ') << node 
+            << ": " << to_string(node->get_position())
+            << " " << to_string(node->get_scale())
+            << " " << to_string(node->get_orientation()) << std::endl;
+  for(const auto& child : node->get_children())
+  {
+    print_scene_graph(child.get(), depth+1);
+  }
+}
+
 // global variables
 namespace {
 
@@ -74,7 +107,7 @@ bool g_draw_look_at = false;
 
 float g_light_angle = 0.0f;
 bool g_draw_3d = false;
-bool g_helmet_3d = true;
+bool g_helmet_3d = false;
 bool g_headlights = false;
 bool g_draw_grid = false;
 bool g_draw_depth = false;
@@ -731,6 +764,25 @@ void init()
       //g_nodes.push_back(moon);
     }
 
+    {
+      auto root_parent = g_scene_manager->get_world()->create_child();
+      auto parent = root_parent;
+      parent->set_position(glm::vec3(10.0f, 0.0f, 0.0f));
+      for(int i = 0; i < 5; ++i)
+      {
+        auto child = parent->create_child();
+        child->set_position(glm::vec3(1.0f, 0.0f, -3.0f));
+        ModelPtr entity = std::make_shared<Model>();
+        entity->add_mesh(Mesh::create_sphere(0.5f, 16, 8));
+        entity->set_material(phong_material);
+        child->attach_entity(entity);
+
+        parent = child;
+      }
+
+      print_scene_graph(root_parent);
+    }
+
     if (true)
     { // load a mesh from file
       //auto node = g_scene_manager->get_world()->create_child();
@@ -923,7 +975,7 @@ void idle_func()
   }
 
   display();
-  usleep(5000);
+  usleep(20 * 1000);
 
   g_grid_offset += glm::vec4(0.0f, 0.0f, 0.001f, 0.0f);
 
