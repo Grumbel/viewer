@@ -15,7 +15,7 @@
 ##  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import bpy
-from mathutils import Matrix, Vector
+from mathutils import Matrix, Vector, Euler, Quaternion
 from collections import namedtuple
 
 def pm(mat):
@@ -31,34 +31,59 @@ def pm(mat):
 Face   = namedtuple('Face',   ['v1', 'v2', 'v3'])
 Vertex = namedtuple('Vertex', ['co', 'n', 'uv', 'bones'])
 
-def vec3(v):
-    """Convert Blender vector into tuple, swaps Y and Z"""
-    # return (v.x, v.z, -v.y)
-    return (v.x, v.z, -v.y)
-
+if True:
+    def b2gl_vec3(v): 
+        return (v.x, v.z, -v.y)
+    def b2gl_vec4(v): 
+        return (v.x, v.z, -v.y, v.w)
+    def b2gl_scale(v): 
+        return (v.x, v.z, v.y)
+    def b2gl_quat(q): 
+        axis, angle = q.to_axis_angle()
+        axis = (axis.x, axis.z, -axis.y)
+        return Quaternion(axis, angle)
+else:
+    def b2gl_vec3(v):  return v
+    def b2gl_vec4(v):  return v
+    def b2gl_scale(v): return v;
+    def b2gl_quat(q):  return q
+    
 def write_mesh(obj):
     faces = collect_faces(obj)
     faces, vertices = index_vertices(faces)
 
     outfile.write("o %s\n" % obj.name)
     # http://wiki.blender.org/index.php/User:Pepribal/Ref/Appendices/ParentInverse
-    if obj.parent:
-        outfile.write("parent %s\n" % obj.parent.name)
-        outfile.write("loc %f %f %f\n" % vec3(obj.matrix_parent_inverse * obj.location))
+    if False:
+        if obj.parent and (obj.parent.type == 'MESH' or obj.parent.type == 'EMPTY'):
+            outfile.write("parent %s\n" % obj.parent.name)
+            outfile.write("loc %f %f %f\n" % b2gl_vec3(obj.matrix_parent_inverse * obj.location))
+        else:
+            outfile.write("loc %f %f %f\n" % b2gl_vec3(obj.location))
+
+        if obj.rotation_mode == 'XYZ':
+            m = obj.rotation_euler.to_matrix()
+        elif obj.rotation_mode == 'QUATERNION':
+            m = obj.rotation_quaternion.to_matrix()
+        else:
+            raise Exception("unsupported rotation mode: %s" % obj.rotation_mode)
+
+        euler = (obj.matrix_parent_inverse.to_3x3() * m).to_euler()
+        quat = Euler((euler.x, euler.z, -euler.y), 'XYZ').to_quaternion()
+        outfile.write("rot %f %f %f %f\n" % (quat.w, quat.x, quat.y, quat.z))
+    
+        x, y, z = obj.scale
+        outfile.write("scale %f %f %f\n" % (x, z, y))
     else:
-        outfile.write("loc %f %f %f\n" % vec3(obj.location))
-
-    if obj.rotation_mode == 'XYZ':
-        w, x, y, z = obj.rotation_euler.to_quaternion()
-    elif obj.rotation_mode == 'QUATERNION':
-        w, x, y, z = obj.rotation_quaternion
-    else:
-        raise Exception("unsupported rotation mode: %s" % obj.rotation_mode)
-
-    outfile.write("rot %f %f %f %f\n" % (w, x, z, -y))
-
-    x, y, z = obj.scale
-    outfile.write("scale %f %f %f\n" % (x, y, z))
+        if obj.parent and (obj.parent.type == 'MESH' or obj.parent.type == 'EMPTY'):
+            outfile.write("parent %s\n" % obj.parent.name)
+        m = obj.matrix_local
+        loc   = b2gl_vec3(m.to_translation())
+        quat  = b2gl_quat(m.to_quaternion())
+        scale = b2gl_scale(m.to_scale())
+        outfile.write("loc %f %f %f\n"    % tuple(loc))
+        outfile.write("rot %f %f %f %f\n" % tuple(quat))
+        outfile.write("scale %f %f %f\n"  % tuple(scale))
 
     print("vertices: %d" % len(vertices))
     print("faces: %d" % len(faces))
@@ -156,23 +181,25 @@ def collect_faces(obj):
         bones = tuple(bones)
 
         out_faces.append(
-            Face(Vertex(vec3(v[0].co), vec3(v[0].normal), uv[0], bones[0]),
-                 Vertex(vec3(v[1].co), vec3(v[1].normal), uv[1], bones[1]),
-                 Vertex(vec3(v[2].co), vec3(v[2].normal), uv[2], bones[2])))
+            Face(Vertex(b2gl_vec3(v[0].co), b2gl_vec3(v[0].normal), uv[0], bones[0]),
+                 Vertex(b2gl_vec3(v[1].co), b2gl_vec3(v[1].normal), uv[1], bones[1]),
+                 Vertex(b2gl_vec3(v[2].co), b2gl_vec3(v[2].normal), uv[2], bones[2])))
        
         if num_vertices == 4:
             out_faces.append(
-                Face(Vertex(vec3(v[0].co), vec3(v[0].normal), uv[0], bones[0]),
-                     Vertex(vec3(v[2].co), vec3(v[2].normal), uv[2], bones[2]),
-                     Vertex(vec3(v[3].co), vec3(v[3].normal), uv[3], bones[3])))
+                Face(Vertex(b2gl_vec3(v[0].co), b2gl_vec3(v[0].normal), uv[0], bones[0]),
+                     Vertex(b2gl_vec3(v[2].co), b2gl_vec3(v[2].normal), uv[2], bones[2]),
+                     Vertex(b2gl_vec3(v[3].co), b2gl_vec3(v[3].normal), uv[3], bones[3])))
 
     return out_faces
 
 def vec3_str(v):
-    return "%6.2f %6.2f %6.2f" % (v.x, v.z, -v.y)
+    v = b2gl_vec3(v)
+    return "%6.2f %6.2f %6.2f" % (v.x, v.y, v.z)
 
 def vec4_str(v):
-    return "%6.2f %6.2f %6.2f %6.2f" % (v.x, v.z, -v.y, v.w)
+    v = b2gl_vec4(v)
+    return "%6.2f %6.2f %6.2f %6.2f" % (v.x, v.y, v.z, v.w)
 
 def mat3_str(m):
     return "%s %s %s" % (vec3_str(m[0]), vec3_str(m[1]), vec3_str(m[2]))
