@@ -151,14 +151,14 @@ def collect_faces(obj):
         bones = tuple(bones)
 
         out_faces.append(
-            Face(Vertex(vec3(v[0].co), vec3(v[0].normal), uv[0], bones[0]),
-                 Vertex(vec3(v[1].co), vec3(v[1].normal), uv[1], bones[1]),
+            Face(Vertex(vec3(v[1].co), vec3(v[1].normal), uv[1], bones[1]),
+                 Vertex(vec3(v[0].co), vec3(v[0].normal), uv[0], bones[0]),
                  Vertex(vec3(v[2].co), vec3(v[2].normal), uv[2], bones[2])))
        
         if num_vertices == 4:
             out_faces.append(
-                Face(Vertex(vec3(v[0].co), vec3(v[0].normal), uv[0], bones[0]),
-                     Vertex(vec3(v[2].co), vec3(v[2].normal), uv[2], bones[2]),
+                Face(Vertex(vec3(v[2].co), vec3(v[2].normal), uv[2], bones[2]),
+                     Vertex(vec3(v[0].co), vec3(v[0].normal), uv[0], bones[0]),
                      Vertex(vec3(v[3].co), vec3(v[3].normal), uv[3], bones[3])))
 
     return out_faces
