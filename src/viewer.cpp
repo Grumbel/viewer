@@ -716,21 +716,19 @@ void init()
       auto sun = origin->create_child();
       sun->set_scale(glm::vec3(3.0f, 3.0f, 3.0f));
       sun->attach_entity(entity);
-      g_nodes.push_back(origin);
+      g_nodes.push_back(sun);
 
-      auto earth = origin->create_child();
+      auto earth = sun->create_child();
       earth->set_scale(glm::vec3(0.5f, 0.5f, 0.5f));
-      earth->set_position(glm::vec3(5, 0, 0));
+      earth->set_position(glm::vec3(2.0f, 0, 0));
       earth->attach_entity(entity);
-      //g_nodes.push_back(earth);
+      g_nodes.push_back(earth);
 
-      /*
       auto moon = earth->create_child();
-      moon->set_scale(glm::vec3(0.25f, 0.25f, 0.25f));
+      moon->set_scale(glm::vec3(0.5f, 0.5f, 0.5f));
       moon->set_position(glm::vec3(2, 0, 0));
       moon->attach_entity(entity);
-      g_nodes.push_back(moon);
-*/
+      //g_nodes.push_back(moon);
     }
 
     if (true)
@@ -899,11 +897,11 @@ void idle_func()
 {
   {
     int i = 1; 
-    for(auto& node :  g_nodes)
+    for(auto& node : g_nodes)
     {
       float f = SDL_GetTicks()/1000.0f;
-      node->set_orientation(glm::quat(glm::vec3(0.0f, f*i*1.3, 0.0f)));
-      i += 1;
+      node->set_orientation(glm::quat(glm::vec3(0.0f, f*1.3*static_cast<float>(i), 0.0f)));
+      i += 3;
     }
   }
 
