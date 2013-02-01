@@ -15,8 +15,13 @@
 ##  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import bpy
+import sys
 from mathutils import Matrix, Vector, Euler, Quaternion
 from collections import namedtuple
+
+# http://www.blender.org/forum/viewtopic.php?t=19102&highlight=batch+render
+# blender  -b data/mech.blend --python blenderexp.py -- extra args
+print("Argv:", sys.argv)
 
 def pm(mat):
     print("Matrix(%6.2f  %6.2f  %6.2f  %6.2f\n"
@@ -49,72 +54,53 @@ else:
     def b2gl_quat(q):  return q
     
 def write_mesh(obj):
-    faces = collect_faces(obj)
-    faces, vertices = index_vertices(faces)
+    # http://wiki.blender.org/index.php/User:Pepribal/Ref/Appendices/ParentInverse
 
     outfile.write("o %s\n" % obj.name)
-    # http://wiki.blender.org/index.php/User:Pepribal/Ref/Appendices/ParentInverse
-    if False:
-        if obj.parent and (obj.parent.type == 'MESH' or obj.parent.type == 'EMPTY'):
-            outfile.write("parent %s\n" % obj.parent.name)
-            outfile.write("loc %f %f %f\n" % b2gl_vec3(obj.matrix_parent_inverse * obj.location))
-        else:
-            outfile.write("loc %f %f %f\n" % b2gl_vec3(obj.location))
+    if obj.parent and (obj.parent.type == 'MESH' or obj.parent.type == 'EMPTY'):
+        outfile.write("parent %s\n" % obj.parent.name)
+    m = obj.matrix_local
+    loc   = b2gl_vec3(m.to_translation())
+    quat  = b2gl_quat(m.to_quaternion())
+    scale = b2gl_scale(m.to_scale())
+    outfile.write("loc %f %f %f\n"    % tuple(loc))
+    outfile.write("rot %f %f %f %f\n" % tuple(quat))
+    outfile.write("scale %f %f %f\n"  % tuple(scale))
 
-        if obj.rotation_mode == 'XYZ':
-            m = obj.rotation_euler.to_matrix()
-        elif obj.rotation_mode == 'QUATERNION':
-            m = obj.rotation_quaternion.to_matrix()
-        else:
-            raise Exception("unsupported rotation mode: %s" % obj.rotation_mode)
+    if obj.type == 'MESH':
+        faces = collect_faces(obj)
+        faces, vertices = index_vertices(faces)
 
-        euler = (obj.matrix_parent_inverse.to_3x3() * m).to_euler()
-        quat = Euler((euler.x, euler.z, -euler.y), 'XYZ').to_quaternion()
-        outfile.write("rot %f %f %f %f\n" % (quat.w, quat.x, quat.y, quat.z))
-    
-        x, y, z = obj.scale
-        outfile.write("scale %f %f %f\n" % (x, z, y))
-    else:
-        if obj.parent and (obj.parent.type == 'MESH' or obj.parent.type == 'EMPTY'):
-            outfile.write("parent %s\n" % obj.parent.name)
-        m = obj.matrix_local
-        loc   = b2gl_vec3(m.to_translation())
-        quat  = b2gl_quat(m.to_quaternion())
-        scale = b2gl_scale(m.to_scale())
-        outfile.write("loc %f %f %f\n"    % tuple(loc))
-        outfile.write("rot %f %f %f %f\n" % tuple(quat))
-        outfile.write("scale %f %f %f\n"  % tuple(scale))
+        print("vertices: %d" % len(vertices))
+        print("faces: %d" % len(faces))
 
-    print("vertices: %d" % len(vertices))
-    print("faces: %d" % len(faces))
+        for v in vertices:
+            outfile.write("vn %f %f %f\n" % v.n)
+            if v.uv:
+                outfile.write("vt %f %f\n" % v.uv)
 
-    for v in vertices:
-        outfile.write("vn %f %f %f\n" % v.n)
-        if v.uv:
-            outfile.write("vt %f %f\n" % v.uv)
+            if v.bones:
+                bones = list(v.bones)
 
-        if v.bones:
-            bones = list(v.bones)
+                bones.sort(key=lambda bone: bone[1], reverse=True)
 
-            bones.sort(key=lambda bone: bone[1], reverse=True)
+                while len(bones) < 4:
+                    bones.append((0, 0.0))
 
-            while len(bones) < 4:
-                bones.append((0, 0.0))
+                while len(bones) > 4:
+                    bones.pop()
 
-            while len(bones) > 4:
-                bones.pop()
+                bone_index  = [g for g, w in bones]
+                bone_weight = [w for g, w in bones]
+                bone_weight = [w / sum(bone_weight) for w in bone_weight]
 
-            bone_index  = [g for g, w in bones]
-            bone_weight = [w for g, w in bones]
-            bone_weight = [w / sum(bone_weight) for w in bone_weight]
+                outfile.write("bi %d %d %d %d\n" % tuple(bone_index))
+                outfile.write("bw %f %f %f %f\n" % tuple(bone_weight))
 
-            outfile.write("bi %d %d %d %d\n" % tuple(bone_index))
-            outfile.write("bw %f %f %f %f\n" % tuple(bone_weight))
-        
-        outfile.write("v %f %f %f\n" % v.co)
+            outfile.write("v %f %f %f\n" % v.co)
 
-    for f in faces:
-        outfile.write("f %d %d %d\n" % (f.v1, f.v2, f.v3))
+        for f in faces:
+            outfile.write("f %d %d %d\n" % (f.v1, f.v2, f.v3))
 
 def index_vertices(faces):
     # collect vertices
@@ -147,12 +133,12 @@ def collect_faces(obj):
         for i, bone in enumerate(obj.modifiers[0].object.data.bones):
             bone_name2idx[bone.name] = i
 
-    print(bone_name2idx)
+    # print(bone_name2idx)
 
     mesh = obj.data
 
     uv_faces = None
-    print(dir(mesh))
+    # print(dir(mesh))
     mesh.update(calc_tessface=True)
     faces = mesh.tessfaces
     print("Faces: ", faces)
@@ -195,11 +181,11 @@ def collect_faces(obj):
 
 def vec3_str(v):
     v = b2gl_vec3(v)
-    return "%6.2f %6.2f %6.2f" % (v.x, v.y, v.z)
+    return "%6.2f %6.2f %6.2f" % (v[0], v[1], v[2])
 
 def vec4_str(v):
     v = b2gl_vec4(v)
-    return "%6.2f %6.2f %6.2f %6.2f" % (v.x, v.y, v.z, v.w)
+    return "%6.2f %6.2f %6.2f %6.2f" % (v[0], v[1], v[2], v[3])
 
 def mat3_str(m):
     return "%s %s %s" % (vec3_str(m[0]), vec3_str(m[1]), vec3_str(m[2]))
@@ -237,7 +223,7 @@ def write_armature(obj):
 
 with open("/tmp/blender.mod", "w") as outfile:
     outfile.write("# exported by %s\n" % __file__)
-    meshes = [obj for obj in bpy.data.objects if obj.type == 'MESH']
+    meshes = [obj for obj in bpy.data.objects if obj.type == 'MESH' or obj.type == 'EMPTY']
     armatures = [obj for obj in bpy.data.objects if obj.type == 'ARMATURE']
     for mesh in meshes:
         write_mesh(mesh)

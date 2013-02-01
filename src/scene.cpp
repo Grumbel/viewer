@@ -50,45 +50,56 @@ Scene::from_istream(std::istream& in)
   std::vector<int>        bone_count;
 
   auto commit_object = [&]{
-    if (!position.empty())
+    if (!name.empty())
     {
-      // fill in some texcoords if there aren't enough
-      if (texcoord.size() < position.size())
+      ModelPtr model;
+        
+      if (!position.empty())
       {
-        texcoord.resize(position.size());
-        for(FaceLst::size_type i = position.size()-1; i < texcoord.size(); ++i)
+        // fill in some texcoords if there aren't enough
+        if (texcoord.size() < position.size())
         {
-          texcoord[i] = glm::vec3(0.0f, 0.0f, 0.0f);
+          texcoord.resize(position.size());
+          for(FaceLst::size_type i = position.size()-1; i < texcoord.size(); ++i)
+          {
+            texcoord[i] = glm::vec3(0.0f, 0.0f, 0.0f);
+          }
+        }
+
+        {
+          // create Mesh
+          std::unique_ptr<Mesh> mesh(new Mesh(GL_TRIANGLES));
+
+          mesh->attach_float_array("position", position);
+          mesh->attach_float_array("texcoord", texcoord);
+          mesh->attach_float_array("normal",   normal);
+          mesh->attach_element_array(index);
+
+          if (!bone_weight.empty() && !bone_index.empty())
+          {
+            mesh->attach_float_array("bone_weight", bone_weight);
+            mesh->attach_int_array("bone_index", bone_index);
+          }
+
+          // create Model
+          model = std::make_shared<Model>();
+          model->add_mesh(std::move(mesh));
+          model->set_material(MaterialFactory::get().create(material));
         }
       }
 
-      // create Mesh
-      std::unique_ptr<Mesh> mesh(new Mesh(GL_TRIANGLES));
-
-      mesh->attach_float_array("position", position);
-      mesh->attach_float_array("texcoord", texcoord);
-      mesh->attach_float_array("normal",   normal);
-      mesh->attach_element_array(index);
-
-      if (!bone_weight.empty() && !bone_index.empty())
-      {
-        mesh->attach_float_array("bone_weight", bone_weight);
-        mesh->attach_int_array("bone_index", bone_index);
-      }
-
-      // create Model
-      ModelPtr model = std::make_shared<Model>();
-      model->add_mesh(std::move(mesh));
-      model->set_material(MaterialFactory::get().create(material));
-
       // create SceneNode
       {
-        std::unique_ptr<SceneNode> node(new SceneNode);
+        std::unique_ptr<SceneNode> node(new SceneNode(name));
         node->set_position(location);
         node->set_orientation(rotation);
         node->set_scale(scale);
-        node->attach_entity(model);
         
+        if (model)
+        {
+          node->attach_entity(model);
+        }
+
         if (nodes.find(name) != nodes.end())
         {
           throw std::runtime_error("duplicate object name: " + name);
