@@ -48,10 +48,10 @@ if True:
         axis = (axis.x, axis.z, -axis.y)
         return Quaternion(axis, angle)
 else:
-    def b2gl_vec3(v):  return v
-    def b2gl_vec4(v):  return v
-    def b2gl_scale(v): return v;
-    def b2gl_quat(q):  return q
+    def b2gl_vec3(v):  return tuple(v)
+    def b2gl_vec4(v):  return tuple(v)
+    def b2gl_scale(v): return tuple(v)
+    def b2gl_quat(q):  return tuple(q)
     
 def write_mesh(obj):
     # http://wiki.blender.org/index.php/User:Pepribal/Ref/Appendices/ParentInverse
