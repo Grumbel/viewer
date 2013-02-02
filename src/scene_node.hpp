@@ -10,6 +10,7 @@
 class SceneNode
 {
 private:
+  std::string m_name;
   glm::vec3 m_position;
   glm::quat m_orientation;
   glm::vec3 m_scale;
@@ -20,7 +21,8 @@ private:
   std::vector<ModelPtr> m_entities;
 
 public:
-  SceneNode() :
+  SceneNode(const std::string& name = std::string()) :
+    m_name(name),
     m_position(0.0f, 0.0f, 0.0f),
     m_orientation(1.0f, 0.0f, 0.0f, 0.0f),
     m_scale(1.0f , 1.0f, 1.0f),
@@ -44,19 +46,7 @@ public:
 
   glm::mat4 get_transform() const { return m_global_transform; }
 
-  void update_transform(const glm::mat4& parent_transform = glm::mat4(1))
-  {
-    m_global_transform = 
-      parent_transform *
-      glm::translate(m_position) *
-      glm::mat4_cast(m_orientation) * 
-      glm::scale(m_scale);
-    
-    for(auto& child : m_children)
-    {
-      child->update_transform(m_global_transform);
-    }
-  }
+  void update_transform(const glm::mat4& parent_transform = glm::mat4(1));
 
   void attach_entity(ModelPtr entity)
   {
