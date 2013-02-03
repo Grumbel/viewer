@@ -87,6 +87,9 @@ void print_scene_graph(SceneNode* node, int depth = 0)
 // global variables
 namespace {
 
+int g_mouse_x = 0;
+int g_mouse_y = 0;
+
 SDL_Surface* g_screen = nullptr;
 
 std::unique_ptr<Menu> g_menu;
@@ -491,11 +494,121 @@ void display()
   assert_gl("display:exit()");
 }
 
-void special(int key, int x, int y)
+void keyboard(SDL_KeyboardEvent key, int x, int y)
 {
-  switch(key)
+  switch (key.keysym.sym)
   {
-    case GLUT_KEY_F1:
+    case SDLK_TAB:
+      g_show_menu = !g_show_menu;
+      break;
+
+    case SDLK_ESCAPE:
+      exit(EXIT_SUCCESS);
+      break;
+
+    case SDLK_n:
+      g_wiggle_offset += 0.01f;
+      break;
+
+    case SDLK_t:
+      g_wiggle_offset -= 0.01f;
+      break;
+
+    case SDLK_SPACE:
+      g_draw_look_at = !g_draw_look_at;
+      break;
+
+    case SDLK_c:
+      g_ipd += 1;
+      break;
+
+    case SDLK_r:
+      g_ipd -= 1;
+      break;
+
+    case SDLK_PLUS:
+      g_scale *= 1.05f;
+      break;
+
+    case SDLK_MINUS:
+      g_scale /= 1.05f;
+      break;
+
+    case SDLK_z:
+      {
+        GLdouble clip_plane[] = { 0.0, 0.0, 1.0, 1.0 };
+
+        clip_plane[0] = (rand() / double(RAND_MAX) - 0.5) * 2.0f;
+        clip_plane[1] = (rand() / double(RAND_MAX) - 0.5) * 2.0f;
+        clip_plane[2] = (rand() / double(RAND_MAX) - 0.5) * 2.0f;
+        clip_plane[3] = (rand() / double(RAND_MAX) - 0.5) * 2.0f;
+
+        glEnable(GL_CLIP_PLANE0);
+        glClipPlane(GL_CLIP_PLANE0, clip_plane);
+      }
+      break;
+
+    case SDLK_g:
+      {
+        GLdouble clip_plane[] = { 0.0, 1.0, 1.0, 0.0 };
+        glClipPlane(GL_CLIP_PLANE0, clip_plane);
+        glEnable(GL_CLIP_PLANE0);
+      }
+      break;
+
+    case SDLK_d:
+      g_draw_3d = !g_draw_3d;
+      break;
+
+    case SDLK_KP8: // up
+      g_eye += glm::normalize(g_look_at);
+      break;
+
+    case SDLK_KP2: // down
+      g_eye -= glm::normalize(g_look_at);
+      break;
+
+    case SDLK_KP4: // left
+      {
+        glm::vec3 dir = glm::normalize(g_look_at);
+        dir = glm::rotate(dir, 90.0f, g_up);
+        g_eye += dir;
+      }
+      break;
+
+    case SDLK_KP6: // right
+      {
+        glm::vec3 dir = glm::normalize(g_look_at);
+        dir = glm::rotate(dir, 90.0f, g_up);
+        g_eye -= dir;
+      }
+      break;
+
+    case SDLK_KP7: // kp_pos1
+      g_look_at = glm::rotate(g_look_at, 5.0f, g_up);
+      break;
+
+    case SDLK_KP9: // kp_raise
+      g_look_at = glm::rotate(g_look_at, -5.0f, g_up);
+      break;
+
+    case SDLK_KP1:
+      g_eye -= glm::normalize(g_up);
+      break;
+
+    case SDLK_KP3:
+      g_eye += glm::normalize(g_up);
+      break;
+
+    case SDLK_KP_MULTIPLY:
+      g_fov += 1.0f;
+      break;
+
+    case SDLK_KP_DIVIDE:
+      g_fov -= 1.0f;
+      break;
+
+    case SDLK_F1:
       {
         // Hitchcock zoom in
         //float old_eye_z = g_eye.z;
@@ -519,7 +632,7 @@ void special(int key, int x, int y)
       }
       break;
 
-    case GLUT_KEY_F2:
+    case SDLK_F2:
       // Hitchcock zoom out
       {
         //float old_eye_z = g_eye.z;
@@ -543,160 +656,40 @@ void special(int key, int x, int y)
       }
       break;
 
-    case GLUT_KEY_F10:
+    case SDLK_F10:
       glutReshapeWindow(1600, 1000);
       break;
 
-    case GLUT_KEY_F11:
+    case SDLK_F11:
       glutFullScreen();
       break;
 
-    case GLUT_KEY_UP:
+    case SDLK_UP:
       g_look_at *= 1.1f;
       break;
 
-    case GLUT_KEY_DOWN:
+    case SDLK_DOWN:
       g_look_at /= 1.1f;
       break;
 
-    case GLUT_KEY_LEFT:
+    case SDLK_LEFT:
       //g_look_at.x += 1.0f;
       break;
 
-    case GLUT_KEY_RIGHT:
+    case SDLK_RIGHT:
       //g_look_at.x -= 1.0f;
       break;
 
-    case GLUT_KEY_PAGE_UP:
+    case SDLK_PAGEUP:
       //g_look_at.y -= 1.0f;
       break;
 
-    case GLUT_KEY_PAGE_DOWN:
+    case SDLK_PAGEDOWN:
       //g_look_at.y += 1.0f;
       break;
 
     default:
-      std::cout << "unknown key: " << static_cast<int>(key) << std::endl;
-      break;
-  };
-}
-
-void keyboard(unsigned char key, int x, int y)
-{
-  switch (key) {
-    case '\t':
-      g_show_menu = !g_show_menu;
-      break;
-
-    case 27:
-    case 'q':
-      exit(EXIT_SUCCESS);
-      break;
-
-    case 'n':
-      g_wiggle_offset += 0.01f;
-      break;
-
-    case 't':
-      g_wiggle_offset -= 0.01f;
-      break;
-
-    case ' ':
-      g_draw_look_at = !g_draw_look_at;
-      break;
-
-    case 'c':
-      g_ipd += 1;
-      break;
-
-    case 'r':
-      g_ipd -= 1;
-      break;
-
-    case '+':
-      g_scale *= 1.05f;
-      break;
-
-    case '-':
-      g_scale /= 1.05f;
-      break;
-
-    case 'z':
-      {
-        GLdouble clip_plane[] = { 0.0, 0.0, 1.0, 1.0 };
-
-        clip_plane[0] = (rand() / double(RAND_MAX) - 0.5) * 2.0f;
-        clip_plane[1] = (rand() / double(RAND_MAX) - 0.5) * 2.0f;
-        clip_plane[2] = (rand() / double(RAND_MAX) - 0.5) * 2.0f;
-        clip_plane[3] = (rand() / double(RAND_MAX) - 0.5) * 2.0f;
-
-        glEnable(GL_CLIP_PLANE0);
-        glClipPlane(GL_CLIP_PLANE0, clip_plane);
-      }
-      break;
-
-    case 'g':
-      {
-        GLdouble clip_plane[] = { 0.0, 1.0, 1.0, 0.0 };
-        glClipPlane(GL_CLIP_PLANE0, clip_plane);
-        glEnable(GL_CLIP_PLANE0);
-      }
-      break;
-
-    case 'd':
-      g_draw_3d = !g_draw_3d;
-      break;
-
-    case 56: // kp_up
-      g_eye += glm::normalize(g_look_at);
-      break;
-
-    case 50: // kp_down
-      g_eye -= glm::normalize(g_look_at);
-      break;
-
-    case 52: // kp_left
-      {
-        glm::vec3 dir = glm::normalize(g_look_at);
-        dir = glm::rotate(dir, 90.0f, g_up);
-        g_eye += dir;
-      }
-      break;
-
-    case 54: // kp_right
-      {
-        glm::vec3 dir = glm::normalize(g_look_at);
-        dir = glm::rotate(dir, 90.0f, g_up);
-        g_eye -= dir;
-      }
-      break;
-
-    case 55: // kp_pos1
-      g_look_at = glm::rotate(g_look_at, 5.0f, g_up);
-      break;
-
-    case 57: // kp_raise
-      g_look_at = glm::rotate(g_look_at, -5.0f, g_up);
-      break;
-
-    case 49: // kp_end
-      g_eye -= glm::normalize(g_up);
-      break;
-
-    case 51: // kp_pgdown
-      g_eye += glm::normalize(g_up);
-      break;
-
-    case 42: // kp_mult
-      g_fov += 1.0f;
-      break;
-
-    case 47: // kp_div
-      g_fov -= 1.0f;
-      break;
-
-    default:
-      std::cout << "unknown key: " << static_cast<int>(key) << std::endl;
+      std::cout << "unknown key: " << static_cast<int>(key.keysym.sym) << std::endl;
       break;
   }
 }
@@ -990,6 +983,22 @@ void idle_func()
     {
       case SDL_QUIT:
         exit(EXIT_SUCCESS);
+        break;
+
+      case SDL_KEYUP:
+        break;
+
+      case SDL_KEYDOWN:
+        keyboard(ev.key, g_mouse_x, g_mouse_y);
+        break;
+
+      case SDL_MOUSEMOTION:
+        g_mouse_x = ev.motion.x;
+        g_mouse_y = ev.motion.y;
+        break;
+
+      case SDL_MOUSEBUTTONDOWN:
+      case SDL_MOUSEBUTTONUP:
         break;
 
       case SDL_JOYAXISMOTION:
@@ -1336,10 +1345,6 @@ int main(int argc, char** argv)
       glutReshapeFunc(reshape);
       glutMouseFunc(mouse);
       glutMotionFunc(mouse_motion);      
-
-      glutIdleFunc(idle_func);
-      glutKeyboardFunc(keyboard);
-      glutSpecialFunc(special);
     }
 
     if (opts.wiimote)
