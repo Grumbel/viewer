@@ -96,8 +96,6 @@ std::unique_ptr<Menu> g_menu;
 std::unique_ptr<SceneManager> g_scene_manager;
 std::unique_ptr<Camera> g_camera;
 
-bool g_cross_eye = false;
-
 float g_ipd = 0.0f;
 int g_screen_w = 640;
 int g_screen_h = 480;
@@ -111,8 +109,10 @@ int g_spot_halo_samples = 100;
 bool g_draw_look_at = false;
 
 float g_light_angle = 0.0f;
-bool g_draw_3d = false;
-bool g_helmet_3d = false;
+
+enum class StereoMode { None, CrossEye, Cybermaxx, Anaglyph, End };
+StereoMode g_stereo_mode = StereoMode::None;
+
 bool g_headlights = false;
 bool g_draw_grid = false;
 bool g_draw_depth = false;
@@ -373,7 +373,13 @@ void display()
       g_shadowmap->unbind();
     }
 
-    if (g_draw_3d || g_cross_eye || g_helmet_3d)
+    if (g_stereo_mode == StereoMode::None)
+    {
+      g_framebuffer1->bind();
+      draw_scene(kCenterEye);
+      g_framebuffer1->unbind();
+    }
+    else
     {
       g_framebuffer1->bind();
       draw_scene(kLeftEye);
@@ -383,12 +389,7 @@ void display()
       draw_scene(kRightEye);
       g_framebuffer2->unbind();
     }
-    else
-    {
-      g_framebuffer1->bind();
-      draw_scene(kCenterEye);
-      g_framebuffer1->unbind();
-    }
+
 
     // composit the final image
     if (true)
@@ -404,58 +405,60 @@ void display()
       glClearColor(0.0, 0.0, 0.0, 1.0);
       glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
 
-      if (g_helmet_3d)
+      switch(g_stereo_mode)
       {
-        glUseProgram(m_composition_prog->get_id());
-        m_composition_prog->set_uniform("tex", 0);
-        m_composition_prog->set_uniform("offset", 0);
-        g_framebuffer1->draw(0.0f, 0.0f, g_screen_w, g_screen_h, -20.0f);
-
-        m_composition_prog->set_uniform("offset", 1);
-        g_framebuffer2->draw(0.0f, 0.0f, g_screen_w, g_screen_h, -20.0f);
-        glUseProgram(0);
-      }
-      else if (g_cross_eye)
-      {
-        glColor3f(1.0f, 1.0f, 1.0f);
-        g_framebuffer1->draw(0.0f, 0.0f, g_screen_w/2.0f, g_screen_h, -20.0f);
-        g_framebuffer2->draw(g_screen_w/2.0f, 0.0f, g_screen_w/2.0f, g_screen_h, -20.0f);
-      }
-      else if (g_draw_3d)
-      {
-        glEnable(GL_BLEND);
-        glBlendFunc(GL_SRC_ALPHA, GL_ONE);
-
-        glColor3f(0.0f, 0.7f, 0.0f);
-        g_framebuffer1->draw(0.0f, 0.0f, g_screen_w, g_screen_h, -20.0f);
-
-        glColor3f(1.0f, 0.0f, 0.0f);
-        g_framebuffer2->draw(g_ipd, 0.0f, g_screen_w, g_screen_h, -20.0f);
-      }
-      else
-      {
-        glEnable(GL_BLEND);
-        glBlendFunc(GL_ONE, GL_ZERO);
-
-        glColor3f(1.0f, 1.0f, 1.0f);
-        if (g_draw_depth)
-        {
-          g_framebuffer1->draw_depth(0.0f, 0.0f, g_screen_w, g_screen_h, -20.0f);
-        }
-        else
-        {
+        case StereoMode::Cybermaxx:
           glUseProgram(m_composition_prog->get_id());
           m_composition_prog->set_uniform("tex", 0);
+          m_composition_prog->set_uniform("offset", 0);
           g_framebuffer1->draw(0.0f, 0.0f, g_screen_w, g_screen_h, -20.0f);
-        }
-      }
 
-      if (g_show_menu)
-      {
-        glDisable(GL_BLEND);
-        //g_shadowmap->draw_depth(g_screen_w - 266, 10, 256, 256, -20.0f);
-        g_shadowmap->draw(g_screen_w - 266 - 276, 10, 256, 256, -20.0f);
+          m_composition_prog->set_uniform("offset", 1);
+          g_framebuffer2->draw(0.0f, 0.0f, g_screen_w, g_screen_h, -20.0f);
+          glUseProgram(0);
+          break;
+
+        case StereoMode::CrossEye:
+          glColor3f(1.0f, 1.0f, 1.0f);
+          g_framebuffer1->draw(0.0f, 0.0f, g_screen_w/2.0f, g_screen_h, -20.0f);
+          g_framebuffer2->draw(g_screen_w/2.0f, 0.0f, g_screen_w/2.0f, g_screen_h, -20.0f);
+          break;
+
+        case StereoMode::Anaglyph:
+          glEnable(GL_BLEND);
+          glBlendFunc(GL_SRC_ALPHA, GL_ONE);
+
+          glColor3f(0.0f, 0.7f, 0.0f);
+          g_framebuffer1->draw(0.0f, 0.0f, g_screen_w, g_screen_h, -20.0f);
+
+          glColor3f(1.0f, 0.0f, 0.0f);
+          g_framebuffer2->draw(g_ipd, 0.0f, g_screen_w, g_screen_h, -20.0f);
+          break;
+
+        default:
+          glEnable(GL_BLEND);
+          glBlendFunc(GL_ONE, GL_ZERO);
+
+          glColor3f(1.0f, 1.0f, 1.0f);
+          if (g_draw_depth)
+          {
+            g_framebuffer1->draw_depth(0.0f, 0.0f, g_screen_w, g_screen_h, -20.0f);
+          }
+          else
+          {
+            glUseProgram(m_composition_prog->get_id());
+            m_composition_prog->set_uniform("tex", 0);
+            g_framebuffer1->draw(0.0f, 0.0f, g_screen_w, g_screen_h, -20.0f);
+          }
+          break;
       }
+    }
+
+    if (g_show_menu)
+    {
+      glDisable(GL_BLEND);
+      //g_shadowmap->draw_depth(g_screen_w - 266, 10, 256, 256, -20.0f);
+      g_shadowmap->draw(g_screen_w - 266 - 276, 10, 256, 256, -20.0f);
     }
   }
 
@@ -557,7 +560,17 @@ void keyboard(SDL_KeyboardEvent key, int x, int y)
       break;
 
     case SDLK_d:
-      g_draw_3d = !g_draw_3d;
+      {
+        int stereo_mode = static_cast<int>(g_stereo_mode) + 1;
+        if (stereo_mode >= static_cast<int>(StereoMode::End))
+        {
+          g_stereo_mode = StereoMode::None;
+        }
+        else
+        {
+          g_stereo_mode = static_cast<StereoMode>(stereo_mode);
+        }
+      }
       break;
 
     case SDLK_KP8: // up
@@ -891,7 +904,7 @@ void init()
   g_menu->add_item("light.specular", &g_light_specular, 0.1f, 0.0f);
   g_menu->add_item("material.shininess", &g_material_shininess, 0.1f, 0.0f);
 
-  g_menu->add_item("3D", &g_draw_3d);
+  //g_menu->add_item("3D", &g_draw_3d);
   g_menu->add_item("Grid", &g_draw_grid);
   g_menu->add_item("Headlights", &g_headlights);
   g_menu->add_item("Look At Sphere", &g_draw_look_at);
@@ -981,6 +994,10 @@ void idle_func()
   {
     switch(ev.type)
     {
+      case SDL_VIDEORESIZE:
+        reshape(ev.resize.w, ev.resize.h);
+        break;
+
       case SDL_QUIT:
         exit(EXIT_SUCCESS);
         break;
@@ -1271,7 +1288,7 @@ void init_display(const std::string& title, bool fullscreen, int anti_aliasing)
   //SDL_WM_SetIcon(IMG_Load(Pathname("icon.png").get_sys_path().c_str()), NULL);
 
   g_screen = SDL_SetVideoMode(g_screen_w, g_screen_h,
-                              0, SDL_OPENGL | (fullscreen ? SDL_FULLSCREEN : 0));
+                              0, SDL_OPENGL | SDL_RESIZABLE | (fullscreen ? SDL_FULLSCREEN : 0));
 }
 
 int main(int argc, char** argv)
@@ -1341,7 +1358,6 @@ int main(int argc, char** argv)
 
     if (false)
     {
-      glutDisplayFunc(display);
       glutReshapeFunc(reshape);
       glutMouseFunc(mouse);
       glutMotionFunc(mouse_motion);      
@@ -1376,11 +1392,6 @@ int main(int argc, char** argv)
     while(true)
     {
       idle_func();
-    }
-
-    if (false)
-    {
-      glutMainLoop();
     }
 
     if (joystick)
