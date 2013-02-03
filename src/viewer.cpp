@@ -199,6 +199,8 @@ void reshape(int w, int h)
   g_framebuffer1.reset(new Framebuffer(g_screen_w, g_screen_h));
   g_framebuffer2.reset(new Framebuffer(g_screen_w, g_screen_h));
 
+  g_screen = SDL_SetVideoMode(g_screen_w, g_screen_h, 0, SDL_OPENGL | SDL_RESIZABLE);
+
   assert_gl("reshape");
 }
 
