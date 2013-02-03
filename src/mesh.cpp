@@ -91,7 +91,7 @@ Mesh::create_skybox(float size)
   mesh->attach_float_array("position", vp);
   mesh->attach_element_array(FaceLst(faces, faces + sizeof(faces)/sizeof(faces[0])));
 
-   return mesh;
+  return mesh;
 }
 
 std::unique_ptr<Mesh>
@@ -126,9 +126,10 @@ Mesh::create_plane(float size, glm::vec3 center)
 }
 
 std::unique_ptr<Mesh>
-Mesh::create_box(float size)
+Mesh::create_cube(float size)
 {
   std::unique_ptr<Mesh> mesh(new Mesh(GL_QUADS));
+  assert(!"not implemented");
   return mesh;
 }
 
