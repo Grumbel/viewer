@@ -87,6 +87,8 @@ void print_scene_graph(SceneNode* node, int depth = 0)
 // global variables
 namespace {
 
+SDL_Surface* g_screen = nullptr;
+
 std::unique_ptr<Menu> g_menu;
 std::unique_ptr<SceneManager> g_scene_manager;
 std::unique_ptr<Camera> g_camera;
@@ -484,7 +486,8 @@ void display()
     g_dot_surface->draw(g_wiimote_dot2.x * g_screen_w, g_wiimote_dot2.y * g_screen_h);
   }
 
-  glutSwapBuffers();
+  //glutSwapBuffers();
+  SDL_GL_SwapBuffers();
   assert_gl("display:exit()");
 }
 
@@ -728,6 +731,7 @@ void init()
 
     MaterialPtr phong_material = MaterialFactory::get().create("phong");
     {
+      if (false)
       {
         auto node = g_scene_manager->get_world()->create_child();
         node->set_position(glm::vec3(0, 0, 0));
@@ -1173,7 +1177,7 @@ void
 wiimote_mesg_callback(cwiid_wiimote_t*, int mesg_count, union cwiid_mesg msg[], timespec*)
 {
   // WARNING: the mesg_callback() comes from another thread, so
-  // syncronize with SDL_PushEvent
+  // syncronize it with SDL_PushEvent() or only do things that are thread-safe
   for (int i=0; i < mesg_count; ++i)
   {
     switch (msg[i].type) 
@@ -1236,6 +1240,31 @@ struct Options
   bool wiimote = false;
 };
 
+void init_display(const std::string& title, bool fullscreen, int anti_aliasing)
+{
+  //SDL_GL_SetAttribute(SDL_GL_SWAP_CONTROL, 1); // vsync
+  SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 1); 
+
+  SDL_GL_SetAttribute(SDL_GL_RED_SIZE,     8);
+  SDL_GL_SetAttribute(SDL_GL_GREEN_SIZE,   8);
+  SDL_GL_SetAttribute(SDL_GL_BLUE_SIZE,    8);
+  SDL_GL_SetAttribute(SDL_GL_BUFFER_SIZE, 32);
+
+  SDL_GL_SetAttribute(SDL_GL_STENCIL_SIZE, 8);
+
+  if (anti_aliasing)
+  {
+    SDL_GL_SetAttribute( SDL_GL_MULTISAMPLEBUFFERS, 1 ); // boolean value, either it's enabled or not
+    SDL_GL_SetAttribute( SDL_GL_MULTISAMPLESAMPLES, anti_aliasing ); // 0, 2, or 4 for number of samples
+  }
+  
+  SDL_WM_SetCaption(title.c_str(), title.c_str());
+  //SDL_WM_SetIcon(IMG_Load(Pathname("icon.png").get_sys_path().c_str()), NULL);
+
+  g_screen = SDL_SetVideoMode(g_screen_w, g_screen_h,
+                              0, SDL_OPENGL | (fullscreen ? SDL_FULLSCREEN : 0));
+}
+
 int main(int argc, char** argv)
 {
   Options opts;
@@ -1277,6 +1306,8 @@ int main(int argc, char** argv)
       atexit(SDL_Quit);
     }
 
+    init_display("OpenGL Viewer", false, 0);
+
     SDL_Joystick* joystick = nullptr;
     log_info("SDL_NumJoysticks: %d", SDL_NumJoysticks());
     if (SDL_NumJoysticks() > 0)
@@ -1284,24 +1315,32 @@ int main(int argc, char** argv)
       joystick = SDLCALL SDL_JoystickOpen(0);
     }
 
-    log_info("glutInit()");
-    glutInit(&argc, argv);
-    glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGB | GLUT_DEPTH);
-    glutInitWindowSize(g_screen_w, g_screen_h);
-    //glutInitWindowPosition(100, 100);
-    log_info("glutCreateWindow()");
-    glutCreateWindow(argv[0]);
-    log_info("glewInit()");
+    if (false)
+    {
+      log_info("glutInit()");
+      glutInit(&argc, argv);
+      glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGB | GLUT_DEPTH);
+      glutInitWindowSize(g_screen_w, g_screen_h);
+      //glutInitWindowPosition(100, 100);
+      log_info("glutCreateWindow()");
+      glutCreateWindow(argv[0]);
+      log_info("glewInit()");
+    }
+
     glewInit();
     init();
-    glutDisplayFunc(display);
-    glutReshapeFunc(reshape);
-    glutMouseFunc(mouse);
-    glutMotionFunc(mouse_motion);      
 
-    glutIdleFunc(idle_func);
-    glutKeyboardFunc(keyboard);
-    glutSpecialFunc(special);
+    if (false)
+    {
+      glutDisplayFunc(display);
+      glutReshapeFunc(reshape);
+      glutMouseFunc(mouse);
+      glutMotionFunc(mouse_motion);      
+
+      glutIdleFunc(idle_func);
+      glutKeyboardFunc(keyboard);
+      glutSpecialFunc(special);
+    }
 
     if (opts.wiimote)
     {
@@ -1329,7 +1368,15 @@ int main(int argc, char** argv)
       }
     }
 
-    glutMainLoop();
+    while(true)
+    {
+      idle_func();
+    }
+
+    if (false)
+    {
+      glutMainLoop();
+    }
 
     if (joystick)
     {
