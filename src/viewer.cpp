@@ -958,39 +958,8 @@ glm::vec3 get_arcball_vector(glm::ivec2 mouse)
   return P;
 }
 
-void idle_func()
+void process_events()
 {
-  {
-    int i = 1; 
-    for(auto& node : g_nodes)
-    {
-      float f = SDL_GetTicks()/1000.0f;
-      node->set_orientation(glm::quat(glm::vec3(0.0f, f*1.3*static_cast<float>(i), 0.0f)));
-      i += 3;
-    }
-  }
-
-  if (g_arcball_active && g_mouse != g_last_mouse)
-  {
-    glm::mat4 camera_matrix;// = g_object2world;
-
-    //glGetFloatv(GL_MODELVIEW_MATRIX, glm::value_ptr(camera_matrix));
-
-    glm::vec3 va = get_arcball_vector(g_last_mouse);
-    glm::vec3 vb = get_arcball_vector(g_mouse);
-    float angle = acos(std::min(1.0f, glm::dot(va, vb)));
-    glm::vec3 axis_in_camera_coord = glm::cross(va, vb);
-    glm::mat3 camera2object = glm::inverse(glm::mat3(camera_matrix) * glm::mat3(g_last_object2world));
-    glm::vec3 axis_in_object_coord = camera2object * axis_in_camera_coord;
-    g_object2world = glm::rotate(g_last_object2world, glm::degrees(angle), axis_in_object_coord);
-    //g_last_mouse = g_mouse;
-  }
-
-  display();
-  usleep(20 * 1000);
-
-  g_grid_offset += glm::vec4(0.0f, 0.0f, 0.001f, 0.0f);
-
   SDL_Event ev;
   while(SDL_PollEvent(&ev))
   {
@@ -1086,7 +1055,10 @@ void idle_func()
         break;
     }
   }
+}
 
+void process_joystick(float dt)
+{
   auto current_time = SDL_GetTicks();
   if (g_stick.hat != g_old_stick.hat || (g_stick.hat && g_hat_autorepeat < current_time))
   {
@@ -1130,7 +1102,7 @@ void idle_func()
               g_stick.dir.x, g_stick.dir.y, g_stick.dir.z,
               g_stick.rot.x, g_stick.rot.y, g_stick.rot.z);
 
-  float delta = 0.1f;
+  float delta = dt * 5.0f;
 
   if (g_stick.light_rotation)
   {
@@ -1167,6 +1139,73 @@ void idle_func()
   }
 
   g_old_stick = g_stick;
+}
+
+void update_arcball()
+{
+  if (g_arcball_active && g_mouse != g_last_mouse)
+  {
+    glm::mat4 camera_matrix;// = g_object2world;
+
+    //glGetFloatv(GL_MODELVIEW_MATRIX, glm::value_ptr(camera_matrix));
+
+    glm::vec3 va = get_arcball_vector(g_last_mouse);
+    glm::vec3 vb = get_arcball_vector(g_mouse);
+    float angle = acos(std::min(1.0f, glm::dot(va, vb)));
+    glm::vec3 axis_in_camera_coord = glm::cross(va, vb);
+    glm::mat3 camera2object = glm::inverse(glm::mat3(camera_matrix) * glm::mat3(g_last_object2world));
+    glm::vec3 axis_in_object_coord = camera2object * axis_in_camera_coord;
+    g_object2world = glm::rotate(g_last_object2world, glm::degrees(angle), axis_in_object_coord);
+    //g_last_mouse = g_mouse;
+  }
+}
+
+void update_world(float dt)
+{
+  int i = 1; 
+  for(auto& node : g_nodes)
+  {
+    float f = SDL_GetTicks()/1000.0f;
+    node->set_orientation(glm::quat(glm::vec3(0.0f, f*1.3*static_cast<float>(i), 0.0f)));
+    i += 3;
+  } 
+}
+
+void main_loop()
+{
+  int num_frames = 0;
+  unsigned int start_ticks = SDL_GetTicks();
+
+  int ticks = SDL_GetTicks();
+  while(true)
+  {
+    int next = SDL_GetTicks();
+    int delta = next - ticks;
+    ticks = next;
+    update_world(delta / 1000.0f);
+      
+    display();
+    SDL_Delay(1);
+
+    g_grid_offset += glm::vec4(0.0f, 0.0f, 0.001f, 0.0f);
+
+    process_events();
+    process_joystick(delta / 1000.0f);
+
+    num_frames += 1;
+
+    if (num_frames == 1000)
+    {
+      int t = SDL_GetTicks() - start_ticks;
+      std::cout << "frames: " << num_frames << " time: " << t 
+                << " frame_delay: " << static_cast<float>(t) / static_cast<float>(num_frames)
+                << " fps: " << static_cast<float>(num_frames) / static_cast<float>(t) * 1000.0f
+                << std::endl;
+
+      num_frames = 0;
+      start_ticks = SDL_GetTicks();
+    }
+  }
 }
 
 void mouse_motion(int x, int y)
