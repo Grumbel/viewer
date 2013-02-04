@@ -392,7 +392,6 @@ void display()
       g_framebuffer2->unbind();
     }
 
-
     // composit the final image
     if (true)
     {
@@ -448,8 +447,6 @@ void display()
           }
           else
           {
-            glUseProgram(m_composition_prog->get_id());
-            m_composition_prog->set_uniform("tex", 0);
             g_framebuffer1->draw(0.0f, 0.0f, g_screen_w, g_screen_h, -20.0f);
           }
           break;
@@ -808,7 +805,7 @@ void init()
       g_scene_manager->get_world()->attach_child(std::move(node));
     }
 
-    if (true)
+    if (false)
     { // create a skybox
       auto mesh = Mesh::create_skybox(500.0f);
       ModelPtr entity = std::make_shared<Model>();
@@ -1430,10 +1427,7 @@ int main(int argc, char** argv)
       }
     }
 
-    while(true)
-    {
-      idle_func();
-    }
+    main_loop();
 
     if (joystick)
     {
