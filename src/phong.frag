@@ -46,7 +46,7 @@ in vec3 world_normal;
 in vec3 frag_normal;
 in vec3 frag_position;
 
-uniform samplerCube LightMap;
+//uniform samplerCube LightMap;
 
 // ---------------------------------------------------------------------------
 // shadow map
@@ -135,9 +135,9 @@ vec3 phong_model(vec3 position, vec3 normal)
 // ---------------------------------------------------------------------------
 void main(void)
 {
-  float light = texture(LightMap, world_normal, 3);
+  //float light = texture(LightMap, world_normal, 3);
   float shadow = max(0.5, shadow_value_4());
-  gl_FragColor = vec4(phong_model(frag_position, frag_normal) * shadow + light * shadow * 0.5, 1.0);
+  gl_FragColor = vec4(phong_model(frag_position, frag_normal) * shadow, 1.0);
 }
 
 /* EOF */

@@ -235,14 +235,15 @@ Mesh::draw()
   if (m_element_array_vbo)
   {
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_element_array_vbo);
+    assert_gl("Mesh::draw: glBindBuffer");
     glDrawElements(m_primitive_type, m_element_count, GL_UNSIGNED_INT, 0);
+    assert_gl("Mesh::draw: glDrawElements");
   }
   else
   {
     glDrawArrays(m_primitive_type, 0, m_element_count);
+    assert_gl("Mesh::draw: glDrawArrays");
   }
-
-  assert_gl("Mesh::draw");
 }
 
 /* EOF */

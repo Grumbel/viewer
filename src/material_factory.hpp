@@ -33,8 +33,9 @@ public:
   MaterialPtr create(const std::string& name);
   MaterialPtr create_phong();
   MaterialPtr create_skybox();
+  MaterialPtr create_textured();
 
-  static MaterialFactory& get() 
+  static MaterialFactory& get()
   {
     static MaterialFactory* instance = 0;
     if (!instance)
