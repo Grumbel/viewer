@@ -47,16 +47,21 @@ if True:
         axis, angle = q.to_axis_angle()
         axis = (axis.x, axis.z, -axis.y)
         return Quaternion(axis, angle)
+    def b2gl_uv(uv):   return (uv[0], 1.0 - uv[1])
+
 else:
     def b2gl_vec3(v):  return tuple(v)
     def b2gl_vec4(v):  return tuple(v)
     def b2gl_scale(v): return tuple(v)
     def b2gl_quat(q):  return tuple(q)
+    def b2gl_uv(uv):   return tuple(uv)
     
 def write_mesh(obj):
     # http://wiki.blender.org/index.php/User:Pepribal/Ref/Appendices/ParentInverse
 
     outfile.write("o %s\n" % obj.name)
+    if len(bpy.data.objects[0].material_slots) > 0:
+        outfile.write("mat %s\n" % bpy.data.objects[0].material_slots[0].name)
     if obj.parent and (obj.parent.type == 'MESH' or obj.parent.type == 'EMPTY'):
         outfile.write("parent %s\n" % obj.parent.name)
     m = obj.matrix_local
@@ -77,7 +82,7 @@ def write_mesh(obj):
         for v in vertices:
             outfile.write("vn %f %f %f\n" % v.n)
             if v.uv:
-                outfile.write("vt %f %f\n" % v.uv)
+                outfile.write("vt %f %f\n" % b2gl_uv(v.uv))
 
             if v.bones:
                 bones = list(v.bones)
