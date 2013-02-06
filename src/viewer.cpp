@@ -1148,19 +1148,21 @@ void process_joystick(float dt)
   }
   else
   { // fps mode
-    auto tmp = glm::normalize(g_look_at);
+    float focus_distance = glm::length(g_look_at);
+    auto tmp = g_look_at;
     auto xz_dist = glm::sqrt(tmp.x * tmp.x + tmp.z * tmp.z);
     float pitch = glm::atan(tmp.y, xz_dist);
     float yaw   = glm::atan(tmp.z, tmp.x);
-
-    log_debug("+yaw: %f pitch: %f", yaw, pitch);
-
+    
     yaw   += -g_stick.rot.y * 2.0f * dt;
     pitch += g_stick.rot.x * 2.0f * dt;
-        
-    log_debug("-yaw: %f pitch: %f", yaw, pitch);
+
+    pitch = glm::clamp(pitch, -static_cast<float>(M_PI)/2.0f + 0.001f, static_cast<float>(M_PI)/2.0f - 0.001f);
 
     glm::vec3 forward(glm::cos(yaw), 0.0f, glm::sin(yaw));
+        
+    //log_debug("focus distance: %f", focus_distance);
+    //log_debug("yaw: %f pitch: %f", yaw, pitch);
 
     // forward/backward
     g_eye += 10.0f * forward * g_stick.dir.z * dt;
@@ -1171,14 +1173,15 @@ void process_joystick(float dt)
     // up/down
     g_eye.y += 10.0f * g_stick.dir.y * dt;
 
-    g_look_at = glm::vec3(glm::cos(pitch) * glm::cos(yaw), 
-                          glm::sin(pitch),
-                          glm::cos(pitch) * glm::sin(yaw));
-
+    g_look_at = focus_distance * glm::vec3(glm::cos(pitch) * glm::cos(yaw), 
+                                           glm::sin(pitch),
+                                           glm::cos(pitch) * glm::sin(yaw));
+    
     float f = sqrt(g_look_at.x*g_look_at.x + g_look_at.z*g_look_at.z);
     g_up.x = -g_look_at.x/f * g_look_at.y;
     g_up.y = f;
     g_up.z = -g_look_at.z/f * g_look_at.y;
+    g_up = glm::normalize(g_up);
   }
 
   g_old_stick = g_stick;
