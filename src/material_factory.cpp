@@ -27,6 +27,7 @@ extern std::unique_ptr<Framebuffer> g_shadowmap;
 MaterialFactory::MaterialFactory() :
   m_materials()
 {
+  m_materials["basic_white"] = create_basic_white();
   m_materials["phong"] = create_phong(glm::vec3(0.5f, 0.5f, 0.5f),
                                       glm::vec3(1.0f, 1.0f, 1.0f),
                                       glm::vec3(1.0f, 1.0f, 1.0f),
@@ -70,6 +71,21 @@ MaterialFactory::create(const std::string& name)
   {
     return it->second;
   }
+}
+
+MaterialPtr
+MaterialFactory::create_basic_white()
+{
+  MaterialPtr material = std::make_shared<Material>();
+
+  material->enable(GL_CULL_FACE);
+  material->enable(GL_DEPTH_TEST);
+
+  material->set_uniform("MVP", UniformSymbol::ModelViewProjectionMatrix);
+
+  material->set_program(Program::create(Shader::from_file(GL_VERTEX_SHADER,   "src/basic_white.vert"),
+                                        Shader::from_file(GL_FRAGMENT_SHADER, "src/basic_white.frag")));
+  return material;
 }
 
 MaterialPtr

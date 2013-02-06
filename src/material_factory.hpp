@@ -36,6 +36,7 @@ public:
                            const glm::vec3& specular,
                            float shininess);
   MaterialPtr create_skybox();
+  MaterialPtr create_basic_white();
   MaterialPtr create_textured();
 
   static MaterialFactory& get()
