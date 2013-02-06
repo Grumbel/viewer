@@ -31,7 +31,10 @@ public:
   MaterialFactory();
 
   MaterialPtr create(const std::string& name);
-  MaterialPtr create_phong();
+  MaterialPtr create_phong(const glm::vec3& diffuse, 
+                           const glm::vec3& ambient, 
+                           const glm::vec3& specular,
+                           float shininess);
   MaterialPtr create_skybox();
   MaterialPtr create_textured();
 

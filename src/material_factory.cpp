@@ -27,7 +27,26 @@ extern std::unique_ptr<Framebuffer> g_shadowmap;
 MaterialFactory::MaterialFactory() :
   m_materials()
 {
-  m_materials["phong"] = create_phong();
+  m_materials["phong"] = create_phong(glm::vec3(0.5f, 0.5f, 0.5f),
+                                      glm::vec3(1.0f, 1.0f, 1.0f),
+                                      glm::vec3(1.0f, 1.0f, 1.0f),
+                                      5.0f);
+
+  m_materials["Rim"] = create_phong(glm::vec3(0.5f, 0.5f, 0.5f),
+                                    glm::vec3(1.0f, 1.0f, 1.0f),
+                                    glm::vec3(1.0f, 1.0f, 1.0f),
+                                    1.0f);
+
+  m_materials["Wheel"] = create_phong(glm::vec3(0.1f, 0.1f, 0.1f),
+                                      glm::vec3(1.0f, 1.0f, 1.0f),
+                                      glm::vec3(1.0f, 1.0f, 1.0f),
+                                      8.0f);
+
+  m_materials["Body"] = create_phong(glm::vec3(0.5f, 0.5f, 0.8f),
+                                     glm::vec3(1.0f, 1.0f, 1.0f),
+                                     glm::vec3(0.5f, 0.5f, 0.5f),
+                                     2.5f);
+                                      
   m_materials["skybox"] = create_skybox();
   m_materials["textured"] = create_textured();
 }
@@ -38,7 +57,14 @@ MaterialFactory::create(const std::string& name)
   auto it = m_materials.find(name);
   if (it == m_materials.end())
   {
-    throw std::runtime_error("unknown material: " + name);
+    if (name == "phong")
+    {
+      throw std::runtime_error("unknown material: " + name);
+    }
+    else
+    {
+      return create("phong");
+    }
   }
   else
   {
@@ -47,7 +73,10 @@ MaterialFactory::create(const std::string& name)
 }
 
 MaterialPtr
-MaterialFactory::create_phong()
+MaterialFactory::create_phong(const glm::vec3& diffuse, 
+                              const glm::vec3& ambient, 
+                              const glm::vec3& specular,
+                              float shininess) 
 {
   MaterialPtr phong = std::make_shared<Material>();
 
@@ -59,7 +88,7 @@ MaterialFactory::create_phong()
 
   phong->set_uniform("light.diffuse",   glm::vec3(1.0f, 1.0f, 1.0f));
   phong->set_uniform("light.ambient",   glm::vec3(0.0f, 0.0f, 0.0f));
-  phong->set_uniform("light.specular",  glm::vec3(0.6f, 0.6f, 0.6f));
+  phong->set_uniform("light.specular",  glm::vec3(1.0f, 1.0f, 1.0f));
   //phong->set_uniform("light.shininess", 3.0f);
   //phong->set_uniform("light.position",  glm::vec3(5.0f, 5.0f, 5.0f));
   phong->set_uniform("light.position", 
@@ -69,10 +98,10 @@ MaterialFactory::create_phong()
                                   prog->set_uniform(name, pos);
                                 }));
 
-  phong->set_uniform("material.diffuse",   glm::vec3(0.5f, 0.5f, 0.5f));
-  phong->set_uniform("material.ambient",   glm::vec3(1.0f, 1.0f, 1.0f));
-  phong->set_uniform("material.specular",  glm::vec3(1.0f, 1.0f, 1.0f));
-  phong->set_uniform("material.shininess", 5.0f);
+  phong->set_uniform("material.diffuse",   diffuse);
+  phong->set_uniform("material.ambient",   ambient);
+  phong->set_uniform("material.specular",  specular);
+  phong->set_uniform("material.shininess", shininess);
 
   phong->set_uniform("ModelViewMatrix", UniformSymbol::ModelViewMatrix);
   phong->set_uniform("NormalMatrix", UniformSymbol::NormalMatrix);
@@ -132,7 +161,7 @@ MaterialFactory::create_textured()
   material->set_uniform("MVP", UniformSymbol::ModelViewProjectionMatrix);
 
   material->set_uniform("light.diffuse",   glm::vec3(1.0f, 1.0f, 1.0f));
-  material->set_uniform("light.ambient",   glm::vec3(0.0f, 0.0f, 0.0f));
+  material->set_uniform("light.ambient",   glm::vec3(0.25f, 0.25f, 0.25f));
   material->set_uniform("light.specular",  glm::vec3(0.6f, 0.6f, 0.6f));
   //material->set_uniform("light.shininess", 3.0f);
   //material->set_uniform("light.position",  glm::vec3(5.0f, 5.0f, 5.0f));
@@ -144,7 +173,7 @@ MaterialFactory::create_textured()
                                 }));
 
   material->set_uniform("material.ambient",   glm::vec3(1.0f, 1.0f, 1.0f));
-  material->set_uniform("material.shininess", 5.0f);
+  material->set_uniform("material.shininess", 64.0f);
 
   material->set_uniform("ShadowMapMatrix",
                               UniformCallback(
