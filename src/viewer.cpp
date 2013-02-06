@@ -1106,33 +1106,70 @@ void process_joystick(float dt)
     //log_debug("light angle: %f", g_light_angle);
     g_light_angle += delta * 30.0f;
   }
+  
+  if (false)
+  { // free flight mode
+    {
+      // forward/backward
+      g_eye += glm::normalize(g_look_at) * g_stick.dir.z * delta;
 
-  {
+      // up/down
+      g_eye += glm::normalize(g_up) * g_stick.dir.y * delta;
+
+      // left/right
+      glm::vec3 dir = glm::normalize(g_look_at);
+      dir = glm::rotate(dir, 90.0f, g_up);
+      g_eye += glm::normalize(dir) * g_stick.dir.x * delta;
+    }
+
+    { // handle rotation
+      float angle_d = 20.0f;
+
+      // yaw
+      g_look_at = glm::rotate(g_look_at, angle_d * g_stick.rot.y * delta, g_up);
+
+      // roll
+      g_up = glm::rotate(g_up, angle_d * g_stick.rot.z * delta, g_look_at);
+    
+      // pitch
+      glm::vec3 cross = glm::cross(g_look_at, g_up);
+      g_up = glm::rotate(g_up, angle_d * g_stick.rot.x * delta, cross);
+      g_look_at = glm::rotate(g_look_at, angle_d * g_stick.rot.x * delta, cross);
+    }
+  }
+  else
+  { // fps mode
+    auto tmp = glm::normalize(g_look_at);
+    auto xz_dist = glm::sqrt(tmp.x * tmp.x + tmp.z * tmp.z);
+    float pitch = glm::atan(tmp.y, xz_dist);
+    float yaw   = glm::atan(tmp.z, tmp.x);
+
+    log_debug("+yaw: %f pitch: %f", yaw, pitch);
+
+    yaw   += -g_stick.rot.y * 2.0f * dt;
+    pitch += g_stick.rot.x * 2.0f * dt;
+        
+    log_debug("-yaw: %f pitch: %f", yaw, pitch);
+
+    glm::vec3 forward(glm::cos(yaw), 0.0f, glm::sin(yaw));
+
     // forward/backward
-    g_eye += glm::normalize(g_look_at) * g_stick.dir.z * delta;
+    g_eye += 10.0f * forward * g_stick.dir.z * dt;
+
+    // strafe
+    g_eye += 10.0f * glm::vec3(forward.z, 0.0f, -forward.x) * g_stick.dir.x * dt;
 
     // up/down
-    g_eye += glm::normalize(g_up) * g_stick.dir.y * delta;
+    g_eye.y += 10.0f * g_stick.dir.y * dt;
 
-    // left/right
-    glm::vec3 dir = glm::normalize(g_look_at);
-    dir = glm::rotate(dir, 90.0f, g_up);
-    g_eye += glm::normalize(dir) * g_stick.dir.x * delta;
-  }
+    g_look_at = glm::vec3(glm::cos(pitch) * glm::cos(yaw), 
+                          glm::sin(pitch),
+                          glm::cos(pitch) * glm::sin(yaw));
 
-  { // handle rotation
-    float angle_d = 20.0f;
-
-    // yaw
-    g_look_at = glm::rotate(g_look_at, angle_d * g_stick.rot.y * delta, g_up);
-
-    // roll
-    g_up = glm::rotate(g_up, angle_d * g_stick.rot.z * delta, g_look_at);
-    
-    // pitch
-    glm::vec3 cross = glm::cross(g_look_at, g_up);
-    g_up = glm::rotate(g_up, angle_d * g_stick.rot.x * delta, cross);
-    g_look_at = glm::rotate(g_look_at, angle_d * g_stick.rot.x * delta, cross);
+    float f = sqrt(g_look_at.x*g_look_at.x + g_look_at.z*g_look_at.z);
+    g_up.x = -g_look_at.x/f * g_look_at.y;
+    g_up.y = f;
+    g_up.z = -g_look_at.z/f * g_look_at.y;
   }
 
   g_old_stick = g_stick;
