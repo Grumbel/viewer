@@ -239,7 +239,7 @@ void draw_scene(EyeType eye_type)
   look_at = glm::rotate(look_at, glm::degrees(-g_pitch_offset), sideways_);
   up = glm::rotate(up, glm::degrees(-g_roll_offset), look_at);
 
-  glm::vec3 sideways = glm::normalize(glm::cross(look_at, up)) * g_wiggle_offset;
+  glm::vec3 sideways = glm::normalize(glm::cross(look_at, up)) * g_eye_distance;
   switch(eye_type)
   {
     case kLeftEye:
@@ -515,11 +515,11 @@ void keyboard(SDL_KeyboardEvent key, int x, int y)
       break;
 
     case SDLK_n:
-      g_wiggle_offset += 0.01f;
+      g_eye_distance += 0.01f;
       break;
 
     case SDLK_t:
-      g_wiggle_offset -= 0.01f;
+      g_eye_distance -= 0.01f;
       break;
 
     case SDLK_SPACE:
@@ -898,7 +898,7 @@ void init()
   g_menu->add_item("AspectRatio", &g_aspect_ratio, 0.05f, 0.5f, 4.0f);
 
   g_menu->add_item("scale", &g_scale, 0.5f, 0.0f);
-  g_menu->add_item("eye3D.dist", &g_wiggle_offset, 0.1f);
+  g_menu->add_item("eye.distance", &g_eye_distance, 0.1f);
 
   g_menu->add_item("spot.cutoff",   &g_spot_cutoff);
   g_menu->add_item("spot.exponent", &g_spot_exponent);
