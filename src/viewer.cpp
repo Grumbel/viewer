@@ -201,6 +201,8 @@ void reshape(int w, int h)
 
   g_screen = SDL_SetVideoMode(g_screen_w, g_screen_h, 0, SDL_OPENGL | SDL_RESIZABLE);
 
+  g_aspect_ratio = static_cast<GLfloat>(g_screen_w)/static_cast<GLfloat>(g_screen_h);
+
   assert_gl("reshape");
 }
 
