@@ -297,6 +297,7 @@ void draw_models(bool shader_foo)
 
   glMaterialf(GL_FRONT, GL_SHININESS, g_material_shininess);
 
+  /*
   if (g_draw_look_at)
   { // draw look-at sphere
     auto target = g_eye + g_look_at;
@@ -308,6 +309,7 @@ void draw_models(bool shader_foo)
     }
     glPopMatrix();
   }
+  */
 
   if (g_draw_grid)
   {
@@ -669,11 +671,11 @@ void keyboard(SDL_KeyboardEvent key, int x, int y)
       break;
 
     case SDLK_F10:
-      glutReshapeWindow(1600, 1000);
+      //glutReshapeWindow(1600, 1000);
       break;
 
     case SDLK_F11:
-      glutFullScreen();
+      //glutFullScreen();
       break;
 
     case SDLK_UP:
@@ -1416,27 +1418,8 @@ int main(int argc, char** argv)
       joystick = SDLCALL SDL_JoystickOpen(0);
     }
 
-    if (false)
-    {
-      log_info("glutInit()");
-      glutInit(&argc, argv);
-      glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGB | GLUT_DEPTH);
-      glutInitWindowSize(g_screen_w, g_screen_h);
-      //glutInitWindowPosition(100, 100);
-      log_info("glutCreateWindow()");
-      glutCreateWindow(argv[0]);
-      log_info("glewInit()");
-    }
-
     glewInit();
     init();
-
-    if (false)
-    {
-      glutReshapeFunc(reshape);
-      glutMouseFunc(mouse);
-      glutMotionFunc(mouse_motion);      
-    }
 
     if (opts.wiimote)
     {
