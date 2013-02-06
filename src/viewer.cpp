@@ -151,7 +151,7 @@ std::unique_ptr<Framebuffer> g_framebuffer2;
 float g_scale = 1.0f;
 
 enum EyeType { kLeftEye, kRightEye, kCenterEye };
-float g_wiggle_offset = 0.065f * 2.0f;
+float g_eye_distance = 0.065f;
 
 bool g_arcball_active = false;
 glm::ivec2 g_mouse;
@@ -163,6 +163,8 @@ glm::mat4 g_eye_matrix;
 TextSurfacePtr g_dot_surface;
 glm::vec2 g_wiimote_dot1;
 glm::vec2 g_wiimote_dot2;
+
+glm::vec2 g_wiimote_scale(0.84f, 0.64f);
 
 ProgramPtr m_composition_prog;
 
@@ -906,6 +908,9 @@ void init()
   g_menu->add_item("light.diffuse",  &g_light_diffuse, 0.1f, 0.0f);
   g_menu->add_item("light.specular", &g_light_specular, 0.1f, 0.0f);
   g_menu->add_item("material.shininess", &g_material_shininess, 0.1f, 0.0f);
+
+  g_menu->add_item("wiimote.scale_x", &g_wiimote_scale.x, 0.01f);
+  g_menu->add_item("wiimote.scale_y", &g_wiimote_scale.y, 0.01f);
 
   //g_menu->add_item("3D", &g_draw_3d);
   g_menu->add_item("Grid", &g_draw_grid);
