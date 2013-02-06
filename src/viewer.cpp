@@ -1275,6 +1275,11 @@ void update_offsets(glm::vec2 p1, glm::vec2 p2)
   float angle = glm::atan(-r.y, r.x);
   g_roll_offset = angle;
   glm::vec2 c = (p1+p2)/2.0f;
+
+  c -= glm::vec2(512, 384);
+  c = glm::rotate(c, glm::degrees(g_roll_offset));
+  c += glm::vec2(512, 384);
+
   g_yaw_offset   = ((c.x / 1024.0f) - 0.5f) * M_PI/2.0f * g_wiimote_scale.x;
   g_pitch_offset = ((c.y /  768.0f) - 0.5f) * (M_PI/2.0f) * g_wiimote_scale.y;
 
