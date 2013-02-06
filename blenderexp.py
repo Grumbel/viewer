@@ -60,8 +60,8 @@ def write_mesh(obj):
     # http://wiki.blender.org/index.php/User:Pepribal/Ref/Appendices/ParentInverse
 
     outfile.write("o %s\n" % obj.name)
-    if len(bpy.data.objects[0].material_slots) > 0:
-        outfile.write("mat %s\n" % bpy.data.objects[0].material_slots[0].name)
+    if len(obj.material_slots) > 0:
+        outfile.write("mat %s\n" % obj.material_slots[0].name)
     if obj.parent and (obj.parent.type == 'MESH' or obj.parent.type == 'EMPTY'):
         outfile.write("parent %s\n" % obj.parent.name)
     m = obj.matrix_local
