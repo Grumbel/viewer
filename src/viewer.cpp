@@ -130,6 +130,7 @@ float g_spot_cutoff   = 60.0f;
 float g_spot_exponent = 30.0f;
 
 bool g_show_menu = true;
+bool g_show_dots = true;
 
 glm::vec3 g_eye(0.0f, 5.0f, 15.0f);
 glm::vec3 g_look_at(0.0f, 0.0f, -100.0f);
@@ -492,8 +493,11 @@ void display()
       g_menu->draw(32.0f, 32.0f);
     }
 
-    g_dot_surface->draw(g_wiimote_dot1.x * g_screen_w, g_wiimote_dot1.y * g_screen_h);
-    g_dot_surface->draw(g_wiimote_dot2.x * g_screen_w, g_wiimote_dot2.y * g_screen_h);
+    if (g_show_dots)
+    {
+      g_dot_surface->draw(g_wiimote_dot1.x * g_screen_w, g_wiimote_dot1.y * g_screen_h);
+      g_dot_surface->draw(g_wiimote_dot2.x * g_screen_w, g_wiimote_dot2.y * g_screen_h);
+    }
   }
 
   //glutSwapBuffers();
@@ -1046,6 +1050,13 @@ void process_events()
             if (ev.jbutton.state)
             {
               g_show_menu = !g_show_menu;
+            }
+            break;
+
+          case 6:
+            if (ev.jbutton.state)
+            {
+              g_show_dots = !g_show_dots;
             }
             break;
         }
