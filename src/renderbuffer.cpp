@@ -41,11 +41,16 @@ Renderbuffer::Renderbuffer(int width, int height) :
   glGenRenderbuffers(1, &m_depth_buffer);
   assert_gl("renderbuffer");
 
+  int samples = 8;
   glBindRenderbuffer(GL_RENDERBUFFER, m_color_buffer);
-  glRenderbufferStorage(GL_RENDERBUFFER, GL_RGB16F, m_width, m_height);
+  //glRenderbufferStorage(GL_RENDERBUFFER, GL_RGB16F, m_width, m_height);
+  glRenderbufferStorageMultisample(GL_RENDERBUFFER, samples, GL_RGB16F, m_width, m_height);
+  assert_gl("glRenderbufferStorageMultisample");
 
   glBindRenderbuffer(GL_RENDERBUFFER, m_depth_buffer);
-  glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT, m_width, m_height);
+  //glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT, m_width, m_height);
+  glRenderbufferStorageMultisample(GL_RENDERBUFFER, samples, GL_DEPTH_COMPONENT, m_width, m_height);
+  assert_gl("glRenderbufferStorageMultisample2");
 
   glBindRenderbuffer(GL_RENDERBUFFER, 0);
 
@@ -61,8 +66,6 @@ Renderbuffer::Renderbuffer(int width, int height) :
   assert_gl("framebuffer");
 
   glBindFramebuffer(GL_FRAMEBUFFER, 0);
-
-  //glRenderbufferStorageMultisample(GL_RENDERBUFFER, m_samples, GL_DEPTH_COMPONENT, m_width, m_height);
 }
 
 Renderbuffer::~Renderbuffer()
@@ -91,15 +94,27 @@ Renderbuffer::blit(Framebuffer& target_fbo,
   // http://www.opengl.org/registry/specs/EXT/framebuffer_blit.txt  
   // http://www.opengl.org/wiki/GLAPI/glBlitFramebuffer
 
+  assert_gl("enter: BlitFramebuffer");
   glBindFramebuffer(GL_DRAW_FRAMEBUFFER, target_fbo.get_id());
+  assert_gl("enter: BlitFramebuffer1");
   glBindFramebuffer(GL_READ_FRAMEBUFFER, m_fbo);
+  glReadBuffer(GL_COLOR_ATTACHMENT0);
+  assert_gl("enter: BlitFramebuffer2");
   glBlitFramebuffer(srcX0, srcY0, srcX1, srcY1,
                     dstX0, dstY0, dstX1, dstY1,
                     mask, filter);
-  assert_gl("BlitFramebuffer");
+  assert_gl("done: BlitFramebuffer");
 
   glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
   glBindFramebuffer(GL_READ_FRAMEBUFFER, 0);
+}
+                                               
+void
+Renderbuffer::blit(Framebuffer& target_fbo)
+{
+  blit(target_fbo, 
+       0, 0, m_width, m_height,
+       0, 0, target_fbo.get_width(), target_fbo.get_height());
 }
 
 void

@@ -47,7 +47,9 @@ public:
             int srcX0, int srcY0, int srcX1, int srcY1,
             int dstX0, int dstY0, int dstX1, int dstY1,
             GLbitfield mask = GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT,
-            GLenum filter = GL_LINEAR);
+            GLenum filter = GL_NEAREST);
+
+  void blit(Framebuffer& target_fbo);
   
 private:
   Renderbuffer(const Renderbuffer&);

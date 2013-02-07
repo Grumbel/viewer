@@ -34,6 +34,7 @@
 #include "assert_gl.hpp"
 #include "camera.hpp"
 #include "framebuffer.hpp"
+#include "renderbuffer.hpp"
 #include "log.hpp"
 #include "material_factory.hpp"
 #include "menu.hpp"
@@ -148,6 +149,9 @@ std::unique_ptr<Pose> g_pose;
 std::unique_ptr<Framebuffer> g_framebuffer1;
 std::unique_ptr<Framebuffer> g_framebuffer2;
 
+std::unique_ptr<Renderbuffer> g_renderbuffer1;
+std::unique_ptr<Renderbuffer> g_renderbuffer2;
+
 float g_scale = 1.0f;
 
 enum EyeType { kLeftEye, kRightEye, kCenterEye };
@@ -200,6 +204,9 @@ void reshape(int w, int h)
 
   g_framebuffer1.reset(new Framebuffer(g_screen_w, g_screen_h));
   g_framebuffer2.reset(new Framebuffer(g_screen_w, g_screen_h));
+
+  g_renderbuffer1.reset(new Renderbuffer(g_screen_w, g_screen_h));
+  g_renderbuffer2.reset(new Renderbuffer(g_screen_w, g_screen_h));
 
   g_screen = SDL_SetVideoMode(g_screen_w, g_screen_h, 0, SDL_OPENGL | SDL_RESIZABLE);
 
@@ -383,19 +390,24 @@ void display()
 
     if (g_stereo_mode == StereoMode::None)
     {
-      g_framebuffer1->bind();
+      g_renderbuffer1->bind();
       draw_scene(kCenterEye);
-      g_framebuffer1->unbind();
+      g_renderbuffer1->unbind();
+
+      g_renderbuffer1->blit(*g_framebuffer1);
     }
     else
     {
-      g_framebuffer1->bind();
+      g_renderbuffer1->bind();
       draw_scene(kLeftEye);
-      g_framebuffer1->unbind();
+      g_renderbuffer1->unbind();
 
-      g_framebuffer2->bind();
+      g_renderbuffer2->bind();
       draw_scene(kRightEye);
-      g_framebuffer2->unbind();
+      g_renderbuffer2->unbind();
+
+      g_renderbuffer1->blit(*g_framebuffer1);
+      g_renderbuffer2->blit(*g_framebuffer2);
     }
 
     // composit the final image
@@ -720,6 +732,8 @@ void init()
   assert_gl("init()");
   g_framebuffer1.reset(new Framebuffer(g_screen_w, g_screen_h));
   g_framebuffer2.reset(new Framebuffer(g_screen_w, g_screen_h));
+  g_renderbuffer1.reset(new Renderbuffer(g_screen_w, g_screen_h));
+  g_renderbuffer2.reset(new Renderbuffer(g_screen_w, g_screen_h));
   g_shadowmap.reset(new Framebuffer(g_shadowmap_resolution, g_shadowmap_resolution));
   assert_gl("init()");
 
