@@ -1,5 +1,5 @@
 //  Simple 3D Model Viewer
-//  Copyright (C) 2012 Ingo Ruhnke <grumbel@gmail.com>
+//  Copyright (C) 013 Ingo Ruhnke <grumbel@gmail.com>
 //
 //  This program is free software: you can redistribute it and/or modify
 //  it under the terms of the GNU General Public License as published by
@@ -14,46 +14,44 @@
 //  You should have received a copy of the GNU General Public License
 //  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-#ifndef HEADER_FRAMEBUFFER_HPP
-#define HEADER_FRAMEBUFFER_HPP
+#ifndef HEADER_RENDERBUFFER_HPP
+#define HEADER_RENDERBUFFER_HPP
 
 #include <GL/glew.h>
 
-#include "texture.hpp"
 #include "log.hpp"
 
-class Framebuffer
+class Framebuffer;
+
+class Renderbuffer
 {
 private:
   int m_width;
   int m_height;
 
   GLuint m_fbo;
-
-  TexturePtr m_color_buffer;
-  TexturePtr m_depth_buffer;
+  GLuint m_depth_buffer;
+  GLuint m_color_buffer;
 
 public:
-  Framebuffer(int width, int height);  
-  ~Framebuffer();
-
-  void draw(float x, float y, float w, float h, float z);
-  void draw_depth(float x, float y, float w, float h, float z);
-
+  Renderbuffer(int width, int height);
+  ~Renderbuffer();
+  
   void bind();
   void unbind();
-
-  TexturePtr get_color_texture() const { return m_color_buffer; }
-  TexturePtr get_depth_texture() const { return m_depth_buffer; }
 
   int get_width()  const { return m_width; }
   int get_height() const { return m_height; }
 
-  GLuint get_id() const { return m_fbo; }
-
+  void blit(Framebuffer& target_fbo, 
+            int srcX0, int srcY0, int srcX1, int srcY1,
+            int dstX0, int dstY0, int dstX1, int dstY1,
+            GLbitfield mask = GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT,
+            GLenum filter = GL_LINEAR);
+  
 private:
-  Framebuffer(const Framebuffer&) = delete;
-  Framebuffer& operator=(const Framebuffer&) = delete;
+  Renderbuffer(const Renderbuffer&);
+  Renderbuffer& operator=(const Renderbuffer&);
 };
 
 #endif
