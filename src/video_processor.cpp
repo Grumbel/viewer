@@ -39,12 +39,17 @@ VideoProcessor::VideoProcessor(const std::string& filename) :
   m_buffer()
 {
   // Setup a second pipeline to get the actual thumbnails
-  m_playbin = Gst::Parse::launch("filesrc name=mysource ! "
-                                 "decodebin2 ! "
-                                 "ffmpegcolorspace ! "
-                                 "videoscale ! "
-                                 "video/x-raw-rgb,depth=24,bpp=24,width=512,height=512 ! "
-                                 "fakesink name=mysink signal-handoffs=True sync=true");
+  m_playbin = Gst::Parse::launch("filesrc name=mysource "
+                                 "  ! decodebin2 name=src "
+                                 "src. "
+                                 "  ! queue "
+                                 "  ! ffmpegcolorspace "
+                                 "  ! videoscale "
+                                 "  ! video/x-raw-rgb,depth=24,bpp=24,width=512,height=512 "
+                                 "  ! fakesink name=mysink signal-handoffs=True sync=true "
+                                 "src. "
+                                 "  ! queue "
+                                 "  ! autoaudiosink ");
 
   m_pipeline = Glib::RefPtr<Gst::Pipeline>::cast_dynamic(m_playbin);
 
