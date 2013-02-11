@@ -26,6 +26,7 @@
 #include <stdexcept>
 #include <glibmm/main.h>
 #include <gstreamermm.h>
+#include <mutex>
 
 #include "texture.hpp"
 
@@ -42,6 +43,7 @@ private:
   bool m_running;
 
   TexturePtr m_texture;
+  std::mutex m_buffer_mutex;
   Glib::RefPtr<Gst::Buffer> m_buffer;
 
 public:
@@ -58,6 +60,7 @@ public:
   void update();
   bool is_playing() const;
   TexturePtr get_texture() const { return m_texture; }
+  void seek(gint64 seek_pos);
 };
 
 #endif

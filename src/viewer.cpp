@@ -538,6 +538,20 @@ void keyboard(SDL_KeyboardEvent key, int x, int y)
       exit(EXIT_SUCCESS);
       break;
 
+    case SDLK_9:
+      if (g_video_player)
+      {
+        g_video_player->seek(g_video_player->get_position() - 10 * Gst::SECOND);
+      }     
+      break;
+
+    case SDLK_0:
+      if (g_video_player)
+      {
+        g_video_player->seek(g_video_player->get_position() + 10 * Gst::SECOND);
+      }
+      break;
+
     case SDLK_n:
       g_eye_distance += 0.01f;
       break;

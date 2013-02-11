@@ -36,6 +36,7 @@ VideoProcessor::VideoProcessor(const std::string& filename) :
   m_done(false),
   m_running(false),
   m_texture(),
+  m_buffer_mutex(),
   m_buffer()
 {
   // Setup a second pipeline to get the actual thumbnails
@@ -123,6 +124,8 @@ VideoProcessor::on_buffer_probe(const Glib::RefPtr<Gst::Pad>& pad, const Glib::R
   // WARNING: this is called from the gstreamer thread, not the main thread
 
   Glib::RefPtr<Gst::Buffer> buffer = Glib::RefPtr<Gst::Buffer>::cast_dynamic(miniobj);
+
+  std::lock_guard<std::mutex> lock(m_buffer_mutex);
   m_buffer = buffer;
 
   // true: keep data in the pipeline, false: drop it
@@ -244,6 +247,7 @@ VideoProcessor::update()
     //std::cout << "looping" << std::endl;
   }
 
+  std::lock_guard<std::mutex> lock(m_buffer_mutex);
   if (m_buffer)
   {
     Glib::RefPtr<Gst::Caps> caps = m_buffer->get_caps();
@@ -304,6 +308,22 @@ bool
 VideoProcessor::is_playing() const
 {
   return true;
+}
+
+void
+VideoProcessor::seek(gint64 seek_pos)
+{
+  if (seek_pos < 0)
+  {
+    seek_pos = 0;
+  }
+
+  if (!m_pipeline->seek(Gst::FORMAT_TIME,
+                        Gst::SEEK_FLAG_FLUSH | Gst::SEEK_FLAG_ACCURATE,
+                        seek_pos))
+  {
+    std::cout << "seek failure" << std::endl;
+  }
 }
 
 /* EOF */
