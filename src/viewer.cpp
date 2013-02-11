@@ -29,6 +29,7 @@
 #include <stdexcept>
 #include <unistd.h>
 #include <vector>
+#include <thread>
 
 #include "armature.hpp"
 #include "assert_gl.hpp"
@@ -48,6 +49,7 @@
 #include "scene_manager.hpp"
 #include "shader.hpp"
 #include "text_surface.hpp"
+#include "video_processor.hpp"
 
 void draw_models(bool shader_foo);
 
@@ -96,10 +98,14 @@ std::unique_ptr<Menu> g_menu;
 std::unique_ptr<SceneManager> g_scene_manager;
 std::unique_ptr<Camera> g_camera;
 
+MaterialPtr g_video_material;
+std::shared_ptr<VideoProcessor> g_video_player;
+
 float g_ipd = 0.0f;
 int g_screen_w = 640;
 int g_screen_h = 480;
-float g_fov = 56.0f;
+//float g_fov = 56.0f;
+float g_fov = 42.0f;
 
 float g_near_z = 0.1f;
 float g_far_z  = 1000.0f;
@@ -760,6 +766,16 @@ void init()
     g_camera.reset(new Camera);
     g_camera->perspective(g_fov, g_aspect_ratio, g_near_z, 100000.0f);
 
+    if (true) // streaming video
+    {
+      g_video_material = MaterialFactory::create_textured();
+      auto node = g_scene_manager->get_world()->create_child();
+      ModelPtr entity = std::make_shared<Model>();
+      entity->add_mesh(Mesh::create_plane(20.0f));
+      entity->set_material(g_video_material);
+      node->attach_entity(entity);
+    }
+
     MaterialPtr phong_material = MaterialFactory::get().create("phong");
     {
       if (false)
@@ -1273,6 +1289,16 @@ void main_loop()
       num_frames = 0;
       start_ticks = SDL_GetTicks();
     }
+
+    if (g_video_player)
+    {
+      g_video_player->update();
+      TexturePtr texture = g_video_player->get_texture();
+      if (texture)
+      {
+        g_video_material->set_texture(0, texture);
+      }
+    }
   }
 }
 
@@ -1379,6 +1405,7 @@ wiimote_mesg_callback(cwiid_wiimote_t*, int mesg_count, union cwiid_mesg msg[], 
 struct Options
 {
   bool wiimote = false;
+  std::string video = std::string();
 };
 
 void init_display(const std::string& title, bool fullscreen, int anti_aliasing)
@@ -1417,6 +1444,11 @@ int main(int argc, char** argv)
       if (strcmp("--wiimote", argv[i]) == 0)
       {
         opts.wiimote = true;
+      }
+      else if (strcmp("--video", argv[i]) == 0)
+      {
+        opts.video = argv[i+1];
+        ++i;
       }
       else
       {
@@ -1484,6 +1516,15 @@ int main(int argc, char** argv)
         }
       }
     }
+
+    if (!opts.video.empty())
+    {
+      Gst::init(argc, argv);
+      std::cout << "Playing video: " << opts.video << std::endl;
+      g_video_player = std::make_shared<VideoProcessor>(opts.video);
+    }
+
+    std::cout << "main: " << std::this_thread::get_id() << std::endl;
 
     main_loop();
 

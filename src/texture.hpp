@@ -18,6 +18,7 @@ private:
 public:
   static TexturePtr cubemap_from_file(const std::string& filename);
   static TexturePtr from_file(const std::string& filename);
+  static TexturePtr from_rgb_data(int width, int height, int pitch, void* data);
   static TexturePtr create_lightspot(int width, int height);
   static TexturePtr create_random_noise(int width, int height);
   static TexturePtr create_empty(GLenum target, GLenum format, int width, int height);

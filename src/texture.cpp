@@ -275,6 +275,30 @@ Texture::from_file(const std::string& filename)
   }
 }
 
+
+TexturePtr
+Texture::from_rgb_data(int width, int height, int pitch, void* data)
+{
+  OpenGLState state;
+
+  GLenum target = GL_TEXTURE_2D;
+  GLuint texture;
+  glGenTextures(1, &texture);
+  glBindTexture(target, texture);
+
+  glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
+  glPixelStorei(GL_UNPACK_ROW_LENGTH, width);
+
+  glTexParameteri(target, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+  glTexParameteri(target, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+  glTexParameteri(target, GL_TEXTURE_WRAP_S, GL_REPEAT);
+  glTexParameteri(target, GL_TEXTURE_WRAP_T, GL_REPEAT);
+
+  glTexImage2D(target, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
+
+  return std::make_shared<Texture>(target, texture);
+}
+
 Texture::Texture(GLenum target, GLuint id) :
   m_target(target),
   m_id(id)
