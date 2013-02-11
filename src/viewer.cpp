@@ -138,6 +138,8 @@ glm::vec3 g_look_at(0.0f, 0.0f, -100.0f);
 glm::vec3 g_up(0.0f, 1.0f, 0.0f);
 float g_pitch_offset = 0.0f;
 float g_roll_offset  = 0.0f;
+float g_distance_offset = 0.0f;
+float g_distance_scale = 0.01f;
 float g_yaw_offset   = 0.0f;
 glm::vec4 g_grid_offset;
 float g_grid_size = 2.0f;
@@ -241,6 +243,7 @@ void draw_scene(EyeType eye_type)
   glm::vec3 up = g_up;
 
   glm::vec3 sideways_ = glm::normalize(glm::cross(look_at, up));
+  glm::vec3 eye = g_eye + glm::normalize(g_look_at) * g_distance_offset;
 
   look_at = glm::rotate(look_at, glm::degrees(g_yaw_offset), up);
   look_at = glm::rotate(look_at, glm::degrees(-g_pitch_offset), sideways_);
@@ -261,7 +264,7 @@ void draw_scene(EyeType eye_type)
       sideways = glm::vec3(0);
       break;
   }
-  g_camera->look_at(g_eye + sideways, g_eye + look_at, up);
+  g_camera->look_at(eye + sideways, eye + look_at, up);
   
   g_scene_manager->render(*g_camera);
 }
@@ -920,6 +923,7 @@ void init()
   g_menu->add_item("light.specular", &g_light_specular, 0.1f, 0.0f);
   g_menu->add_item("material.shininess", &g_material_shininess, 0.1f, 0.0f);
 
+  g_menu->add_item("wiimote.distance_scale",  &g_distance_scale, 0.01f);
   g_menu->add_item("wiimote.scale_x", &g_wiimote_scale.x, 0.01f);
   g_menu->add_item("wiimote.scale_y", &g_wiimote_scale.y, 0.01f);
 
@@ -1292,6 +1296,7 @@ void update_offsets(glm::vec2 p1, glm::vec2 p2)
   glm::vec2 r = p2 - p1;
   float angle = glm::atan(-r.y, r.x);
   g_roll_offset = angle;
+  g_distance_offset = g_distance_scale * glm::length(r) / 2.0f * glm::tan(glm::radians(g_fov));
   glm::vec2 c = (p1+p2)/2.0f;
 
   c -= glm::vec2(512, 384);
