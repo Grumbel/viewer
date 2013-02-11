@@ -108,10 +108,10 @@ Mesh::create_plane(float size, glm::vec3 center)
   vn.emplace_back(0.0f, 1.0f, 0.0f);
   vn.emplace_back(0.0f, 1.0f, 0.0f);
 
-  vt.emplace_back(0.0f, 0.0f, 0.0f);
-  vt.emplace_back(0.1f, 0.0f, 0.0f);
-  vt.emplace_back(0.1f, 1.0f, 0.0f);
   vt.emplace_back(0.0f, 1.0f, 0.0f);
+  vt.emplace_back(1.0f, 1.0f, 0.0f);
+  vt.emplace_back(1.0f, 0.0f, 0.0f);
+  vt.emplace_back(0.0f, 0.0f, 0.0f);
 
   vp.emplace_back(-size, 0, +size);
   vp.emplace_back(+size, 0, +size);

@@ -31,6 +31,8 @@ public:
   GLuint get_id() const { return m_id; }
   GLenum get_target() const { return m_target; }
 
+  void upload(int width, int height, int pitch, void* data);
+
 private:
   Texture(const Texture&);
   Texture& operator=(const Texture&);

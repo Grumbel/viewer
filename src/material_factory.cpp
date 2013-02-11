@@ -167,8 +167,8 @@ MaterialFactory::create_textured()
   material->set_program(Program::create(Shader::from_file(GL_VERTEX_SHADER, "src/textured.vert"),
                                         Shader::from_file(GL_FRAGMENT_SHADER, "src/textured.frag")));
 
-  material->set_texture(0, Texture::from_file("data/textures/cube/cube_diff.png"));
-  material->set_texture(1, Texture::from_file("data/textures/cube/cube_spec.png"));
+  material->set_texture(0, Texture::from_file("data/textures/uvtest.png"));
+  material->set_texture(1, Texture::from_file("data/textures/uvtest.png"));
   material->set_uniform("texture_diff", 0);
   material->set_uniform("texture_spec", 1);
 
@@ -198,6 +198,25 @@ MaterialFactory::create_textured()
                                 }));
   material->set_texture(2, g_shadowmap->get_depth_texture());
   material->set_uniform("ShadowMap", 2);
+
+  return material;
+}
+
+MaterialPtr
+MaterialFactory::create_video()
+{
+  MaterialPtr material = std::make_shared<Material>();
+
+  material->enable(GL_CULL_FACE);
+  material->enable(GL_DEPTH_TEST);
+
+  material->set_program(Program::create(Shader::from_file(GL_VERTEX_SHADER, "src/video.vert"),
+                                        Shader::from_file(GL_FRAGMENT_SHADER, "src/video.frag")));
+
+  material->set_texture(0, Texture::from_file("data/textures/uvtest.png"));
+  material->set_uniform("texture_diff", 0);
+
+  material->set_uniform("MVP", UniformSymbol::ModelViewProjectionMatrix);
 
   return material;
 }

@@ -31,13 +31,14 @@ public:
   MaterialFactory();
 
   MaterialPtr create(const std::string& name);
-  MaterialPtr create_phong(const glm::vec3& diffuse, 
-                           const glm::vec3& ambient, 
-                           const glm::vec3& specular,
-                           float shininess);
-  MaterialPtr create_skybox();
-  MaterialPtr create_basic_white();
-  MaterialPtr create_textured();
+  static MaterialPtr create_phong(const glm::vec3& diffuse, 
+                                  const glm::vec3& ambient, 
+                                  const glm::vec3& specular,
+                                  float shininess);
+  static MaterialPtr create_skybox();
+  static MaterialPtr create_basic_white();
+  static MaterialPtr create_textured();
+  static MaterialPtr create_video();
 
   static MaterialFactory& get()
   {

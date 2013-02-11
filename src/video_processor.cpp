@@ -43,8 +43,8 @@ VideoProcessor::VideoProcessor(const std::string& filename) :
                                  "decodebin2 ! "
                                  "ffmpegcolorspace ! "
                                  "videoscale ! "
-                                 "video/x-raw-rgb,depth=24,bpp=24,width=256,height=256,pixel-aspect-ratio=1/1 ! "
-                                 "fakesink name=mysink signal-handoffs=True");
+                                 "video/x-raw-rgb,depth=24,bpp=24,width=512,height=512 ! "
+                                 "fakesink name=mysink signal-handoffs=True sync=true");
 
   m_pipeline = Glib::RefPtr<Gst::Pipeline>::cast_dynamic(m_playbin);
 
@@ -236,7 +236,7 @@ VideoProcessor::update()
 {
   while(m_mainloop->get_context()->iteration(false))
   {
-    std::cout << "looping" << std::endl;
+    //std::cout << "looping" << std::endl;
   }
 
   if (m_buffer)
@@ -260,10 +260,17 @@ VideoProcessor::update()
                 << std::endl;
     }
 
-
-    std::cout << "Size: " << width << "x" << height << " pitch: " << m_buffer->get_size() / height << std::endl;
-    m_texture = Texture::from_rgb_data(width, height, m_buffer->get_size() / height, m_buffer->get_data());
-
+    // std::cout << "Size: " << width << "x" << height << " pitch: " << m_buffer->get_size() / height << std::endl;
+    if (!m_texture)
+    {
+      m_texture = Texture::from_rgb_data(width, height, m_buffer->get_size() / height, m_buffer->get_data());
+    }
+    else
+    {
+      m_texture->upload(width, height, m_buffer->get_size() / height, m_buffer->get_data());
+    }
+    
+    if (false)
     {
       Cairo::RefPtr<Cairo::ImageSurface> img = Cairo::ImageSurface::create(Cairo::FORMAT_RGB24, width, height);
 

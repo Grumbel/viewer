@@ -310,4 +310,17 @@ Texture::~Texture()
   glDeleteTextures(1, &m_id);
 }
 
+void
+Texture::upload(int width, int height, int pitch, void* data)
+{
+  OpenGLState state;
+
+  glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
+  glPixelStorei(GL_UNPACK_ROW_LENGTH, width);
+
+  glBindTexture(m_target, m_id);
+  glTexSubImage2D(m_target, 0, 0, 0, width, height, GL_RGB, GL_UNSIGNED_BYTE, data);
+  assert_gl("Texture::upload");
+}
+
 /* EOF */

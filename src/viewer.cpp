@@ -768,15 +768,19 @@ void init()
 
     if (true) // streaming video
     {
-      g_video_material = MaterialFactory::create_textured();
+      g_video_material = MaterialFactory::create_video();
       auto node = g_scene_manager->get_world()->create_child();
       ModelPtr entity = std::make_shared<Model>();
-      entity->add_mesh(Mesh::create_plane(20.0f));
+      entity->add_mesh(Mesh::create_plane(5.0f));
       entity->set_material(g_video_material);
       node->attach_entity(entity);
+      node->set_position(glm::vec3(0.0f, 0.0f, -10.0f));
+      node->set_orientation(glm::quat(glm::vec3(M_PI/2, 0.0f, 0.0f)));
+      node->set_scale(glm::vec3(4.0f, 0.0f, 3.0f));
     }
 
     MaterialPtr phong_material = MaterialFactory::get().create("phong");
+    if (false)
     {
       if (false)
       {
@@ -815,6 +819,7 @@ void init()
       //g_nodes.push_back(moon);
     }
 
+    if (false)
     {
       auto root_parent = g_scene_manager->get_world()->create_child();
       auto parent = root_parent;
@@ -834,14 +839,14 @@ void init()
       print_scene_graph(root_parent);
     }
 
-    if (true)
+    if (!g_model_filename.empty())
     { // load a mesh from file
       auto node = Scene::from_file(g_model_filename);
       print_scene_graph(node.get());
       g_scene_manager->get_world()->attach_child(std::move(node));
     }
 
-    if (false)
+    if (true)
     { // create a skybox
       auto mesh = Mesh::create_skybox(500.0f);
       ModelPtr entity = std::make_shared<Model>();
@@ -1461,80 +1466,72 @@ int main(int argc, char** argv)
     }
   }
 
-  if (g_model_filename.empty())
+  if (SDL_Init(SDL_INIT_TIMER | SDL_INIT_VIDEO | SDL_INIT_JOYSTICK) < 0)
   {
-    puts("Usage: viewer [MODELFILE]");
-    return EXIT_FAILURE;
+    std::ostringstream msg;
+    msg << "Couldn't initialize SDL: " << SDL_GetError();
+    throw std::runtime_error(msg.str());
   }
   else
   {
-    if (SDL_Init(SDL_INIT_TIMER | SDL_INIT_VIDEO | SDL_INIT_JOYSTICK) < 0)
+    atexit(SDL_Quit);
+  }
+
+  init_display("OpenGL Viewer", false, 0);
+
+  SDL_Joystick* joystick = nullptr;
+  log_info("SDL_NumJoysticks: %d", SDL_NumJoysticks());
+  if (SDL_NumJoysticks() > 0)
+  {
+    joystick = SDLCALL SDL_JoystickOpen(0);
+  }
+
+  glewInit();
+  init();
+
+  if (opts.wiimote)
+  {
+    std::cout  << "Put Wiimote in discoverable mode now (press 1+2)..." << std::endl;
+
+    bdaddr_t addr_any = {{0, 0, 0, 0, 0, 0}};
+    g_wiimote = cwiid_open_timeout(&addr_any, CWIID_FLAG_MESG_IFC, -1);
+
+    if (g_wiimote)
     {
-      std::ostringstream msg;
-      msg << "Couldn't initialize SDL: " << SDL_GetError();
-      throw std::runtime_error(msg.str());
-    }
-    else
-    {
-      atexit(SDL_Quit);
-    }
-
-    init_display("OpenGL Viewer", false, 0);
-
-    SDL_Joystick* joystick = nullptr;
-    log_info("SDL_NumJoysticks: %d", SDL_NumJoysticks());
-    if (SDL_NumJoysticks() > 0)
-    {
-      joystick = SDLCALL SDL_JoystickOpen(0);
-    }
-
-    glewInit();
-    init();
-
-    if (opts.wiimote)
-    {
-      std::cout  << "Put Wiimote in discoverable mode now (press 1+2)..." << std::endl;
-
-      bdaddr_t addr_any = {{0, 0, 0, 0, 0, 0}};
-      g_wiimote = cwiid_open_timeout(&addr_any, CWIID_FLAG_MESG_IFC, -1);
-
-      if (g_wiimote)
+      std::cout << "Wiimote connected: " << g_wiimote << std::endl;
+      if (cwiid_set_mesg_callback(g_wiimote, &wiimote_mesg_callback)) 
       {
-        std::cout << "Wiimote connected: " << g_wiimote << std::endl;
-        if (cwiid_set_mesg_callback(g_wiimote, &wiimote_mesg_callback)) 
-        {
-          std::cerr << "Unable to set message callback" << std::endl;
-        }
+        std::cerr << "Unable to set message callback" << std::endl;
+      }
       
-        if (cwiid_command(g_wiimote, CWIID_CMD_RPT_MODE, 
-                          CWIID_RPT_STATUS  |
-                          //CWIID_RPT_ACC   |
-                          CWIID_RPT_IR      |
-                          CWIID_RPT_BTN))
-        {
-          std::cerr << "Wiimote: Error setting report mode" << std::endl;
-        }
+      if (cwiid_command(g_wiimote, CWIID_CMD_RPT_MODE, 
+                        CWIID_RPT_STATUS  |
+                        //CWIID_RPT_ACC   |
+                        CWIID_RPT_IR      |
+                        CWIID_RPT_BTN))
+      {
+        std::cerr << "Wiimote: Error setting report mode" << std::endl;
       }
     }
-
-    if (!opts.video.empty())
-    {
-      Gst::init(argc, argv);
-      std::cout << "Playing video: " << opts.video << std::endl;
-      g_video_player = std::make_shared<VideoProcessor>(opts.video);
-    }
-
-    std::cout << "main: " << std::this_thread::get_id() << std::endl;
-
-    main_loop();
-
-    if (joystick)
-    {
-      SDL_JoystickClose(joystick);
-    }
-
-    return 0; 
   }
+
+  if (!opts.video.empty())
+  {
+    Gst::init(argc, argv);
+    std::cout << "Playing video: " << opts.video << std::endl;
+    g_video_player = std::make_shared<VideoProcessor>(opts.video);
+  }
+
+  std::cout << "main: " << std::this_thread::get_id() << std::endl;
+
+  main_loop();
+
+  if (joystick)
+  {
+    SDL_JoystickClose(joystick);
+  }
+
+  return 0; 
 }
 
 
