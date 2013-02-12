@@ -33,6 +33,7 @@
  */
 
 #include <iostream>
+#include <unistd.h>
 #include "wiicpp.h"
 
 using namespace std;
