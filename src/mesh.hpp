@@ -74,6 +74,7 @@ public:
   static std::unique_ptr<Mesh> create_plane(float size, glm::vec3 center = glm::vec3(0.0f, 0.0f, 0.0f));
   static std::unique_ptr<Mesh> create_cube(float size);
   static std::unique_ptr<Mesh> create_sphere(float size, int rings = 16, int segments = 32);
+  static std::unique_ptr<Mesh> create_curved_screen(float size, float hfov, float vfov, int rings = 16, int segments = 32);
 
 public:
   Mesh(GLenum primitive_type);

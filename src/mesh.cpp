@@ -134,7 +134,7 @@ Mesh::create_cube(float size)
 }
 
 std::unique_ptr<Mesh>
-Mesh::create_sphere(float size, int rings, int segments)
+Mesh::create_curved_screen(float size, float hfov, float vfov, int rings, int segments)
 {
   std::unique_ptr<Mesh> mesh(new Mesh(GL_QUADS));
 
@@ -142,7 +142,50 @@ Mesh::create_sphere(float size, int rings, int segments)
   TexCoordLst vt;
   VertexLst   vp;
 
-  const float tau = 2 * M_PI;
+  // hfov = 2.0f * M_PI
+  // vfov = M_PI
+
+  // FIXME: should use indexed array instead to save some vertices
+  auto add_point = [&](int ring, int seg) {
+    float r = static_cast<float>(ring) / rings;
+    float s = static_cast<float>(seg)  / segments;
+
+    float f = sinf((r-0.5f) * vfov + M_PI/2.0f);
+    glm::vec3 p(cosf((s-0.5f) * hfov - M_PI/2.0f) * f, 
+                cosf((r-0.5f) * vfov + M_PI/2.0f),
+                sinf((s-0.5f) * hfov - M_PI/2.0f) * f);
+
+    vn.push_back(-p);
+    vt.emplace_back(s, r, 0.0f);
+    vp.push_back(p * size);
+  };
+
+  for(int ring = 0; ring < rings; ++ring)
+  {
+    for(int seg = 0; seg < segments; ++seg)
+    {
+      add_point(ring+1, seg  );
+      add_point(ring+1, seg+1);
+      add_point(ring,   seg+1);
+      add_point(ring,   seg  );
+    }
+  }
+
+  mesh->attach_float_array("normal", vn);
+  mesh->attach_float_array("texcoord", vt);
+  mesh->attach_float_array("position", vp);
+
+  return mesh;  
+}
+
+std::unique_ptr<Mesh>
+Mesh::create_sphere(float size, int rings, int segments)
+{
+  std::unique_ptr<Mesh> mesh(new Mesh(GL_QUADS));
+
+  NormalLst   vn;
+  TexCoordLst vt;
+  VertexLst   vp;
 
   // FIXME: should use indexed array instead to save some vertices
   auto add_point = [&](int ring, int seg) {
@@ -163,10 +206,10 @@ Mesh::create_sphere(float size, int rings, int segments)
   {
     for(int seg = 0; seg < segments; ++seg)
     {
-      add_point(ring, seg);
-      add_point(ring, seg+1);
+      add_point(ring,   seg  );
+      add_point(ring,   seg+1);
       add_point(ring+1, seg+1);
-      add_point(ring+1, seg);
+      add_point(ring+1, seg  );
     }
   }
 
