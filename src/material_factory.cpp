@@ -17,8 +17,10 @@
 #include "material_factory.hpp"
 
 #include <stdexcept>
+#include <boost/algorithm/string/predicate.hpp>
 
 #include "framebuffer.hpp"
+#include "material_parser.hpp"
 #include "render_context.hpp"
 
 extern glm::mat4 g_shadowmap_matrix;
@@ -50,26 +52,70 @@ MaterialFactory::MaterialFactory() :
                                       
   m_materials["skybox"] = create_skybox();
   m_materials["textured"] = create_textured();
+  m_materials["video"] = create_video();
+}
+
+MaterialPtr
+MaterialFactory::from_file(const std::string& filename)
+{
+  MaterialPtr material = MaterialParser::from_file("data/" + filename);
+
+  material->enable(GL_CULL_FACE);
+  material->enable(GL_DEPTH_TEST);
+
+  material->set_program(Program::create(Shader::from_file(GL_VERTEX_SHADER, "src/default.vert"),
+                                        Shader::from_file(GL_FRAGMENT_SHADER, "src/default.frag")));
+
+  material->set_uniform("ModelViewMatrix", UniformSymbol::ModelViewMatrix);
+  material->set_uniform("NormalMatrix", UniformSymbol::NormalMatrix);
+  material->set_uniform("MVP", UniformSymbol::ModelViewProjectionMatrix);
+
+  material->set_uniform("light.diffuse",   glm::vec3(1.0f, 1.0f, 1.0f));
+  material->set_uniform("light.ambient",   glm::vec3(0.25f, 0.25f, 0.25f));
+  material->set_uniform("light.specular",  glm::vec3(0.6f, 0.6f, 0.6f));
+  material->set_uniform("light.position", 
+                              UniformCallback(
+                                [](ProgramPtr prog, const std::string& name, const RenderContext& ctx) {
+                                  glm::vec3 pos(ctx.get_view_matrix() * glm::vec4(50.0f, 50.0f, 50.0f, 1.0f));
+                                  prog->set_uniform(name, pos);
+                                }));
+
+  material->set_uniform("ShadowMapMatrix",
+                              UniformCallback(
+                                [](ProgramPtr prog, const std::string& name, const RenderContext& ctx) {
+                                  prog->set_uniform(name, g_shadowmap_matrix * ctx.get_model_matrix());
+                                }));
+  material->set_texture(2, g_shadowmap->get_depth_texture());
+  material->set_uniform("ShadowMap", 2);
+
+  return material;
 }
 
 MaterialPtr
 MaterialFactory::create(const std::string& name)
 {
-  auto it = m_materials.find(name);
-  if (it == m_materials.end())
+  if (boost::algorithm::ends_with(name, ".material"))
   {
-    if (name == "phong")
+    return from_file(name);
+  }
+  else
+  {    
+    auto it = m_materials.find(name);
+    if (it == m_materials.end())
     {
-      throw std::runtime_error("unknown material: " + name);
+      if (name == "phong")
+      {
+        throw std::runtime_error("unknown material: " + name);
+      }
+      else
+      {
+        return create("phong");
+      }
     }
     else
     {
-      return create("phong");
+      return it->second;
     }
-  }
-  else
-  {
-    return it->second;
   }
 }
 
@@ -215,6 +261,7 @@ MaterialFactory::create_video()
 
   material->set_texture(0, Texture::from_file("data/textures/uvtest.png"));
   material->set_uniform("texture_diff", 0);
+  material->set_uniform("offset", 0.0f);
 
   material->set_uniform("MVP", UniformSymbol::ModelViewProjectionMatrix);
 

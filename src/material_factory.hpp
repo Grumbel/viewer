@@ -30,6 +30,7 @@ private:
 public:
   MaterialFactory();
 
+  MaterialPtr from_file(const std::string& name);
   MaterialPtr create(const std::string& name);
   static MaterialPtr create_phong(const glm::vec3& diffuse, 
                                   const glm::vec3& ambient, 
