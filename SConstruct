@@ -12,6 +12,9 @@ libwiicpp = wiicpp.StaticLibrary("wiicpp",
                                  Glob("external/wiic-2013-02-12/src/wiicpp/*.cpp") +
                                  Glob("external/wiic-2013-02-12/src/log/*.cpp"))
 
+glew = Environment(CPPPATH = [ "external/glew-1.9.0/include/" ])
+libglew = glew.StaticLibrary(Glob("external/glew-1.9.0/src/*.c"))
+
 env = Environment(ENV=os.environ,
                   CXX="g++-snapshot",
                   CXXFLAGS= [ "-O3", "-g3",
@@ -32,14 +35,16 @@ env = Environment(ENV=os.environ,
                               "-Wno-unused-parameter"])
 
 env.Append( LIBS = [ "SDL_image", "cwiid", libwiicpp, libwiic, "bluetooth" ])
-env.Append( CPPPATH = [ "external/wiic-2013-02-12/src/wiic",
+env.Append( CPPPATH = [ "external/glew-1.9.0/include",
+                        "external/wiic-2013-02-12/src/wiic",
                         "external/wiic-2013-02-12/src/wiicpp",
                         "external/wiic-2013-02-12/src/log" ])
 env.ParseConfig("pkg-config --libs --cflags bluez | sed 's/-I/-isystem/g'")
 env.ParseConfig("pkg-config --cflags --libs gstreamermm-0.10 | sed 's/-I/-isystem/g'")
 env.ParseConfig("sdl-config --libs --cflags | sed 's/-I/-isystem/g'")
-env.ParseConfig("pkg-config --libs --cflags  gl glu glew | sed 's/-I/-isystem/g'")
+env.ParseConfig("pkg-config --libs --cflags  gl glu | sed 's/-I/-isystem/g'")
 env.ParseConfig("pkg-config --libs --cflags cairomm-1.0 gl glu | sed 's/-I/-isystem/g'")
+env.Append( LIBS = [ libglew ])
 
 if False: 
     env.Append(LINKFLAGS=["-pg"], CXXFLAGS="-pg")
