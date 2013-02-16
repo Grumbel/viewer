@@ -23,6 +23,7 @@
 Renderbuffer::Renderbuffer(int width, int height) :
   m_width(width),
   m_height(height),
+  m_multisample(8),
   m_fbo(0),
   m_depth_buffer(0),
   m_color_buffer(0)
@@ -41,15 +42,26 @@ Renderbuffer::Renderbuffer(int width, int height) :
   glGenRenderbuffers(1, &m_depth_buffer);
   assert_gl("renderbuffer");
 
-  int samples = 8;
   glBindRenderbuffer(GL_RENDERBUFFER, m_color_buffer);
-  //glRenderbufferStorage(GL_RENDERBUFFER, GL_RGB16F, m_width, m_height);
-  glRenderbufferStorageMultisample(GL_RENDERBUFFER, samples, GL_RGB16F, m_width, m_height);
+  if (!m_multisample)
+  {
+    glRenderbufferStorage(GL_RENDERBUFFER, GL_RGB16F, m_width, m_height);
+  }
+  else
+  {
+    glRenderbufferStorageMultisample(GL_RENDERBUFFER, m_multisample, GL_RGB16F, m_width, m_height);
+  }
   assert_gl("glRenderbufferStorageMultisample");
 
   glBindRenderbuffer(GL_RENDERBUFFER, m_depth_buffer);
-  //glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT, m_width, m_height);
-  glRenderbufferStorageMultisample(GL_RENDERBUFFER, samples, GL_DEPTH_COMPONENT, m_width, m_height);
+  if (!m_multisample)
+  {
+    glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT, m_width, m_height);
+  }
+  else
+  {
+    glRenderbufferStorageMultisample(GL_RENDERBUFFER, m_multisample, GL_DEPTH_COMPONENT, m_width, m_height);
+  }
   assert_gl("glRenderbufferStorageMultisample2");
 
   glBindRenderbuffer(GL_RENDERBUFFER, 0);

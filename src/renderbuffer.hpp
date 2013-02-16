@@ -28,6 +28,7 @@ class Renderbuffer
 private:
   int m_width;
   int m_height;
+  int m_multisample;
 
   GLuint m_fbo;
   GLuint m_depth_buffer;
