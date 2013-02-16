@@ -241,7 +241,7 @@ Texture::cubemap_from_file(const std::string& filename)
 }
 
 TexturePtr
-Texture::from_file(const std::string& filename)
+Texture::from_file(const std::string& filename, bool build_mipmaps)
 {
   OpenGLState state;
 
@@ -261,13 +261,23 @@ Texture::from_file(const std::string& filename)
     glPixelStorei(GL_UNPACK_ROW_LENGTH, surface->pitch / surface->format->BytesPerPixel);  
 
     glTexParameteri(target, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-    glTexParameteri(target, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+    glTexParameteri(target, GL_TEXTURE_MIN_FILTER, build_mipmaps ? GL_LINEAR_MIPMAP_LINEAR : GL_LINEAR);
+
     glTexParameteri(target, GL_TEXTURE_WRAP_S, GL_REPEAT);
     glTexParameteri(target, GL_TEXTURE_WRAP_T, GL_REPEAT);
 
-    gluBuild2DMipmaps(target, GL_RGB, surface->w, surface->h, 
-                      surface->format->BytesPerPixel == 4 ? GL_RGBA : GL_RGB, 
-                      GL_UNSIGNED_BYTE, surface->pixels);
+    if (build_mipmaps)
+    {
+      gluBuild2DMipmaps(target, GL_RGB, surface->w, surface->h,
+                        surface->format->BytesPerPixel == 4 ? GL_RGBA : GL_RGB,
+                        GL_UNSIGNED_BYTE, surface->pixels);
+    }
+    else
+    {
+      glTexImage2D(target, 0, GL_RGB, surface->w, surface->h, 0,
+                   surface->format->BytesPerPixel == 4 ? GL_RGBA : GL_RGB,
+                   GL_UNSIGNED_BYTE, surface->pixels);
+    }
 
     SDL_FreeSurface(surface);
 
@@ -321,6 +331,36 @@ Texture::upload(int width, int height, int pitch, void* data)
   glBindTexture(m_target, m_id);
   glTexSubImage2D(m_target, 0, 0, 0, width, height, GL_RGB, GL_UNSIGNED_BYTE, data);
   assert_gl("Texture::upload");
+}
+
+void
+Texture::draw(float x, float y, float w, float h, float z)
+{
+  OpenGLState state;
+    
+  glEnable(GL_TEXTURE_2D);
+
+  float uv_left   = 0.0f;
+  float uv_right  = 1.0f;
+  float uv_top    = 0.0f;
+  float uv_bottom = 1.0f;
+
+  glBindTexture(GL_TEXTURE_2D, m_id);
+  glBegin(GL_QUADS);
+  {
+    glTexCoord2f(uv_left, uv_top);
+    glVertex3f(x, y, z);
+
+    glTexCoord2f(uv_right, uv_top);
+    glVertex3f(x+w, y, z);
+
+    glTexCoord2f(uv_right, uv_bottom);
+    glVertex3f(x+w, y+h, z);
+
+    glTexCoord2f(uv_left, uv_bottom);
+    glVertex3f(x, y+h, z);
+  }
+  glEnd();
 }
 
 /* EOF */

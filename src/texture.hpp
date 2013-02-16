@@ -17,7 +17,7 @@ private:
 
 public:
   static TexturePtr cubemap_from_file(const std::string& filename);
-  static TexturePtr from_file(const std::string& filename);
+  static TexturePtr from_file(const std::string& filename, bool build_mipmaps = true);
   static TexturePtr from_rgb_data(int width, int height, int pitch, void* data);
   static TexturePtr create_lightspot(int width, int height);
   static TexturePtr create_random_noise(int width, int height);
@@ -32,6 +32,8 @@ public:
   GLenum get_target() const { return m_target; }
 
   void upload(int width, int height, int pitch, void* data);
+
+  void draw(float x, float y, float w, float h, float z);
 
 private:
   Texture(const Texture&);
