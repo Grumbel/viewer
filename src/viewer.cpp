@@ -94,6 +94,9 @@ int g_mouse_y = 0;
 
 SDL_Surface* g_screen = nullptr;
 
+TexturePtr g_calibration_texture;
+bool g_show_calibration = false;
+
 std::unique_ptr<Menu> g_menu;
 std::unique_ptr<SceneManager> g_scene_manager;
 std::unique_ptr<Camera> g_camera;
@@ -101,6 +104,10 @@ std::unique_ptr<Camera> g_camera;
 MaterialPtr g_video_material;
 std::shared_ptr<VideoProcessor> g_video_player;
 
+float g_slow_factor = 0.1f;
+
+glm::ivec2 g_viewport_offset(-41, 16);
+float g_barrel_power = 1.0f;
 float g_ipd = 0.0f;
 int g_screen_w = 640;
 int g_screen_h = 480;
@@ -139,13 +146,13 @@ float g_spot_exponent = 30.0f;
 bool g_show_menu = true;
 bool g_show_dots = true;
 
-glm::vec3 g_eye(0.0f, 5.0f, 15.0f);
-glm::vec3 g_look_at(0.0f, 0.0f, -100.0f);
+glm::vec3 g_eye(0.0f, 0.0f, 0.0f);
+glm::vec3 g_look_at(0.0f, 0.0f, -1.0f);
 glm::vec3 g_up(0.0f, 1.0f, 0.0f);
 float g_pitch_offset = 0.0f;
 float g_roll_offset  = 0.0f;
 float g_distance_offset = 0.0f;
-float g_distance_scale = 0.01f;
+float g_distance_scale = 0.000f;
 float g_yaw_offset   = 0.0f;
 glm::vec4 g_grid_offset;
 float g_grid_size = 2.0f;
@@ -164,6 +171,7 @@ float g_scale = 1.0f;
 
 enum EyeType { kLeftEye, kRightEye, kCenterEye };
 float g_eye_distance = 0.065f;
+float g_convergence = 1.0f;
 
 bool g_arcball_active = false;
 glm::ivec2 g_mouse;
@@ -176,7 +184,8 @@ TextSurfacePtr g_dot_surface;
 glm::vec2 g_wiimote_dot1;
 glm::vec2 g_wiimote_dot2;
 
-glm::vec2 g_wiimote_scale(0.84f, 0.64f);
+//glm::vec2 g_wiimote_scale(0.84f, 0.64f);
+glm::vec2 g_wiimote_scale(0.52f, 0.47f);
 
 ProgramPtr m_composition_prog;
 
@@ -237,7 +246,7 @@ void draw_scene(EyeType eye_type)
 {
   OpenGLState state;
 
-  glViewport(0,0, g_screen_w, g_screen_h);
+  glViewport(0, 0, g_screen_w, g_screen_h);
 
   // clear the screen
   glClearColor(0.0, 0.0, 0.0, 1.0);
@@ -255,7 +264,7 @@ void draw_scene(EyeType eye_type)
   look_at = glm::rotate(look_at, glm::degrees(-g_pitch_offset), sideways_);
   up = glm::rotate(up, glm::degrees(-g_roll_offset), look_at);
 
-  glm::vec3 sideways = glm::normalize(glm::cross(look_at, up)) * g_eye_distance;
+  glm::vec3 sideways = glm::normalize(glm::cross(look_at, up)) * g_eye_distance * 0.5f;
   switch(eye_type)
   {
     case kLeftEye:
@@ -270,7 +279,7 @@ void draw_scene(EyeType eye_type)
       sideways = glm::vec3(0);
       break;
   }
-  g_camera->look_at(eye + sideways, eye + look_at, up);
+  g_camera->look_at(eye + sideways, eye + look_at * g_convergence, up);
   
   g_scene_manager->render(*g_camera);
 }
@@ -384,7 +393,7 @@ void draw_models(bool shader_foo)
 
 void display()
 {
-  glViewport(0,0, g_screen_w, g_screen_h);
+  glViewport(g_viewport_offset.x, g_viewport_offset.y, g_screen_w, g_screen_h);
   
   //log_info("display()\n");
   {
@@ -400,6 +409,7 @@ void display()
     if (g_stereo_mode == StereoMode::None)
     {
       g_renderbuffer1->bind();
+      if (g_video_material) g_video_material->set_uniform("offset", 0.0f);
       draw_scene(kCenterEye);
       g_renderbuffer1->unbind();
 
@@ -408,10 +418,12 @@ void display()
     else
     {
       g_renderbuffer1->bind();
+      if (g_video_material) g_video_material->set_uniform("offset", 0.0f);
       draw_scene(kLeftEye);
       g_renderbuffer1->unbind();
 
       g_renderbuffer2->bind();
+      if (g_video_material) g_video_material->set_uniform("offset", 0.5f);
       draw_scene(kRightEye);
       g_renderbuffer2->unbind();
 
@@ -437,6 +449,7 @@ void display()
       {
         case StereoMode::Cybermaxx:
           glUseProgram(m_composition_prog->get_id());
+          m_composition_prog->set_uniform("barrel_power", g_barrel_power);
           m_composition_prog->set_uniform("tex", 0);
           m_composition_prog->set_uniform("offset", 0);
           g_framebuffer1->draw(0.0f, 0.0f, g_screen_w, g_screen_h, -20.0f);
@@ -480,6 +493,11 @@ void display()
       }
     }
 
+    if (g_show_calibration)
+    {
+      g_calibration_texture->draw(0, 0, g_screen_w, g_screen_h, -20.0f);
+    }
+
     if (g_show_menu)
     {
       glDisable(GL_BLEND);
@@ -511,7 +529,7 @@ void display()
 
     if (g_show_menu)
     {
-      g_menu->draw(32.0f, 32.0f);
+      g_menu->draw(120.0f, 64.0f);
     }
 
     if (g_show_dots)
@@ -532,6 +550,10 @@ void keyboard(SDL_KeyboardEvent key, int x, int y)
   {
     case SDLK_TAB:
       g_show_menu = !g_show_menu;
+      break;
+
+    case SDLK_F3:
+      g_show_calibration = !g_show_calibration;
       break;
 
     case SDLK_ESCAPE:
@@ -721,11 +743,11 @@ void keyboard(SDL_KeyboardEvent key, int x, int y)
       break;
 
     case SDLK_UP:
-      g_look_at *= 1.1f;
+      g_convergence *= 1.1f;
       break;
 
     case SDLK_DOWN:
-      g_look_at /= 1.1f;
+      g_convergence /= 1.1f;
       break;
 
     case SDLK_LEFT:
@@ -780,17 +802,26 @@ void init()
     g_camera.reset(new Camera);
     g_camera->perspective(g_fov, g_aspect_ratio, g_near_z, 100000.0f);
 
-    if (true) // streaming video
+    if (true) //g_video_player) // streaming video
     {
-      g_video_material = MaterialFactory::create_video();
+      g_video_material = MaterialFactory::get().create("video");
       auto node = g_scene_manager->get_world()->create_child();
       ModelPtr entity = std::make_shared<Model>();
+
+      if (false)
+      {
       entity->add_mesh(Mesh::create_plane(5.0f));
-      entity->set_material(g_video_material);
-      node->attach_entity(entity);
       node->set_position(glm::vec3(0.0f, 0.0f, -10.0f));
       node->set_orientation(glm::quat(glm::vec3(M_PI/2, 0.0f, 0.0f)));
-      node->set_scale(glm::vec3(4.0f, 0.0f, 3.0f));
+      node->set_scale(glm::vec3(4.0f, 1.0f, 2.25f));
+      }
+      else
+      {
+        entity->add_mesh(Mesh::create_curved_screen(15.0f, glm::radians(125.0f), glm::radians(70.3f), 16, 16));
+      }
+
+      entity->set_material(g_video_material);
+      node->attach_entity(entity);
     }
 
     MaterialPtr phong_material = MaterialFactory::get().create("phong");
@@ -926,49 +957,57 @@ void init()
     }
   }
 
+  g_calibration_texture = Texture::from_file("data/calibration.png", false);
+
   //m_composition_prog = Program::create(Shader::from_file(GL_FRAGMENT_SHADER, "src/newsprint.frag"));
   m_composition_prog = Program::create(Shader::from_file(GL_FRAGMENT_SHADER, "src/composite.frag"));
 
   g_dot_surface = TextSurface::create("+", TextProperties().set_line_width(3.0f));
 
-  g_menu.reset(new Menu(TextProperties().set_font_size(14.0f).set_line_width(4.0f)));
-  g_menu->add_item("eye.x", &g_eye.x);
-  g_menu->add_item("eye.y", &g_eye.y);
-  g_menu->add_item("eye.z", &g_eye.z);
+  g_menu.reset(new Menu(TextProperties().set_font_size(24.0f).set_line_width(4.0f)));
+  //g_menu->add_item("eye.x", &g_eye.x);
+  //g_menu->add_item("eye.y", &g_eye.y);
+  //g_menu->add_item("eye.z", &g_eye.z);
 
   g_menu->add_item("depth.near_z", &g_near_z, 0.01, 0.0f);
   g_menu->add_item("depth.far_z",  &g_far_z, 1.0f);
 
-  g_menu->add_item("shadowmap.fov", &g_shadowmap_fov, 1.0f);
+  g_menu->add_item("convergence", &g_convergence, 0.1f);
 
-  g_menu->add_item("spot_halo_samples",  &g_spot_halo_samples, 1, 0);
+  //g_menu->add_item("viewport.offset.x",  &g_viewport_offset.x, 1);
+  //g_menu->add_item("viewport.offset.y",  &g_viewport_offset.y, 1);
+
+  //g_menu->add_item("shadowmap.fov", &g_shadowmap_fov, 1.0f);
+
+  //g_menu->add_item("spot_halo_samples",  &g_spot_halo_samples, 1, 0);
 
   g_menu->add_item("FOV", &g_fov);
-  g_menu->add_item("AspectRatio", &g_aspect_ratio, 0.05f, 0.5f, 4.0f);
+  g_menu->add_item("Barrel Power", &g_barrel_power, 0.01f);
+  //g_menu->add_item("AspectRatio", &g_aspect_ratio, 0.05f, 0.5f, 4.0f);
 
-  g_menu->add_item("scale", &g_scale, 0.5f, 0.0f);
+  //g_menu->add_item("scale", &g_scale, 0.5f, 0.0f);
   g_menu->add_item("eye.distance", &g_eye_distance, 0.1f);
 
-  g_menu->add_item("spot.cutoff",   &g_spot_cutoff);
-  g_menu->add_item("spot.exponent", &g_spot_exponent);
+  //g_menu->add_item("spot.cutoff",   &g_spot_cutoff);
+  //g_menu->add_item("spot.exponent", &g_spot_exponent);
 
-  g_menu->add_item("light.up",  &g_light_up, 1.0f);
-  g_menu->add_item("light.angle",  &g_light_angle, 1.0f);
-  g_menu->add_item("light.diffuse",  &g_light_diffuse, 0.1f, 0.0f);
-  g_menu->add_item("light.specular", &g_light_specular, 0.1f, 0.0f);
-  g_menu->add_item("material.shininess", &g_material_shininess, 0.1f, 0.0f);
+  //g_menu->add_item("light.up",  &g_light_up, 1.0f);
+  //g_menu->add_item("light.angle",  &g_light_angle, 1.0f);
+  //g_menu->add_item("light.diffuse",  &g_light_diffuse, 0.1f, 0.0f);
+  //g_menu->add_item("light.specular", &g_light_specular, 0.1f, 0.0f);
+  //g_menu->add_item("material.shininess", &g_material_shininess, 0.1f, 0.0f);
 
   g_menu->add_item("wiimote.distance_scale",  &g_distance_scale, 0.01f);
   g_menu->add_item("wiimote.scale_x", &g_wiimote_scale.x, 0.01f);
   g_menu->add_item("wiimote.scale_y", &g_wiimote_scale.y, 0.01f);
 
   //g_menu->add_item("3D", &g_draw_3d);
-  g_menu->add_item("Grid", &g_draw_grid);
-  g_menu->add_item("Headlights", &g_headlights);
-  g_menu->add_item("Look At Sphere", &g_draw_look_at);
-  g_menu->add_item("draw depth", &g_draw_depth);
-  g_menu->add_item("shadow map", &g_render_shadowmap);
-  g_menu->add_item("grid.size", &g_grid_size, 0.5f);
+  //g_menu->add_item("Grid", &g_draw_grid);
+  //g_menu->add_item("Headlights", &g_headlights);
+  //g_menu->add_item("Look At Sphere", &g_draw_look_at);
+  //g_menu->add_item("draw depth", &g_draw_depth);
+  //g_menu->add_item("shadow map", &g_render_shadowmap);
+  //g_menu->add_item("grid.size", &g_grid_size, 0.5f);
 
   assert_gl("init()");
 }
@@ -1165,7 +1204,7 @@ void process_joystick(float dt)
               g_stick.dir.x, g_stick.dir.y, g_stick.dir.z,
               g_stick.rot.x, g_stick.rot.y, g_stick.rot.z);
 
-  float delta = dt * 5.0f;
+  float delta = dt * 5.0f * g_slow_factor;
 
   if (g_stick.light_rotation)
   {
@@ -1222,13 +1261,13 @@ void process_joystick(float dt)
     //log_debug("yaw: %f pitch: %f", yaw, pitch);
 
     // forward/backward
-    g_eye += 10.0f * forward * g_stick.dir.z * dt;
+    g_eye += 10.0f * forward * g_stick.dir.z * dt * g_slow_factor;
 
     // strafe
-    g_eye += 10.0f * glm::vec3(forward.z, 0.0f, -forward.x) * g_stick.dir.x * dt;
+    g_eye += 10.0f * glm::vec3(forward.z, 0.0f, -forward.x) * g_stick.dir.x * dt * g_slow_factor;
 
     // up/down
-    g_eye.y += 10.0f * g_stick.dir.y * dt;
+    g_eye.y += 10.0f * g_stick.dir.y * dt * g_slow_factor;
 
     g_look_at = focus_distance * glm::vec3(glm::cos(pitch) * glm::cos(yaw), 
                                            glm::sin(pitch),
@@ -1425,6 +1464,7 @@ struct Options
 {
   bool wiimote = false;
   std::string video = std::string();
+  std::string model = std::string();
 };
 
 void init_display(const std::string& title, bool fullscreen, int anti_aliasing)
@@ -1476,7 +1516,8 @@ int main(int argc, char** argv)
     }
     else
     {
-      g_model_filename = argv[i];
+      opts.model = argv[i];
+      g_model_filename = opts.model;
     }
   }
 
