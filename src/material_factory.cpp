@@ -56,9 +56,9 @@ MaterialFactory::MaterialFactory() :
 }
 
 MaterialPtr
-MaterialFactory::from_file(const std::string& filename)
+MaterialFactory::from_file(const boost::filesystem::path& filename)
 {
-  MaterialPtr material = MaterialParser::from_file("data/" + filename);
+  MaterialPtr material = MaterialParser::from_file(filename);
 
   material->set_uniform("ModelViewMatrix", UniformSymbol::ModelViewMatrix);
   material->set_uniform("NormalMatrix", UniformSymbol::NormalMatrix);
@@ -88,28 +88,21 @@ MaterialFactory::from_file(const std::string& filename)
 MaterialPtr
 MaterialFactory::create(const std::string& name)
 {
-  if (boost::algorithm::ends_with(name, ".material"))
+  auto it = m_materials.find(name);
+  if (it == m_materials.end())
   {
-    return from_file(name);
-  }
-  else
-  {    
-    auto it = m_materials.find(name);
-    if (it == m_materials.end())
+    if (name == "phong")
     {
-      if (name == "phong")
-      {
-        throw std::runtime_error("unknown material: " + name);
-      }
-      else
-      {
-        return create("phong");
-      }
+      throw std::runtime_error("unknown material: " + name);
     }
     else
     {
-      return it->second;
+      return create("phong");
     }
+  }
+  else
+  {
+    return it->second;
   }
 }
 

@@ -17,6 +17,7 @@
 #ifndef HEADER_MATERIAL_FACTORY_HPP
 #define HEADER_MATERIAL_FACTORY_HPP
 
+#include <boost/filesystem/path.hpp>
 #include <string>
 #include <unordered_map>
 
@@ -30,7 +31,7 @@ private:
 public:
   MaterialFactory();
 
-  MaterialPtr from_file(const std::string& name);
+  MaterialPtr from_file(const boost::filesystem::path& name);
   MaterialPtr create(const std::string& name);
   static MaterialPtr create_phong(const glm::vec3& diffuse, 
                                   const glm::vec3& ambient, 

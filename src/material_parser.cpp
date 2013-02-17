@@ -53,12 +53,12 @@ std::string to_string(T beg, T end)
 } // namespace
 
 MaterialPtr
-MaterialParser::from_file(const std::string& filename)
+MaterialParser::from_file(const boost::filesystem::path& filename)
 {
-  std::ifstream in(filename);
+  std::ifstream in(filename.string());
   if (!in)
   {
-    throw std::runtime_error("couldn't open: " + filename);
+    throw std::runtime_error("MaterialParser: couldn't open: " + filename.string());
   }
   else
   {
@@ -154,6 +154,8 @@ MaterialParser::from_stream(std::istream& in)
   {
     material->set_subroutine_uniform(GL_FRAGMENT_SHADER, "specular_color", "specular_color_from_material");    
   }
+
+  material->set_subroutine_uniform(GL_FRAGMENT_SHADER, "shadow_value", "shadow_value_4");
 
   return material;
 }

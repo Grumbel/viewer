@@ -1,6 +1,7 @@
-#include <boost/tokenizer.hpp>
-#include <boost/lexical_cast.hpp>
+#include <boost/algorithm/string/predicate.hpp>
 #include <boost/format.hpp>
+#include <boost/lexical_cast.hpp>
+#include <boost/tokenizer.hpp>
 #include <fstream>
 #include <stdexcept>
 
@@ -20,18 +21,39 @@ Scene::from_file(const std::string& filename)
   }
   else
   {
-    return Scene::from_istream(in);
+    Scene scene;
+    scene.set_directory(boost::filesystem::path(filename).parent_path());
+    scene.parse_istream(in);
+    return scene.get_node();
   }
 }
 
 std::unique_ptr<SceneNode>
 Scene::from_istream(std::istream& in)
 {
+  Scene scene;
+  scene.parse_istream(in);
+  return scene.get_node();
+}
+
+Scene::Scene() :
+  m_directory(),
+  m_node(new SceneNode)
+{
+}
+
+void
+Scene::set_directory(const boost::filesystem::path& path)
+{
+  m_directory = path;
+}
+
+void
+Scene::parse_istream(std::istream& in)
+{
   // This is not a fully featured .obj file reader, it just takes some
   // inspiration from it: 
   // http://www.martinreddy.net/gfx/3d/OBJ.spec
-  std::unique_ptr<SceneNode> root(new SceneNode);
-  
   std::unordered_map<std::string, SceneNode*> nodes;
   std::unordered_map<std::string, std::unique_ptr<SceneNode> > unattached_children;
 
@@ -84,7 +106,15 @@ Scene::from_istream(std::istream& in)
           // create Model
           model = std::make_shared<Model>();
           model->add_mesh(std::move(mesh));
-          model->set_material(MaterialFactory::get().create(material));
+          
+          if (boost::algorithm::ends_with(material, ".material"))
+          {
+            model->set_material(MaterialFactory::get().from_file(m_directory / boost::filesystem::path(material)));
+          }
+          else
+          {
+            model->set_material(MaterialFactory::get().create(material));
+          }
         }
       }
 
@@ -108,7 +138,7 @@ Scene::from_istream(std::istream& in)
         nodes[name] = node.get();
         if (parent.empty())
         {
-          root->attach_child(std::move(node));
+          m_node->attach_child(std::move(node));
         }
         else
         {
@@ -308,8 +338,12 @@ Scene::from_istream(std::istream& in)
       p->second->attach_child(std::move(it.second));
     }
   }
+}
 
-  return std::move(root);
+std::unique_ptr<SceneNode>
+Scene::get_node()
+{
+  return std::move(m_node);
 }
 
 /* EOF */
