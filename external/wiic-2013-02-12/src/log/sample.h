@@ -16,7 +16,7 @@ class Sample
 {
 public:
 	Sample() : relTimestamp(0) { }
-	~Sample() {}
+	virtual ~Sample() {}
 	virtual void save(ofstream& out) =0;
 	
 	inline void setLogType(int l) { logType = l; }

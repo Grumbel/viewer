@@ -44,6 +44,7 @@ class CButtonBase
 {
 public:
     CButtonBase(void *ButtonsPtr, void *ButtonsHeldPtr, void *ButtonsReleasedPtr);
+    virtual ~CButtonBase() {}
 
     int isPressed(int Button);
     int isHeld(int Button);
