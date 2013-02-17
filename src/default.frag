@@ -50,6 +50,12 @@ in vec3 frag_normal;
 in vec3 frag_position;
 in vec2 frag_uv;
 
+subroutine vec3 diffuse_color_t();
+subroutine vec3 specular_color_t();
+
+subroutine uniform diffuse_color_t  diffuse_color;
+subroutine uniform specular_color_t specular_color;
+
 // ---------------------------------------------------------------------------
 // shadow map
 uniform sampler2DShadow ShadowMap;
@@ -142,12 +148,39 @@ vec3 phong_model(vec3 position, vec3 normal, vec3 diff, vec3 spec)
 
   return intensity;
 }
+
 // ---------------------------------------------------------------------------
+
+subroutine( diffuse_color_t )
+vec3 diffuse_color_from_texture()
+{
+  return material.diffuse * texture2D(material.diffuse_texture, frag_uv).rgb;
+}
+
+subroutine( diffuse_color_t )
+vec3 diffuse_color_from_material()
+{
+  return material.diffuse;
+}
+
+subroutine( specular_color_t )
+vec3 specular_color_from_texture()
+{
+  return material.specular * texture2D(material.specular_texture, frag_uv).rgb;
+}
+
+subroutine( specular_color_t )
+vec3 specular_color_from_material()
+{
+  return material.specular;
+}
+
+
 void main(void)
 {
   //float light = texture(LightMap, world_normal, 3);
-  vec3 diff = material.diffuse; // * texture2D(material.diffuse_texture, frag_uv).rgb;
-  vec3 spec = material.specular; //* texture2D(material.specular_texture, frag_uv).rgb;
+  vec3 diff = diffuse_color();
+  vec3 spec = specular_color();
   gl_FragColor = vec4(phong_model(frag_position, frag_normal, diff, spec), 1.0);
 }
 
