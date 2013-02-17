@@ -23,6 +23,8 @@
 #include <glm/glm.hpp>
 #include <glm/ext.hpp>
 #include <functional>
+#include <unordered_map>
+#include <tuple>
 
 #include "program.hpp"
 
@@ -31,12 +33,12 @@ class UniformGroup;
 
 enum class UniformSymbol {
   NormalMatrix,
-  ViewMatrix,
-  ModelMatrix,
-  ModelViewMatrix,
-  ProjectionMatrix,
-  ModelViewProjectionMatrix
-};
+    ViewMatrix,
+    ModelMatrix,
+    ModelViewMatrix,
+    ProjectionMatrix,
+    ModelViewProjectionMatrix
+    };
 
 class UniformBase
 {
@@ -107,10 +109,14 @@ class UniformGroup
 {
 private:
   std::vector<std::unique_ptr<UniformBase> > m_uniforms;
+  std::unordered_map<std::string, std::string> m_vertex_subroutine_uniforms;
+  std::unordered_map<std::string, std::string> m_fragment_subroutine_uniforms;
 
 public:
   UniformGroup() :
-    m_uniforms()
+    m_uniforms(),
+    m_vertex_subroutine_uniforms(),
+    m_fragment_subroutine_uniforms()
   {}
 
   template<typename T>
@@ -119,7 +125,26 @@ public:
     m_uniforms.emplace_back(new Uniform<T>(name, value));
   }
 
+  void set_subroutine_uniform(GLenum shadertype,
+                              const std::string& name,
+                              const std::string& subroutine)
+  {
+    if (shadertype == GL_FRAGMENT_SHADER)
+    {
+      m_fragment_subroutine_uniforms[name] = subroutine;
+    }
+    else if (shadertype == GL_VERTEX_SHADER)
+    {
+      m_vertex_subroutine_uniforms[name] = subroutine;
+    }
+    else
+    {
+      assert(!"not implemented");
+    }
+  }
+
   void apply(ProgramPtr prog, const RenderContext& ctx);
+  void apply_subroutines(ProgramPtr prog, GLenum shadertype, const std::unordered_map<std::string, std::string>& subroutines);
 
 private:
   UniformGroup(const UniformGroup&);

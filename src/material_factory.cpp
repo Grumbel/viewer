@@ -60,12 +60,6 @@ MaterialFactory::from_file(const std::string& filename)
 {
   MaterialPtr material = MaterialParser::from_file("data/" + filename);
 
-  material->enable(GL_CULL_FACE);
-  material->enable(GL_DEPTH_TEST);
-
-  material->set_program(Program::create(Shader::from_file(GL_VERTEX_SHADER, "src/default.vert"),
-                                        Shader::from_file(GL_FRAGMENT_SHADER, "src/default.frag")));
-
   material->set_uniform("ModelViewMatrix", UniformSymbol::ModelViewMatrix);
   material->set_uniform("NormalMatrix", UniformSymbol::NormalMatrix);
   material->set_uniform("MVP", UniformSymbol::ModelViewProjectionMatrix);
@@ -257,7 +251,7 @@ MaterialFactory::create_video()
   material->enable(GL_DEPTH_TEST);
 
   material->set_program(Program::create(Shader::from_file(GL_VERTEX_SHADER, "src/video.vert"),
-                                        Shader::from_file(GL_FRAGMENT_SHADER, "src/video.frag")));
+                                        Shader::from_file(GL_FRAGMENT_SHADER, "src/video3d.frag")));
 
   material->set_texture(0, Texture::from_file("data/textures/uvtest.png"));
   material->set_uniform("texture_diff", 0);

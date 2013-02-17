@@ -67,6 +67,47 @@ UniformGroup::apply(ProgramPtr prog, const RenderContext& ctx)
   {
     uniform->apply(prog, ctx);
   }
+
+  apply_subroutines(prog, GL_VERTEX_SHADER, m_vertex_subroutine_uniforms);
+  apply_subroutines(prog, GL_FRAGMENT_SHADER, m_fragment_subroutine_uniforms);
+}
+
+void
+UniformGroup::apply_subroutines(ProgramPtr prog, GLenum shadertype, 
+                                const std::unordered_map<std::string, std::string>& subroutines)
+{
+  GLint num_uniform_locations;
+  glGetProgramStageiv(prog->get_id(), shadertype, GL_ACTIVE_SUBROUTINE_UNIFORM_LOCATIONS, &num_uniform_locations);
+  
+  std::vector<GLuint> subroutine_mappings;
+  for(int i = 0; i < num_uniform_locations; ++i)
+  {
+    char name[256];
+    GLsizei length;
+    glGetActiveSubroutineUniformName(prog->get_id(), shadertype, i, sizeof(name), &length, name);
+    
+    const auto& it = subroutines.find(name);
+    if (it == subroutines.end())
+    {
+      log_error("unmapped subroutine: %s", name);
+    }
+    else
+    {
+      GLuint loc = glGetSubroutineIndex(prog->get_id(), shadertype, it->second.c_str());
+      if (loc == GL_INVALID_INDEX)
+      {
+        log_error("unknown subroutine: %s", it->second);
+      }
+      else
+      {
+        subroutine_mappings.emplace_back(loc);  
+      }      
+    }
+  }
+
+  glUniformSubroutinesuiv(shadertype, subroutine_mappings.size(), subroutine_mappings.data());
+
+  assert_gl("apply_subroutines");
 }
 
 /* EOF */

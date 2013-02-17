@@ -53,20 +53,20 @@ public:
       set_uniform(loc, v);
     }
   }
+  
+  void set_uniform(GLint loc, float v) { glProgramUniform1f(m_program, loc, v); }
+  void set_uniform(GLint loc, const glm::vec2& v) { glProgramUniform2f(m_program, loc, v.x, v.y); }
+  void set_uniform(GLint loc, const glm::vec3& v) { glProgramUniform3f(m_program, loc, v.x, v.y, v.z); }
+  void set_uniform(GLint loc, const glm::vec4& v) { glProgramUniform4f(m_program, loc, v.x, v.y, v.z, v.w); }
 
- void set_uniform(GLint loc, float v) { glUniform1f(loc, v); }
- void set_uniform(GLint loc, const glm::vec2& v) { glUniform2f(loc, v.x, v.y); }
- void set_uniform(GLint loc, const glm::vec3& v) { glUniform3f(loc, v.x, v.y, v.z); }
- void set_uniform(GLint loc, const glm::vec4& v) { glUniform4f(loc, v.x, v.y, v.z, v.w); }
+  void set_uniform(GLint loc, int v) { glProgramUniform1i(m_program, loc, v); }
+  void set_uniform(GLint loc, unsigned int v) { glProgramUniform1i(m_program, loc, v); }
+  void set_uniform(GLint loc, const glm::ivec2& v) { glProgramUniform2i(m_program, loc, v.x, v.y); }
+  void set_uniform(GLint loc, const glm::ivec3& v) { glProgramUniform3i(m_program, loc, v.x, v.y, v.z); }
+  void set_uniform(GLint loc, const glm::ivec4& v) { glProgramUniform4i(m_program, loc, v.x, v.y, v.z, v.w); }
 
- void set_uniform(GLint loc, int v) { glUniform1i(loc, v); }
- void set_uniform(GLint loc, unsigned int v) { glUniform1i(loc, v); }
- void set_uniform(GLint loc, const glm::ivec2& v) { glUniform2i(loc, v.x, v.y); }
- void set_uniform(GLint loc, const glm::ivec3& v) { glUniform3i(loc, v.x, v.y, v.z); }
- void set_uniform(GLint loc, const glm::ivec4& v) { glUniform4i(loc, v.x, v.y, v.z, v.w); }
-
- void set_uniform(GLint loc, const glm::mat3& v) { glUniformMatrix3fv(loc, 1, GL_FALSE, glm::value_ptr(v)); }
- void set_uniform(GLint loc, const glm::mat4& v) { glUniformMatrix4fv(loc, 1, GL_FALSE, glm::value_ptr(v)); }
+  void set_uniform(GLint loc, const glm::mat3& v) { glProgramUniformMatrix3fv(m_program, loc, 1, GL_FALSE, glm::value_ptr(v)); }
+  void set_uniform(GLint loc, const glm::mat4& v) { glProgramUniformMatrix4fv(m_program, loc, 1, GL_FALSE, glm::value_ptr(v)); }
 
 private:
   Program(const Program&);

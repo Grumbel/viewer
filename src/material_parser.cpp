@@ -1,10 +1,15 @@
 #include "material_parser.hpp"
 
+#include <GL/glew.h>
+#define GL_GLEXT_PROTOTYPES 1
+#include <GL/glext.h>
 #include <boost/tokenizer.hpp>
 #include <boost/lexical_cast.hpp>
 #include <stdexcept>
 #include <fstream>
 #include <iostream>
+
+#include "assert_gl.hpp"
 
 namespace {
 
@@ -64,8 +69,17 @@ MaterialParser::from_file(const std::string& filename)
 MaterialPtr
 MaterialParser::from_stream(std::istream& in)
 {
+  bool has_diffuse_texture  = false;
+  bool has_specular_texture = false;
   int current_texture_unit = 0;
   MaterialPtr material = std::make_shared<Material>();
+
+  material->enable(GL_CULL_FACE);
+  material->enable(GL_DEPTH_TEST);
+  
+  ProgramPtr program = Program::create(Shader::from_file(GL_VERTEX_SHADER, "src/default.vert"),
+                                       Shader::from_file(GL_FRAGMENT_SHADER, "src/default.frag"));
+  material->set_program(program);
 
   std::string line;
   while(std::getline(in, line))
@@ -83,6 +97,7 @@ MaterialParser::from_stream(std::istream& in)
       }
       else if (args[0] == "material.diffuse_texture")
       {
+        has_diffuse_texture = true;
         material->set_texture(current_texture_unit, Texture::from_file(to_string(args.begin()+1, args.end())));
         material->set_uniform("material.diffuse_texture", current_texture_unit);
         current_texture_unit += 1;
@@ -95,6 +110,7 @@ MaterialParser::from_stream(std::istream& in)
       }
       else if (args[0] == "material.specular_texture")
       {
+        has_specular_texture = true;
         material->set_texture(current_texture_unit, Texture::from_file(to_string(args.begin()+1, args.end())));
         material->set_uniform("material.specular_texture", current_texture_unit);
         current_texture_unit += 1;
@@ -119,6 +135,24 @@ MaterialParser::from_stream(std::istream& in)
         throw std::runtime_error("unknown token: " + args[0]);
       }
     }
+  }
+
+  if (has_diffuse_texture)
+  {
+    material->set_subroutine_uniform(GL_FRAGMENT_SHADER, "diffuse_color", "diffuse_color_from_texture");
+  }
+  else
+  {
+    material->set_subroutine_uniform(GL_FRAGMENT_SHADER, "diffuse_color", "diffuse_color_from_material");
+  }
+
+  if (has_specular_texture)
+  {
+    material->set_subroutine_uniform(GL_FRAGMENT_SHADER, "specular_color", "specular_color_from_texture");
+  }
+  else
+  {
+    material->set_subroutine_uniform(GL_FRAGMENT_SHADER, "specular_color", "specular_color_from_material");    
   }
 
   return material;
