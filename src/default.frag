@@ -50,11 +50,13 @@ in vec3 frag_normal;
 in vec3 frag_position;
 in vec2 frag_uv;
 
-subroutine vec3 diffuse_color_t();
-subroutine vec3 specular_color_t();
+subroutine vec3  diffuse_color_t();
+subroutine vec3  specular_color_t();
+//subroutine float shadow_value_t();
 
 subroutine uniform diffuse_color_t  diffuse_color;
 subroutine uniform specular_color_t specular_color;
+//subroutine uniform shadow_value_t   shadow_value;
 
 // ---------------------------------------------------------------------------
 // shadow map
@@ -75,11 +77,13 @@ float offset_lookup(sampler2DShadow map,
                                loc.q));
 }
 
+//subroutine( shadow_value_t )
 float shadow_value_1()
 {
   return textureProj(ShadowMap, shadow_position);
 }
 
+//subroutine( shadow_value_t )
 float shadow_value_16()
 {
   float shadowCoeff = 1.0f;
@@ -97,6 +101,7 @@ float shadow_value_16()
   return shadowCoeff;
 }
 
+//subroutine( shadow_value_t )
 float shadow_value_4()
 {
   vec2 offset = vec2(greaterThan(fract(gl_FragCoord.xy * 0.5),
@@ -142,7 +147,6 @@ vec3 phong_model(vec3 position, vec3 normal, vec3 diff, vec3 spec)
   }
   else
   {
-    intensity = diff * light.ambient;
     // in shadow
   }
 
@@ -174,7 +178,6 @@ vec3 specular_color_from_material()
 {
   return material.specular;
 }
-
 
 void main(void)
 {
