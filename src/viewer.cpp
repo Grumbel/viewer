@@ -104,7 +104,7 @@ std::unique_ptr<Camera> g_camera;
 MaterialPtr g_video_material;
 std::shared_ptr<VideoProcessor> g_video_player;
 
-float g_slow_factor = 0.1f;
+float g_slow_factor = 0.5f;
 
 glm::ivec2 g_viewport_offset(-41, 16);
 float g_barrel_power = 1.0f;
@@ -968,6 +968,8 @@ void init()
   //g_menu->add_item("eye.x", &g_eye.x);
   //g_menu->add_item("eye.y", &g_eye.y);
   //g_menu->add_item("eye.z", &g_eye.z);
+
+  g_menu->add_item("slowfactor", &g_slow_factor, 0.01f, 0.0f);
 
   g_menu->add_item("depth.near_z", &g_near_z, 0.01, 0.0f);
   g_menu->add_item("depth.far_z",  &g_far_z, 1.0f);
