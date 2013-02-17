@@ -1,6 +1,9 @@
+non-free
 .xvpics
 *~
 *.o
+*.a
 /viewer
 .sconsign.dblite
 *.blend[1-9]
+/test/*_test
