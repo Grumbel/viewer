@@ -2,9 +2,10 @@
 
 #include <SDL.h>
 #include <SDL_image.h>
-#include <stdexcept>
 #include <assert.h>
 #include <math.h>
+#include <stdexcept>
+#include <string.h>
 #include <vector>
 
 #include "opengl_state.hpp"
@@ -20,6 +21,21 @@ void flip_rgb(SDL_Surface* surface)
       uint8_t* p = static_cast<uint8_t*>(surface->pixels) + y * surface->pitch + x * surface->format->BytesPerPixel;
       std::swap(p[0], p[2]);
     }
+}
+
+void vflip_surface(SDL_Surface* surface)
+{
+  size_t len = surface->w * surface->format->BytesPerPixel;
+  std::vector<uint8_t> tmp_vec(len);
+  for(int y = 0; y < surface->h/2; ++y)
+  {
+    uint8_t* src = static_cast<uint8_t*>(surface->pixels) + y * surface->pitch;
+    uint8_t* dst = static_cast<uint8_t*>(surface->pixels) + (surface->h - y - 1) * surface->pitch;
+    uint8_t* tmp = tmp_vec.data();
+    memcpy(tmp, src, len);
+    memcpy(src, dst, len);
+    memcpy(dst, tmp, len);
+  }
 }
 
 } // namespace
@@ -252,6 +268,8 @@ Texture::from_file(const std::string& filename, bool build_mipmaps)
   }
   else
   {
+    vflip_surface(surface);
+
     GLenum target = GL_TEXTURE_2D;
     GLuint texture;
     glGenTextures(1, &texture);

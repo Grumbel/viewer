@@ -47,7 +47,7 @@ if True:
         axis, angle = q.to_axis_angle()
         axis = (axis.x, axis.z, -axis.y)
         return Quaternion(axis, angle)
-    def b2gl_uv(uv):   return (uv[0], 1.0 - uv[1])
+    def b2gl_uv(uv):   return uv
 
 else:
     def b2gl_vec3(v):  return tuple(v)
