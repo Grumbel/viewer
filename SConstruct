@@ -34,7 +34,9 @@ env = Environment(ENV=os.environ,
                               "-Winit-self", # only works with >= -O1
                               "-Wno-unused-parameter"])
 
-env.Append( LIBS = [ "SDL_image", "cwiid", libwiicpp, libwiic, "bluetooth" ])
+env.Append( LIBS = [ "SDL_image" ])
+env.Append( LIBS = [ "cwiid", libwiicpp, libwiic, "bluetooth" ])
+env.Append( LIBS = [ "boost_system", "boost_filesystem" ])
 env.Append( CPPPATH = [ "external/glew-1.9.0/include",
                         "external/wiic-2013-02-12/src/wiic",
                         "external/wiic-2013-02-12/src/wiicpp",
