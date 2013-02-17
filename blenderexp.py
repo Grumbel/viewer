@@ -61,7 +61,7 @@ def write_mesh(obj):
 
     outfile.write("o %s\n" % obj.name)
     if len(obj.material_slots) > 0:
-        outfile.write("mat %s\n" % obj.material_slots[0].name)
+        outfile.write("mat %s.material\n" % obj.material_slots[0].name)
     if obj.parent and (obj.parent.type == 'MESH' or obj.parent.type == 'EMPTY'):
         outfile.write("parent %s\n" % obj.parent.name)
     m = obj.matrix_local
@@ -228,8 +228,9 @@ def write_armature(obj):
 
 with open("/tmp/blender.mod", "w") as outfile:
     outfile.write("# exported by %s\n" % __file__)
-    meshes = [obj for obj in bpy.data.objects if obj.type == 'MESH' or obj.type == 'EMPTY']
-    armatures = [obj for obj in bpy.data.objects if obj.type == 'ARMATURE']
+    objects = [obj for obj in bpy.data.objects if obj.layers[0]]
+    meshes = [obj for obj in objects if obj.type == 'MESH' or obj.type == 'EMPTY']
+    armatures = [obj for obj in objects if obj.type == 'ARMATURE']
     for mesh in meshes:
         write_mesh(mesh)
     for armature in armatures:
