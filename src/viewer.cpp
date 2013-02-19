@@ -272,13 +272,15 @@ void draw_scene(EyeType eye_type)
   glm::vec3 up = g_up;
 
   glm::vec3 sideways_ = glm::normalize(glm::cross(look_at, up));
-  glm::vec3 eye = g_eye + glm::normalize(g_look_at) * g_distance_offset;
+  glm::vec3 eye = g_eye + glm::normalize(look_at) * g_distance_offset;
 
   if (g_wiimote_manager)
   {
+    glm::quat q = glm::inverse(glm::quat(glm::mat3(glm::lookAt(glm::vec3(), look_at, up))));
+
     glm::quat orientation = g_wiimote_manager->get_orientation();
-    look_at = orientation * look_at;
-    up = orientation * up;
+    look_at = (q * orientation) * glm::vec3(0,0,-1);
+    up = (q * orientation) * glm::vec3(0,1,0);
   }
   else 
   {
@@ -1407,7 +1409,7 @@ void main_loop()
 
     if (g_wiimote_manager)
     {
-      g_wiimote_manager->update();
+      //g_wiimote_manager->update();
       //g_wiimote_manager->get_accumulated();
       g_wiimote_node->set_orientation(g_wiimote_manager->get_orientation());
       g_wiimote_node->set_position(glm::vec3(0.0f, 0.0f, -0.5f));
