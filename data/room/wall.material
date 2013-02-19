@@ -1,0 +1,4 @@
+material.diffuse           1.0  1.0  1.0
+material.diffuse_texture   "data/room/big_brown_wood_tile.jpg"
+material.specular          1.0  1.0  1.0
+material.shininess         5
