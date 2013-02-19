@@ -4,6 +4,8 @@
 #include <wiicpp.h>
 #include <glm/glm.hpp>
 #include <glm/ext.hpp>
+#include <thread>
+#include <mutex>
 
 class WiimoteManager
 {
@@ -13,15 +15,19 @@ private:
 
   glm::quat m_orientation;
   glm::vec3 m_accumulated;
-
+  
+  std::thread m_thread;
+  mutable std::mutex m_mutex;
+  
 public:
   WiimoteManager();
 
-  void update();
-  void handle_event(CWiimote& wm);
-
   glm::quat get_orientation() const;
   glm::quat get_accumulated() const;
+
+private:
+  void update();
+  void handle_event(CWiimote& wm);
 };
 
 #endif

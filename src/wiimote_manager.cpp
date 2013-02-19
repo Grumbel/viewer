@@ -8,7 +8,9 @@ WiimoteManager::WiimoteManager() :
   m_cwii(1),
   m_reload_wiimotes(false),
   m_orientation(1.0f, 0.0f, 0.0f, 0.0f),
-  m_accumulated(0.0f, 0.0f, 0.0f)
+  m_accumulated(0.0f, 0.0f, 0.0f),
+  m_thread(),
+  m_mutex()
 {
   std::vector<CWiimote>& m_wiimotes = m_cwii.FindAndConnect();
   if (!m_wiimotes.size())
@@ -24,6 +26,13 @@ WiimoteManager::WiimoteManager() :
       wm.SetMotionSensingMode(CWiimote::ON);
       //wm.EnableMotionPlus(CWiimote::ON);
     }
+
+    m_thread = std::thread([this]{
+        while(true)
+        {
+          update();
+        }
+      });
   }
 }
 
@@ -105,6 +114,8 @@ WiimoteManager::update()
 void
 WiimoteManager::handle_event(CWiimote& wm)
 {
+  std::lock_guard<std::mutex> lock(m_mutex);
+
   char prefixString[64];
   sprintf(prefixString, "Controller [%i]: ", wm.GetID());
 
@@ -199,12 +210,14 @@ WiimoteManager::handle_event(CWiimote& wm)
 glm::quat
 WiimoteManager::get_orientation() const
 {
+  std::lock_guard<std::mutex> lock(m_mutex);
   return m_orientation;
 }
 
 glm::quat
 WiimoteManager::get_accumulated() const
 {
+  std::lock_guard<std::mutex> lock(m_mutex);
   return glm::quat(m_accumulated);
 }
 
