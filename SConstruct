@@ -1,16 +1,16 @@
 import os
 
-wiic = Environment(CPPDEFINES = [ ("LINUX", 1) ])
-libwiic = wiic.StaticLibrary("wiic",
-                             Glob("external/wiic-2013-02-12/src/wiic/*.c"))
+wiic_env = Environment(CPPDEFINES = [ ("LINUX", 1) ])
+libwiic = wiic_env.StaticLibrary("wiic",
+                                 Glob("external/wiic-2013-02-12/src/wiic/*.c"))
 
-wiicpp = Environment(CPPDEFINES = [ ("LINUX", 1) ],
-                     CPPPATH = [ "external/wiic-2013-02-12/src/wiic",
-                                 "external/wiic-2013-02-12/src/wiicpp",
-                                 "external/wiic-2013-02-12/src/log" ])
-libwiicpp = wiicpp.StaticLibrary("wiicpp",
-                                 Glob("external/wiic-2013-02-12/src/wiicpp/*.cpp") +
-                                 Glob("external/wiic-2013-02-12/src/log/*.cpp"))
+wiicpp_env = Environment(CPPDEFINES = [ ("LINUX", 1) ],
+                         CPPPATH = [ "external/wiic-2013-02-12/src/wiic",
+                                     "external/wiic-2013-02-12/src/wiicpp",
+                                     "external/wiic-2013-02-12/src/log" ])
+libwiicpp = wiicpp_env.StaticLibrary("wiicpp",
+                                     Glob("external/wiic-2013-02-12/src/wiicpp/*.cpp") +
+                                     Glob("external/wiic-2013-02-12/src/log/*.cpp"))
 
 glew = Environment(CPPPATH = [ "external/glew-1.9.0/include/" ])
 libglew = glew.StaticLibrary(Glob("external/glew-1.9.0/src/*.c"))
@@ -37,10 +37,11 @@ env = Environment(ENV=os.environ,
 env.Append( LIBS = [ "SDL_image" ])
 env.Append( LIBS = [ "cwiid", libwiicpp, libwiic, "bluetooth" ])
 env.Append( LIBS = [ "boost_system", "boost_filesystem" ])
-env.Append( CPPPATH = [ "external/glew-1.9.0/include",
-                        "external/wiic-2013-02-12/src/wiic",
-                        "external/wiic-2013-02-12/src/wiicpp",
-                        "external/wiic-2013-02-12/src/log" ])
+env.Append( CXXFLAGS = [ "-isystemexternal/glm-0.9.4.2",
+                         "-isystemexternal/glew-1.9.0/include",
+                         "-isystemexternal/wiic-2013-02-12/src/wiic",
+                         "-isystemexternal/wiic-2013-02-12/src/wiicpp",
+                         "-isystemexternal/wiic-2013-02-12/src/log" ])
 env.ParseConfig("pkg-config --libs --cflags bluez | sed 's/-I/-isystem/g'")
 env.ParseConfig("pkg-config --cflags --libs gstreamermm-0.10 | sed 's/-I/-isystem/g'")
 env.ParseConfig("sdl-config --libs --cflags | sed 's/-I/-isystem/g'")
@@ -56,7 +57,7 @@ if True:
     test_env = env.Clone()
     test_env.Append(CPPPATH="src/")
     for filename in Glob("test/*.cpp", strings=True):
-        test_env.Program(filename[0:-4], [filename, "src/video_processor.o", "src/texture.o"])
+        test_env.Program(filename[0:-4], [filename, "src/video_processor.o", "src/texture.o", "src/tokenize.o", "src/wiimote_manager.o"])
 
 env.Program("viewer", Glob("src/*.cpp"))
 
