@@ -50,13 +50,13 @@ in vec3 frag_normal;
 in vec3 frag_position;
 in vec2 frag_uv;
 
+//subroutine float shadow_value_t();
 subroutine vec3  diffuse_color_t();
 subroutine vec3  specular_color_t();
-//subroutine float shadow_value_t();
 
+//subroutine uniform shadow_value_t   shadow_value;
 subroutine uniform diffuse_color_t  diffuse_color;
 subroutine uniform specular_color_t specular_color;
-//subroutine uniform shadow_value_t   shadow_value;
 
 // ---------------------------------------------------------------------------
 // shadow map
@@ -124,26 +124,25 @@ float shadow_value_4()
 // ---------------------------------------------------------------------------
 vec3 phong_model(vec3 position, vec3 normal, vec3 diff, vec3 spec)
 {
-  vec3 intensity = light.ambient * material.ambient;
+  vec3 intensity = light.ambient * material.ambient * diff;
 
   vec3 N = normalize(normal);
   vec3 L = normalize(light.position - position); // eye dir
-  float lambertTerm = dot(N, L);
 
+  float lambertTerm = dot(N, L);
   if(lambertTerm > 0.0)
   {
+    float shadow = shadow_value_4();
+
     // in light
-    intensity += light.diffuse * diff * lambertTerm;
+    intensity += light.diffuse * lambertTerm * diff * shadow;
 		
     vec3 E = normalize(-position); // eye vec
     vec3 R = reflect(-L, N);
 
     float specular = pow( max(dot(R, E), 0.0), material.shininess );
 
-    intensity += light.specular * spec * specular;
-
-    float shadow = shadow_value_4();
-    intensity *= max(light.ambient, shadow);
+    intensity += light.specular * specular * spec * shadow;
   }
   else
   {
@@ -184,7 +183,9 @@ void main(void)
   //float light = texture(LightMap, world_normal, 3);
   vec3 diff = diffuse_color();
   vec3 spec = specular_color();
-  gl_FragColor = vec4(phong_model(frag_position, frag_normal, diff, spec), 1.0);
+  vec3 intensity = phong_model(frag_position, frag_normal, diff, spec);
+
+  gl_FragColor = vec4(intensity, 1.0);
 }
 
 /* EOF */
