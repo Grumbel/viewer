@@ -10,12 +10,16 @@
 class MaterialParser
 {
 private:
+  std::string m_filename;
+  MaterialPtr m_material;
 
 public:
   static MaterialPtr from_file(const boost::filesystem::path& filename);
-  static MaterialPtr from_stream(std::istream& filename);
+  static MaterialPtr from_stream(std::istream& in);
 
-  MaterialParser(std::istream& in);
+  MaterialParser(const std::string& filename);
+  void parse(std::istream& in);
+  MaterialPtr get_material() { return m_material; }
 
 private:
   MaterialParser(const MaterialParser&);
