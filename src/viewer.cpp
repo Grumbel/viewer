@@ -19,7 +19,7 @@
 #include <SDL_image.h>
 #include <cmath>
 #include <cmath>
-#include <cwiid.h>
+//#include <cwiid.h>
 #include <fstream>
 #include <glm/ext.hpp>
 #include <glm/glm.hpp>
@@ -50,6 +50,7 @@
 #include "shader.hpp"
 #include "text_surface.hpp"
 #include "video_processor.hpp"
+#include "wiimote_manager.hpp"
 
 void draw_models(bool shader_foo);
 
@@ -86,8 +87,18 @@ void print_scene_graph(SceneNode* node, int depth = 0)
   }
 }
 
+struct Options
+{
+  bool wiimote = false;
+  std::string video = std::string();
+  bool video3d = false;
+  std::string model = std::string();
+};
+
 // global variables
 namespace {
+
+Options g_opts;
 
 int g_mouse_x = 0;
 int g_mouse_y = 0;
@@ -102,6 +113,7 @@ std::unique_ptr<SceneManager> g_scene_manager;
 std::unique_ptr<Camera> g_camera;
 
 MaterialPtr g_video_material;
+MaterialPtr g_video_material_flip;
 std::shared_ptr<VideoProcessor> g_video_player;
 
 float g_slow_factor = 0.5f;
@@ -131,9 +143,9 @@ bool g_draw_grid = false;
 bool g_draw_depth = false;
 bool g_render_shadowmap = true;
 
-int g_shadowmap_resolution = 512;
+int g_shadowmap_resolution = 1024;
 
-float g_shadowmap_fov = 45.0f;
+float g_shadowmap_fov = 25.0f;
 float g_light_diffuse = 1.0f;
 float g_light_specular = 1.0f;
 float g_material_shininess = 10.0f;
@@ -189,9 +201,11 @@ glm::vec2 g_wiimote_scale(0.52f, 0.47f);
 
 ProgramPtr m_composition_prog;
 
+SceneNode* g_wiimote_node = 0;
 std::vector<SceneNode*> g_nodes;
 
-cwiid_wiimote_t* g_wiimote = 0;
+//cwiid_wiimote_t* g_wiimote = 0;
+std::shared_ptr<WiimoteManager> g_wiimote_manager;
 
 } // namespace
 
@@ -260,9 +274,18 @@ void draw_scene(EyeType eye_type)
   glm::vec3 sideways_ = glm::normalize(glm::cross(look_at, up));
   glm::vec3 eye = g_eye + glm::normalize(g_look_at) * g_distance_offset;
 
-  look_at = glm::rotate(look_at, glm::degrees(g_yaw_offset), up);
-  look_at = glm::rotate(look_at, glm::degrees(-g_pitch_offset), sideways_);
-  up = glm::rotate(up, glm::degrees(-g_roll_offset), look_at);
+  if (g_wiimote_manager)
+  {
+    glm::quat orientation = g_wiimote_manager->get_orientation();
+    look_at = orientation * look_at;
+    up = orientation * up;
+  }
+  else 
+  {
+    look_at = glm::rotate(look_at, glm::degrees(g_yaw_offset), up);
+    look_at = glm::rotate(look_at, glm::degrees(-g_pitch_offset), sideways_);
+    up = glm::rotate(up, glm::degrees(-g_roll_offset), look_at);
+  }
 
   glm::vec3 sideways = glm::normalize(glm::cross(look_at, up)) * g_eye_distance * 0.5f;
   switch(eye_type)
@@ -298,8 +321,8 @@ void draw_shadowmap()
   glm::vec3 look_at(0.0f, 0.0f, 0.0f);
 
   Camera camera;
-  //camera.perspective(g_shadowmap_fov, 1.0f, g_near_z, g_far_z);
-  camera.ortho(-25.0f, 25.0f, -25.0f, 25.0f, g_near_z, g_far_z);
+  camera.perspective(g_shadowmap_fov, 1.0f, g_near_z, g_far_z);
+  //camera.ortho(-25.0f, 25.0f, -25.0f, 25.0f, g_near_z, g_far_z);
   
   camera.look_at(light_pos, look_at, up);
 
@@ -409,7 +432,7 @@ void display()
     if (g_stereo_mode == StereoMode::None)
     {
       g_renderbuffer1->bind();
-      if (g_video_material) g_video_material->set_uniform("offset", 0.0f);
+      if (g_video_material && g_opts.video3d) g_video_material->set_uniform("offset", 0.0f);
       draw_scene(kCenterEye);
       g_renderbuffer1->unbind();
 
@@ -418,12 +441,12 @@ void display()
     else
     {
       g_renderbuffer1->bind();
-      if (g_video_material) g_video_material->set_uniform("offset", 0.0f);
+      if (g_video_material && g_opts.video3d) g_video_material->set_uniform("offset", 0.0f);
       draw_scene(kLeftEye);
       g_renderbuffer1->unbind();
 
       g_renderbuffer2->bind();
-      if (g_video_material) g_video_material->set_uniform("offset", 0.5f);
+      if (g_video_material && g_opts.video3d) g_video_material->set_uniform("offset", 0.5f);
       draw_scene(kRightEye);
       g_renderbuffer2->unbind();
 
@@ -802,26 +825,66 @@ void init()
     g_camera.reset(new Camera);
     g_camera->perspective(g_fov, g_aspect_ratio, g_near_z, 100000.0f);
 
-    if (true) //g_video_player) // streaming video
+    if (g_video_player) // streaming video
     {
-      g_video_material = MaterialFactory::get().create("video");
-      auto node = g_scene_manager->get_world()->create_child();
-      ModelPtr entity = std::make_shared<Model>();
-
-      if (false)
+      if (!g_opts.video3d)
       {
-      entity->add_mesh(Mesh::create_plane(5.0f));
-      node->set_position(glm::vec3(0.0f, 0.0f, -10.0f));
-      node->set_orientation(glm::quat(glm::vec3(M_PI/2, 0.0f, 0.0f)));
-      node->set_scale(glm::vec3(4.0f, 1.0f, 2.25f));
+        g_video_material = MaterialFactory::get().create("video");
       }
       else
       {
-        entity->add_mesh(Mesh::create_curved_screen(15.0f, glm::radians(125.0f), glm::radians(70.3f), 16, 16));
+        g_video_material = MaterialFactory::get().create("video3d");
+        g_video_material_flip = MaterialFactory::get().create("video3d-flip");
       }
 
-      entity->set_material(g_video_material);
-      node->attach_entity(entity);
+      if (false)
+      {
+        auto node = g_scene_manager->get_world()->create_child();
+        ModelPtr entity = std::make_shared<Model>();
+
+        entity->add_mesh(Mesh::create_plane(5.0f));
+        node->set_position(glm::vec3(0.0f, 0.0f, -10.0f));
+        node->set_orientation(glm::quat(glm::vec3(M_PI/2, 0.0f, 0.0f)));
+        node->set_scale(glm::vec3(4.0f, 1.0f, 2.25f));
+
+        entity->set_material(g_video_material);
+        node->attach_entity(entity);
+      }
+      else
+      {
+        auto node = g_scene_manager->get_world()->create_child();
+        ModelPtr entity = std::make_shared<Model>();
+
+        int rings = 16;
+        int segments = 16;
+        //float hfov = glm::radians(125.0f);
+        //float vfov = glm::radians(70.3f);
+
+        float hfov = glm::radians(90.0f);
+        float vfov = glm::radians(50.0f);
+
+        entity->add_mesh(Mesh::create_curved_screen(15.0f, hfov, vfov, rings, segments));
+
+        entity->add_mesh(Mesh::create_curved_screen(15.0f, hfov, vfov, rings, segments, 0, 16, false, true));
+        entity->add_mesh(Mesh::create_curved_screen(15.0f, hfov, vfov, rings, segments, 0, -16, false, true));
+
+        entity->set_material(g_video_material);
+        node->attach_entity(entity);
+
+        entity = std::make_shared<Model>();
+
+        entity->add_mesh(Mesh::create_curved_screen(15.0f, hfov, vfov, rings, segments, 16, 0, true, false));
+        entity->add_mesh(Mesh::create_curved_screen(15.0f, hfov, vfov, rings, segments, -16, 0, true, false));
+
+        entity->add_mesh(Mesh::create_curved_screen(15.0f, hfov, vfov, rings, segments, 16, 16, true, true));
+        entity->add_mesh(Mesh::create_curved_screen(15.0f, hfov, vfov, rings, segments, -16, 16, true, true));
+
+        entity->add_mesh(Mesh::create_curved_screen(15.0f, hfov, vfov, rings, segments, 16, -16, true, true));
+        entity->add_mesh(Mesh::create_curved_screen(15.0f, hfov, vfov, rings, segments, -16, -16, true, true));
+
+        entity->set_material(g_video_material_flip);
+        node->attach_entity(entity);
+      }
     }
 
     MaterialPtr phong_material = MaterialFactory::get().create("phong");
@@ -888,6 +951,12 @@ void init()
     { // load a mesh from file
       auto node = Scene::from_file(g_model_filename);
       print_scene_graph(node.get());
+      g_scene_manager->get_world()->attach_child(std::move(node));
+    }
+
+    {
+      auto node = Scene::from_file("data/wiimote.mod");
+      g_wiimote_node = node.get();
       g_scene_manager->get_world()->attach_child(std::move(node));
     }
 
@@ -979,7 +1048,7 @@ void init()
   //g_menu->add_item("viewport.offset.x",  &g_viewport_offset.x, 1);
   //g_menu->add_item("viewport.offset.y",  &g_viewport_offset.y, 1);
 
-  //g_menu->add_item("shadowmap.fov", &g_shadowmap_fov, 1.0f);
+  g_menu->add_item("shadowmap.fov", &g_shadowmap_fov, 1.0f);
 
   //g_menu->add_item("spot_halo_samples",  &g_spot_halo_samples, 1, 0);
 
@@ -1336,6 +1405,14 @@ void main_loop()
     process_events();
     process_joystick(delta / 1000.0f);
 
+    if (g_wiimote_manager)
+    {
+      g_wiimote_manager->update();
+      //g_wiimote_manager->get_accumulated();
+      g_wiimote_node->set_orientation(g_wiimote_manager->get_orientation());
+      g_wiimote_node->set_position(glm::vec3(0.0f, 0.0f, -0.5f));
+    }
+
     num_frames += 1;
 
     if (num_frames == 1000)
@@ -1357,6 +1434,7 @@ void main_loop()
       if (texture)
       {
         g_video_material->set_texture(0, texture);
+        if (g_video_material_flip) g_video_material_flip->set_texture(0, texture);
       }
     }
   }
@@ -1400,6 +1478,7 @@ void update_offsets(glm::vec2 p1, glm::vec2 p2)
   //std::cout << "offset: " << boost::format("%4.2f %4.2f %4.2f") % g_roll_offset % g_yaw_offset % g_pitch_offset << std::endl;
 }
 
+#if 0
 void
 wiimote_mesg_callback(cwiid_wiimote_t*, int mesg_count, union cwiid_mesg msg[], timespec*)
 {
@@ -1461,13 +1540,7 @@ wiimote_mesg_callback(cwiid_wiimote_t*, int mesg_count, union cwiid_mesg msg[], 
     }
   }
 }
-
-struct Options
-{
-  bool wiimote = false;
-  std::string video = std::string();
-  std::string model = std::string();
-};
+#endif
 
 void init_display(const std::string& title, bool fullscreen, int anti_aliasing)
 {
@@ -1496,7 +1569,7 @@ void init_display(const std::string& title, bool fullscreen, int anti_aliasing)
 
 int main(int argc, char** argv)
 {
-  Options opts;
+  Options& opts = g_opts;
 
   for(int i = 1; i < argc; ++i)
   {
@@ -1508,6 +1581,12 @@ int main(int argc, char** argv)
       }
       else if (strcmp("--video", argv[i]) == 0)
       {
+        opts.video = argv[i+1];
+        ++i;
+      }
+      else if (strcmp("--video3d", argv[i]) == 0)
+      {
+        opts.video3d = true;
         opts.video = argv[i+1];
         ++i;
       }
@@ -1544,8 +1623,8 @@ int main(int argc, char** argv)
   }
 
   glewInit();
-  init();
 
+#if 0
   if (opts.wiimote)
   {
     std::cout  << "Put Wiimote in discoverable mode now (press 1+2)..." << std::endl;
@@ -1571,13 +1650,20 @@ int main(int argc, char** argv)
       }
     }
   }
-
+#endif 
+  if (opts.wiimote)
+  {
+    g_wiimote_manager = std::make_shared<WiimoteManager>();
+  }
+  
   if (!opts.video.empty())
   {
     Gst::init(argc, argv);
     std::cout << "Playing video: " << opts.video << std::endl;
     g_video_player = std::make_shared<VideoProcessor>(opts.video);
   }
+
+  init();
 
   std::cout << "main: " << std::this_thread::get_id() << std::endl;
 
