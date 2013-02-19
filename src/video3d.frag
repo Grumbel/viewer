@@ -21,12 +21,14 @@ uniform mat4 MVP;
 in vec2 frag_uv;
 
 uniform float offset;
+uniform float offset_scale;
+uniform float offset_offset;
 uniform sampler2D texture_diff;
 
 // ---------------------------------------------------------------------------
 void main(void)
 {
-  vec3 diff = texture2D(texture_diff, vec2(frag_uv.x * 0.5 + offset, frag_uv.y)).rgb;
+  vec3 diff = texture2D(texture_diff, vec2(frag_uv.x * 0.5 + offset * offset_scale + offset_offset, frag_uv.y)).rgb;
   gl_FragColor = vec4(diff, 1.0);
 }
 

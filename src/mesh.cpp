@@ -134,7 +134,7 @@ Mesh::create_cube(float size)
 }
 
 std::unique_ptr<Mesh>
-Mesh::create_curved_screen(float size, float hfov, float vfov, int rings, int segments)
+Mesh::create_curved_screen(float size, float hfov, float vfov, int rings, int segments, int offset_x, int offset_y, bool flip_uv_x, bool flip_uv_y)
 {
   std::unique_ptr<Mesh> mesh(new Mesh(GL_QUADS));
 
@@ -147,8 +147,8 @@ Mesh::create_curved_screen(float size, float hfov, float vfov, int rings, int se
 
   // FIXME: should use indexed array instead to save some vertices
   auto add_point = [&](int ring, int seg) {
-    float r = static_cast<float>(ring) / rings;
-    float s = static_cast<float>(seg)  / segments;
+    float r = static_cast<float>(ring + offset_y) / rings;
+    float s = static_cast<float>(seg + offset_x)  / segments;
 
     float f = sinf((r-0.5f) * vfov + M_PI/2.0f);
     glm::vec3 p(cosf((s-0.5f) * hfov - M_PI/2.0f) * f, 
@@ -156,7 +156,7 @@ Mesh::create_curved_screen(float size, float hfov, float vfov, int rings, int se
                 sinf((s-0.5f) * hfov - M_PI/2.0f) * f);
 
     vn.push_back(-p);
-    vt.emplace_back(s, r, 0.0f);
+    vt.emplace_back(!flip_uv_x ? s : 1.0f - s, !flip_uv_y ? r : 1.0f - r, 0.0f);
     vp.push_back(p * size);
   };
 

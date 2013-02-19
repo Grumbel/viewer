@@ -41,6 +41,7 @@ public:
   static MaterialPtr create_basic_white();
   static MaterialPtr create_textured();
   static MaterialPtr create_video();
+  static MaterialPtr create_video3d(bool flip_eyes);
 
   static MaterialFactory& get()
   {

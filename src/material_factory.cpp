@@ -53,6 +53,8 @@ MaterialFactory::MaterialFactory() :
   m_materials["skybox"] = create_skybox();
   m_materials["textured"] = create_textured();
   m_materials["video"] = create_video();
+  m_materials["video3d"] = create_video3d(false);
+  m_materials["video3d-flip"] = create_video3d(true);
 }
 
 MaterialPtr
@@ -136,7 +138,7 @@ MaterialFactory::create_phong(const glm::vec3& diffuse,
   //phong->set_uniform("diffuse_texture", 0);
 
   phong->set_uniform("light.diffuse",   glm::vec3(1.0f, 1.0f, 1.0f));
-  phong->set_uniform("light.ambient",   glm::vec3(0.0f, 0.0f, 0.0f));
+  phong->set_uniform("light.ambient",   glm::vec3(0.25f, 0.25f, 0.25f));
   phong->set_uniform("light.specular",  glm::vec3(1.0f, 1.0f, 1.0f));
   //phong->set_uniform("light.shininess", 3.0f);
   //phong->set_uniform("light.position",  glm::vec3(5.0f, 5.0f, 5.0f));
@@ -244,10 +246,41 @@ MaterialFactory::create_video()
   material->enable(GL_DEPTH_TEST);
 
   material->set_program(Program::create(Shader::from_file(GL_VERTEX_SHADER, "src/video.vert"),
-                                        Shader::from_file(GL_FRAGMENT_SHADER, "src/video3d.frag")));
+                                        Shader::from_file(GL_FRAGMENT_SHADER, "src/video.frag")));
 
   material->set_texture(0, Texture::from_file("data/textures/uvtest.png"));
   material->set_uniform("texture_diff", 0);
+  material->set_uniform("offset", 0.0f);
+
+  material->set_uniform("MVP", UniformSymbol::ModelViewProjectionMatrix);
+
+  return material;
+}
+
+MaterialPtr
+MaterialFactory::create_video3d(bool flip_eyes)
+{
+  MaterialPtr material = std::make_shared<Material>();
+
+  material->enable(GL_CULL_FACE);
+  material->enable(GL_DEPTH_TEST);
+
+  auto vert_shader = Shader::from_file(GL_VERTEX_SHADER, "src/video.vert");
+  auto frag_shader = Shader::from_file(GL_FRAGMENT_SHADER, "src/video3d.frag");
+  material->set_program(Program::create(vert_shader, frag_shader));
+
+  material->set_texture(0, Texture::from_file("data/textures/uvtest.png"));
+  material->set_uniform("texture_diff", 0);
+  if (flip_eyes)
+  {
+    material->set_uniform("offset_scale", -1.0f);
+    material->set_uniform("offset_offset", 1.0f);
+  }
+  else
+  {
+    material->set_uniform("offset_scale", 1.0f);
+    material->set_uniform("offset_offset", 0.0f);
+  }
   material->set_uniform("offset", 0.0f);
 
   material->set_uniform("MVP", UniformSymbol::ModelViewProjectionMatrix);
