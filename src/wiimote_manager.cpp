@@ -8,6 +8,9 @@ WiimoteManager::WiimoteManager() :
   m_cwii(1),
   m_reload_wiimotes(false),
   m_smoothed_gravity(0.0f, 1.0f, 0.0f),
+  m_pitch(),
+  m_yaw(),
+  m_roll(),
   m_accumulated(0.0f, 0.0f, 0.0f),
   m_gyro_orientation(1.0f, 0.0f, 0.0f, 0.0f),
   m_accel_orientation(1.0f, 0.0f, 0.0f, 0.0f),
@@ -175,6 +178,8 @@ WiimoteManager::handle_event(CWiimote& wm)
     
     m_accel_orientation = pitch_rot * roll_rot;
 
+    //m_yaw = glm::radians(glm::yaw());
+
     //m_accel_orientation = glm::quat(glm::vec3(0.0f, glm::radians(glm::yaw(m_gyro_orientation)), 0.0f)) * m_accel_orientation;
     
     printf("%8.2f %8.2f   %8.2f %8.2f %8.2f\n", glm::degrees(pitch), glm::degrees(roll), gravity.x, gravity.y, gravity.z);
@@ -252,7 +257,7 @@ WiimoteManager::reset_gyro_orientation(const glm::quat& value)
 glm::quat
 WiimoteManager::get_orientation() const
 {
-  return m_gyro_orientation;
+  return glm::quat(glm::vec3(m_pitch, m_yaw, m_roll));
 }
 
 /* EOF */

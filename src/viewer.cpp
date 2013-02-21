@@ -21,6 +21,7 @@
 #include <cmath>
 //#include <cwiid.h>
 #include <fstream>
+#define GLM_FORCE_RADIANS
 #include <glm/ext.hpp>
 #include <glm/glm.hpp>
 #include <iostream>
@@ -125,8 +126,8 @@ float g_barrel_power = 1.0f;
 float g_ipd = 0.0f;
 int g_screen_w = 640;
 int g_screen_h = 480;
-//float g_fov = 56.0f;
-float g_fov = 42.0f;
+//float g_fov = glm::radians(56.0f);
+float g_fov = glm::radians(42.0f);
 
 float g_near_z = 0.1f;
 float g_far_z  = 1000.0f;
@@ -147,7 +148,7 @@ bool g_render_shadowmap = true;
 
 int g_shadowmap_resolution = 1024;
 
-float g_shadowmap_fov = 25.0f;
+float g_shadowmap_fov = glm::radians(25.0f);
 float g_light_diffuse = 1.0f;
 float g_light_specular = 1.0f;
 float g_material_shininess = 10.0f;
@@ -288,9 +289,9 @@ void draw_scene(EyeType eye_type)
   }
   else 
   {
-    look_at = glm::rotate(look_at, glm::degrees(g_yaw_offset), up);
-    look_at = glm::rotate(look_at, glm::degrees(-g_pitch_offset), sideways_);
-    up = glm::rotate(up, glm::degrees(-g_roll_offset), look_at);
+    look_at = glm::rotate(look_at, g_yaw_offset, up);
+    look_at = glm::rotate(look_at, -g_pitch_offset, sideways_);
+    up = glm::rotate(up, -g_roll_offset, look_at);
   }
 
   glm::vec3 sideways = glm::normalize(glm::cross(look_at, up)) * g_eye_distance * 0.5f;
@@ -708,11 +709,11 @@ void keyboard(SDL_KeyboardEvent key, int x, int y)
       break;
 
     case SDLK_KP_MULTIPLY:
-      g_fov += 1.0f;
+      g_fov += glm::radians(1.0f);
       break;
 
     case SDLK_KP_DIVIDE:
-      g_fov -= 1.0f;
+      g_fov -= glm::radians(1.0f);
       break;
 
     case SDLK_F1:
@@ -723,12 +724,12 @@ void keyboard(SDL_KeyboardEvent key, int x, int y)
         //g_fov = g_fov / std::atan(1.0f / old_eye_z) * std::atan(1.0f / g_eye.z);
 
         float old_fov = g_fov;
-        g_fov += 1.0f;
-        if (g_fov < 160.0f)
+        g_fov += glm::radians(1.0f);
+        if (g_fov < glm::radians(160.0f))
         {
           g_eye.z = g_eye.z 
-            * (2.0*tan(0.5 * old_fov / 180.0 * M_PI))
-            / (2.0*tan(0.5 * g_fov   / 180.0 * M_PI));
+            * (2.0*tan(0.5 * old_fov))
+            / (2.0*tan(0.5 * g_fov));
         }
         else
         {
@@ -1392,7 +1393,7 @@ void update_arcball()
     glm::vec3 axis_in_camera_coord = glm::cross(va, vb);
     glm::mat3 camera2object = glm::inverse(glm::mat3(camera_matrix) * glm::mat3(g_last_object2world));
     glm::vec3 axis_in_object_coord = camera2object * axis_in_camera_coord;
-    g_object2world = glm::rotate(g_last_object2world, glm::degrees(angle), axis_in_object_coord);
+    g_object2world = glm::rotate(g_last_object2world, angle, axis_in_object_coord);
     //g_last_mouse = g_mouse;
   }
 }
@@ -1494,7 +1495,7 @@ void update_offsets(glm::vec2 p1, glm::vec2 p2)
   glm::vec2 c = (p1+p2)/2.0f;
 
   c -= glm::vec2(512, 384);
-  c = glm::rotate(c, glm::degrees(g_roll_offset));
+  c = glm::rotate(c, g_roll_offset);
   c += glm::vec2(512, 384);
 
   g_yaw_offset   = ((c.x / 1024.0f) - 0.5f) * M_PI/2.0f * g_wiimote_scale.x;

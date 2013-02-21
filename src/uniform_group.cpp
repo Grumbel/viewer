@@ -101,10 +101,17 @@ UniformGroup::apply_subroutines(ProgramPtr prog, GLenum shadertype,
       else
       {
         subroutine_mappings.emplace_back(loc);  
-      }      
+      }
     }
+
+    //std::cout << name << " -> " << it->second << std::endl;
   }
 
+  //std::cout << "subroutine map: " << subroutine_mappings.size() << std::endl;
+  //for(size_t i = 0; i < subroutine_mappings.size(); ++i)
+  //{
+  //  std:: cout << subroutine_mappings[i] << std::endl;
+  //}
   glUniformSubroutinesuiv(shadertype, subroutine_mappings.size(), subroutine_mappings.data());
 
   assert_gl("apply_subroutines");

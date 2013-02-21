@@ -23,7 +23,7 @@
 Renderbuffer::Renderbuffer(int width, int height) :
   m_width(width),
   m_height(height),
-  m_multisample(8),
+  m_multisample(2),
   m_fbo(0),
   m_depth_buffer(0),
   m_color_buffer(0)

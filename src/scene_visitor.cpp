@@ -1,5 +1,6 @@
 #include "scene_visitor.hpp"
 
+#define GLM_FORCE_RADIANS
 #include <glm/ext.hpp>
 
 #include "scene_manager.hpp"

@@ -2,6 +2,7 @@
 #define HEADER_WIIMOTE_MANAGER_HPP
 
 #include <wiicpp.h>
+#define GLM_FORCE_RADIANS
 #include <glm/glm.hpp>
 #include <glm/ext.hpp>
 #include <thread>
@@ -14,6 +15,10 @@ private:
   bool m_reload_wiimotes;
 
   glm::vec3 m_smoothed_gravity;
+
+  float m_pitch;
+  float m_yaw;
+  float m_roll;
 
   glm::vec3 m_accumulated;
   glm::quat m_gyro_orientation;

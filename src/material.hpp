@@ -17,6 +17,7 @@
 #ifndef HEADER_MATERIAL_HPP
 #define HEADER_MATERIAL_HPP
 
+#define GLM_FORCE_RADIANS
 #include <glm/glm.hpp>
 #include <memory>
 #include <unordered_map>

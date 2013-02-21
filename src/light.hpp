@@ -17,6 +17,7 @@
 #ifndef HEADER_LIGHT_HPP
 #define HEADER_LIGHT_HPP
 
+#define GLM_FORCE_RADIANS
 #include <glm/glm.hpp>
 #include <memory>
 

@@ -1,6 +1,7 @@
 #ifndef HEADER_SCENE_VISITOR_HPP
 #define HEADER_SCENE_VISITOR_HPP
 
+#define GLM_FORCE_RADIANS
 #include <glm/glm.hpp>
 
 #include "model.hpp"
