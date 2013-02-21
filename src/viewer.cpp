@@ -118,6 +118,8 @@ std::shared_ptr<VideoProcessor> g_video_player;
 
 float g_slow_factor = 0.5f;
 
+bool g_wiimote_camera_control = false;
+
 glm::ivec2 g_viewport_offset(-41, 16);
 float g_barrel_power = 1.0f;
 float g_ipd = 0.0f;
@@ -201,6 +203,8 @@ glm::vec2 g_wiimote_scale(0.52f, 0.47f);
 
 ProgramPtr m_composition_prog;
 
+SceneNode* g_wiimote_accel_node = 0;
+SceneNode* g_wiimote_gyro_node = 0;
 SceneNode* g_wiimote_node = 0;
 std::vector<SceneNode*> g_nodes;
 
@@ -274,11 +278,11 @@ void draw_scene(EyeType eye_type)
   glm::vec3 sideways_ = glm::normalize(glm::cross(look_at, up));
   glm::vec3 eye = g_eye + glm::normalize(look_at) * g_distance_offset;
 
-  if (g_wiimote_manager)
+  if (g_wiimote_camera_control && g_wiimote_manager)
   {
     glm::quat q = glm::inverse(glm::quat(glm::mat3(glm::lookAt(glm::vec3(), look_at, up))));
 
-    glm::quat orientation = g_wiimote_manager->get_orientation();
+    glm::quat orientation = g_wiimote_manager->get_gyro_orientation();
     look_at = (q * orientation) * glm::vec3(0,0,-1);
     up = (q * orientation) * glm::vec3(0,1,0);
   }
@@ -958,7 +962,19 @@ void init()
 
     {
       auto node = Scene::from_file("data/wiimote.mod");
+      g_wiimote_gyro_node = node.get();
+      g_scene_manager->get_world()->attach_child(std::move(node));
+    }
+
+    {
+      auto node = Scene::from_file("data/wiimote.mod");
       g_wiimote_node = node.get();
+      g_scene_manager->get_world()->attach_child(std::move(node));
+    }
+
+    {
+      auto node = Scene::from_file("data/wiimote.mod");
+      g_wiimote_accel_node = node.get();
       g_scene_manager->get_world()->attach_child(std::move(node));
     }
 
@@ -1039,6 +1055,8 @@ void init()
   //g_menu->add_item("eye.x", &g_eye.x);
   //g_menu->add_item("eye.y", &g_eye.y);
   //g_menu->add_item("eye.z", &g_eye.z);
+
+  g_menu->add_item("wiimote.camera_control", &g_wiimote_camera_control);
 
   g_menu->add_item("slowfactor", &g_slow_factor, 0.01f, 0.0f);
 
@@ -1194,6 +1212,10 @@ void process_events()
             
           case 5:
             g_stick.dir.y = +ev.jbutton.state;
+            break;
+
+          case 0:
+            g_wiimote_manager->reset_gyro_orientation();
             break;
 
           case 1:
@@ -1411,8 +1433,14 @@ void main_loop()
     {
       //g_wiimote_manager->update();
       //g_wiimote_manager->get_accumulated();
+      g_wiimote_gyro_node->set_orientation(g_wiimote_manager->get_gyro_orientation());
+      g_wiimote_gyro_node->set_position(glm::vec3(-0.1f, 0.0f, -0.5f));
+
       g_wiimote_node->set_orientation(g_wiimote_manager->get_orientation());
       g_wiimote_node->set_position(glm::vec3(0.0f, 0.0f, -0.5f));
+
+      g_wiimote_accel_node->set_orientation(g_wiimote_manager->get_accel_orientation());
+      g_wiimote_accel_node->set_position(glm::vec3(0.1f, 0.0f, -0.5f));
     }
 
     num_frames += 1;

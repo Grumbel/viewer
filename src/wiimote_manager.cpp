@@ -7,8 +7,11 @@
 WiimoteManager::WiimoteManager() :
   m_cwii(1),
   m_reload_wiimotes(false),
-  m_orientation(1.0f, 0.0f, 0.0f, 0.0f),
+  m_smoothed_gravity(0.0f, 1.0f, 0.0f),
   m_accumulated(0.0f, 0.0f, 0.0f),
+  m_gyro_orientation(1.0f, 0.0f, 0.0f, 0.0f),
+  m_accel_orientation(1.0f, 0.0f, 0.0f, 0.0f),
+  m_orientation(),
   m_thread(),
   m_mutex()
 {
@@ -139,31 +142,42 @@ WiimoteManager::handle_event(CWiimote& wm)
   if(wm.Buttons.isJustPressed(CButtons::BUTTON_A))
   {
     m_accumulated = glm::vec3(0.0f, 0.0f, 0.0f);
-    m_orientation = glm::quat();
-#if 0    
-    glm::vec3 g_acc_orientation;
-    wm.Accelerometer.GetOrientation(g_acc_orientation.x, g_acc_orientation.y, g_acc_orientation.z);
-    // pitch, roll, yaw
-
-    // pitch, yaw, roll
-    g_wiimote.update_accel(glm::quat(glm::vec3(glm::radians(g_acc_orientation.x),
-                                               glm::radians(g_acc_orientation.z),
-                                               glm::radians(g_acc_orientation.y))));
-
-    std::cout << "-- updating orientation --" << std::endl;
-#endif
+    m_gyro_orientation = glm::quat();
   }
 
   if(wm.isUsingACC())
   {
-#if 0
-    float pitch, yaw, roll;
-    wm.Accelerometer.GetOrientation(pitch, roll, yaw);
+    // We are not using WiiCs orientation calculation as it doesn't
+    // work properly when roll and ptich are in effect at the same
+    // time
+    glm::vec3 gravity;
+    wm.Accelerometer.GetGravityVector(gravity.x, gravity.y, gravity.z);
 
-    m_accumulated.x += pitch;
-    m_accumulated.y += yaw;
-    m_accumulated.z += roll;
-#endif
+    // convert WiiC gravity vector into OpenGL coordinate system
+    std::swap(gravity.y, gravity.z);
+    gravity.z = -gravity.z;
+
+    float alpha = 0.05f;
+    m_smoothed_gravity = alpha * gravity + (1.0f - alpha) * m_smoothed_gravity;
+    gravity = m_smoothed_gravity;
+    
+    // calculate the roll
+    float roll  = atan2f(gravity.y, gravity.x) - glm::half_pi<float>();
+    glm::quat roll_rot = glm::quat(glm::vec3(0.0f, 0.0f, roll));
+    
+    // remove the roll from the gravity vector, so that pitch can be calculated properly
+    glm::quat rot_undo = glm::normalize(glm::quat(glm::vec3(0.0f, 0.0f, -roll)));
+    gravity = rot_undo * gravity;
+    
+    // calculate pitch
+    float pitch = atan2f(gravity.z, gravity.y);
+    glm::quat pitch_rot = glm::quat(glm::vec3(pitch, 0.0f, 0.0f));
+    
+    m_accel_orientation = pitch_rot * roll_rot;
+
+    //m_accel_orientation = glm::quat(glm::vec3(0.0f, glm::radians(glm::yaw(m_gyro_orientation)), 0.0f)) * m_accel_orientation;
+    
+    printf("%8.2f %8.2f   %8.2f %8.2f %8.2f\n", glm::degrees(pitch), glm::degrees(roll), gravity.x, gravity.y, gravity.z);
   }
 
   // if the Motion Plus is turned on then print angles
@@ -171,9 +185,9 @@ WiimoteManager::handle_event(CWiimote& wm)
   {
     float pitch, yaw, roll;
     wm.ExpansionDevice.MotionPlus.Gyroscope.GetRates(roll, pitch, yaw);
-    m_orientation = m_orientation * glm::quat(glm::vec3(glm::radians(pitch * -0.01f),
-                                                        glm::radians(yaw   * 0.01f),
-                                                        glm::radians(roll  * 0.01f)));
+    m_gyro_orientation = m_gyro_orientation * glm::quat(glm::vec3(glm::radians(pitch * -0.01f),
+                                                                  glm::radians(yaw   * 0.01f),
+                                                                  glm::radians(roll  * 0.01f)));
     
     //glm::vec3 angles = glm::eulerAngles(g_wiimote.get_orientation());
     //glm::vec3 accum = g_wiimote.get_accumulated();
@@ -208,10 +222,10 @@ WiimoteManager::handle_event(CWiimote& wm)
 }
 
 glm::quat
-WiimoteManager::get_orientation() const
+WiimoteManager::get_gyro_orientation() const
 {
   std::lock_guard<std::mutex> lock(m_mutex);
-  return m_orientation;
+  return m_gyro_orientation;
 }
 
 glm::quat
@@ -219,6 +233,26 @@ WiimoteManager::get_accumulated() const
 {
   std::lock_guard<std::mutex> lock(m_mutex);
   return glm::quat(m_accumulated);
+}
+
+glm::quat
+WiimoteManager::get_accel_orientation() const
+{
+  std::lock_guard<std::mutex> lock(m_mutex);
+  return m_accel_orientation;
+}
+
+void
+WiimoteManager::reset_gyro_orientation(const glm::quat& value)
+{  
+  std::lock_guard<std::mutex> lock(m_mutex);
+  m_gyro_orientation = value;
+}
+
+glm::quat
+WiimoteManager::get_orientation() const
+{
+  return m_gyro_orientation;
 }
 
 /* EOF */
