@@ -16,6 +16,8 @@
 
 #include "mesh.hpp"
 
+#define GLM_FORCE_RADIANS
+#include <glm/ext.hpp>
 #include <GL/glew.h>
 #include <iostream>
 
@@ -126,6 +128,30 @@ Mesh::create_plane(float size, glm::vec3 center)
 }
 
 std::unique_ptr<Mesh>
+Mesh::create_rect(float x1, float y1, float x2, float y2, float z)
+{
+  std::unique_ptr<Mesh> mesh(new Mesh(GL_QUADS));
+
+  TexCoordLst vt;
+  VertexLst   vp;
+
+  vt.emplace_back(0.0f, 0.0f, 0.0f);
+  vt.emplace_back(1.0f, 0.0f, 0.0f);
+  vt.emplace_back(1.0f, 1.0f, 0.0f);
+  vt.emplace_back(0.0f, 1.0f, 0.0f);
+
+  vp.emplace_back(x1, y2, z);
+  vp.emplace_back(x2, y2, z);
+  vp.emplace_back(x2, y1, z);
+  vp.emplace_back(x1, y1, z);
+
+  mesh->attach_float_array("texcoord", vt);
+  mesh->attach_float_array("position", vp);
+
+  return mesh;  
+}
+
+std::unique_ptr<Mesh>
 Mesh::create_cube(float size)
 {
   std::unique_ptr<Mesh> mesh(new Mesh(GL_QUADS));
@@ -142,18 +168,18 @@ Mesh::create_curved_screen(float size, float hfov, float vfov, int rings, int se
   TexCoordLst vt;
   VertexLst   vp;
 
-  // hfov = 2.0f * M_PI
-  // vfov = M_PI
+  // hfov = 2.0f * glm::pi<float>()
+  // vfov = glm::pi<float>()
 
   // FIXME: should use indexed array instead to save some vertices
   auto add_point = [&](int ring, int seg) {
     float r = static_cast<float>(ring + offset_y) / rings;
     float s = static_cast<float>(seg + offset_x)  / segments;
 
-    float f = sinf((r-0.5f) * vfov + M_PI/2.0f);
-    glm::vec3 p(cosf((s-0.5f) * hfov - M_PI/2.0f) * f, 
-                cosf((r-0.5f) * vfov + M_PI/2.0f),
-                sinf((s-0.5f) * hfov - M_PI/2.0f) * f);
+    float f = sinf((r-0.5f) * vfov + glm::half_pi<float>());
+    glm::vec3 p(cosf((s-0.5f) * hfov - glm::half_pi<float>()) * f, 
+                cosf((r-0.5f) * vfov + glm::half_pi<float>()),
+                sinf((s-0.5f) * hfov - glm::half_pi<float>()) * f);
 
     vn.push_back(-p);
     vt.emplace_back(!flip_uv_x ? s : 1.0f - s, !flip_uv_y ? r : 1.0f - r, 0.0f);
@@ -192,10 +218,10 @@ Mesh::create_sphere(float size, int rings, int segments)
     float r = static_cast<float>(ring) / rings;
     float s = static_cast<float>(seg)  / segments;
 
-    float f = sinf(r * M_PI);
-    glm::vec3 p(cosf(s * 2.0f * M_PI) * f, 
-                cosf(r * M_PI), 
-                sinf(s * 2.0f * M_PI) * f);
+    float f = sinf(r * glm::pi<float>());
+    glm::vec3 p(cosf(s * 2.0f * glm::pi<float>()) * f, 
+                cosf(r * glm::pi<float>()), 
+                sinf(s * 2.0f * glm::pi<float>()) * f);
 
     vn.push_back(p);
     vt.emplace_back(r, s, 0.0f);

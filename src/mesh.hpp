@@ -73,6 +73,7 @@ public:
   /** Create a cube with cubemap texture coordinates */
   static std::unique_ptr<Mesh> create_skybox(float size);
   static std::unique_ptr<Mesh> create_plane(float size, glm::vec3 center = glm::vec3(0.0f, 0.0f, 0.0f));
+  static std::unique_ptr<Mesh> create_rect(float x1, float y1, float x2, float y2, float z);
   static std::unique_ptr<Mesh> create_cube(float size);
   static std::unique_ptr<Mesh> create_sphere(float size, int rings = 16, int segments = 32);
   static std::unique_ptr<Mesh> create_curved_screen(float size, float hfov, float vfov, int rings = 16, int segments = 32, 
