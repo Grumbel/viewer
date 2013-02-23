@@ -1257,6 +1257,11 @@ void process_joystick(float dt)
 
     pitch = glm::clamp(pitch, -glm::half_pi<float>() + 0.001f, glm::half_pi<float>() - 0.001f);
 
+    if (g_wiimote_camera_control)
+    {
+      pitch = 0.0f;
+    }
+
     glm::vec3 forward(glm::cos(yaw), 0.0f, glm::sin(yaw));
         
     //log_debug("focus distance: %f", focus_distance);
