@@ -104,7 +104,8 @@ int g_mouse_y = 0;
 
 SDL_Surface* g_screen = nullptr;
 
-TexturePtr g_calibration_texture;
+TexturePtr g_calibration_left_texture;
+TexturePtr g_calibration_right_texture;
 bool g_show_calibration = false;
 
 std::unique_ptr<Menu> g_menu;
@@ -136,11 +137,10 @@ bool g_draw_look_at = false;
 
 float g_light_angle = 0.0f;
 
-enum class StereoMode { None, CrossEye, Cybermaxx, Anaglyph, End };
+enum class StereoMode { None, CrossEye, Cybermaxx, Anaglyph, Depth, End };
 StereoMode g_stereo_mode = StereoMode::None;
 
 bool g_headlights = false;
-bool g_draw_depth = false;
 bool g_render_shadowmap = true;
 
 int g_shadowmap_resolution = 1024;
@@ -373,84 +373,63 @@ void display()
     // composit the final image
     if (true)
     {
-      // 2d screen access
-      glMatrixMode(GL_PROJECTION);
-      glLoadIdentity();
-      glOrtho(0, g_screen_w, 0, g_screen_h, 0.1f, 10000.0f);
+      MaterialPtr material = std::make_shared<Material>();
+      material->set_program(m_composition_prog);
 
-      glMatrixMode(GL_MODELVIEW);
-      glLoadIdentity();
+      material->set_uniform("MVP", UniformSymbol::ModelViewProjectionMatrix);
 
-      glClearColor(0.0, 0.0, 0.0, 1.0);
-      glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
+      material->set_uniform("barrel_power", g_barrel_power);
+      material->set_uniform("left_eye",  0);
+      material->set_uniform("right_eye", 1);
+
+      if (!g_show_calibration)
+      {
+        material->set_texture(0, g_framebuffer1->get_color_texture());
+        material->set_texture(1, g_framebuffer2->get_color_texture());  
+      }
+      else
+      {
+        material->set_texture(0, g_calibration_left_texture);
+        material->set_texture(1, g_calibration_right_texture);
+      }
 
       switch(g_stereo_mode)
       {
         case StereoMode::Cybermaxx:
-          {
-            MaterialPtr material = std::make_shared<Material>();
-            material->set_program(m_composition_prog);
-
-            material->set_uniform("MVP", UniformSymbol::ModelViewProjectionMatrix);
-
-            material->set_uniform("barrel_power", g_barrel_power);
-            material->set_uniform("left_eye",  0);
-            material->set_uniform("right_eye", 1);
-          
-            material->set_texture(0, g_framebuffer1->get_color_texture());
-            material->set_texture(1, g_framebuffer2->get_color_texture());
-            material->set_subroutine_uniform(GL_FRAGMENT_SHADER, "fragment_color", "interlaced");
-
-            ModelPtr entity = std::make_shared<Model>();
-            entity->add_mesh(Mesh::create_rect(0.0f, 0.0f, g_screen_w, g_screen_h, -20.0f));
-            entity->set_material(material);
-            
-            Camera camera;
-            camera.ortho(0, g_screen_w, g_screen_h, 0.0f, 0.1f, 10000.0f);
-            
-            SceneManager mgr;
-            mgr.get_world()->attach_entity(entity);
-            mgr.render(camera);
-          }
+          material->set_subroutine_uniform(GL_FRAGMENT_SHADER, "fragment_color", "interlaced");
           break;
-
+                
         case StereoMode::CrossEye:
-          glColor3f(1.0f, 1.0f, 1.0f);
-          g_framebuffer1->draw(0.0f, 0.0f, g_screen_w/2.0f, g_screen_h, -20.0f);
-          g_framebuffer2->draw(g_screen_w/2.0f, 0.0f, g_screen_w/2.0f, g_screen_h, -20.0f);
+          material->set_subroutine_uniform(GL_FRAGMENT_SHADER, "fragment_color", "crosseye");
+          break;
+                
+        case StereoMode::Anaglyph:
+          material->set_subroutine_uniform(GL_FRAGMENT_SHADER, "fragment_color", "anaglyph");
           break;
 
-        case StereoMode::Anaglyph:
-          glEnable(GL_BLEND);
-          glBlendFunc(GL_SRC_ALPHA, GL_ONE);
-
-          glColor3f(0.0f, 0.7f, 0.0f);
-          g_framebuffer1->draw(0.0f, 0.0f, g_screen_w, g_screen_h, -20.0f);
-
-          glColor3f(1.0f, 0.0f, 0.0f);
-          g_framebuffer2->draw(g_ipd, 0.0f, g_screen_w, g_screen_h, -20.0f);
+        case StereoMode::Depth:
+          material->set_texture(0, g_framebuffer1->get_depth_texture());
+          material->set_subroutine_uniform(GL_FRAGMENT_SHADER, "fragment_color", "depth");
           break;
 
         default:
-          glEnable(GL_BLEND);
-          glBlendFunc(GL_ONE, GL_ZERO);
-
-          glColor3f(1.0f, 1.0f, 1.0f);
-          if (g_draw_depth)
-          {
-            g_framebuffer1->draw_depth(0.0f, 0.0f, g_screen_w, g_screen_h, -20.0f);
-          }
-          else
-          {
-            g_framebuffer1->draw(0.0f, 0.0f, g_screen_w, g_screen_h, -20.0f);
-          }
+          material->set_subroutine_uniform(GL_FRAGMENT_SHADER, "fragment_color", "mono");
           break;
       }
-    }
 
-    if (g_show_calibration)
-    {
-      g_calibration_texture->draw(0, 0, g_screen_w, g_screen_h, -20.0f);
+      ModelPtr entity = std::make_shared<Model>();
+      entity->add_mesh(Mesh::create_rect(0.0f, 0.0f, g_screen_w, g_screen_h, -20.0f));
+      entity->set_material(material);
+            
+      Camera camera;
+      camera.ortho(0, g_screen_w, g_screen_h, 0.0f, 0.1f, 10000.0f);
+            
+      SceneManager mgr;
+      mgr.get_world()->attach_entity(entity);
+        
+      glClearColor(0.0, 0.0, 0.0, 1.0);
+      glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
+      mgr.render(camera);
     }
 
     if (g_show_menu)
@@ -975,7 +954,8 @@ void init()
     }
   }
 
-  g_calibration_texture = Texture::from_file("data/calibration.png", false);
+  g_calibration_left_texture  = Texture::from_file("data/calibration_left.png", false);
+  g_calibration_right_texture = Texture::from_file("data/calibration_right.png", false);
 
   g_dot_surface = TextSurface::create("+", TextProperties().set_line_width(3.0f));
 
