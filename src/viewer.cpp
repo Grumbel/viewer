@@ -251,16 +251,6 @@ void reshape(int w, int h)
   assert_gl("reshape");
 }
 
-void flip_rgb(SDL_Surface* surface)
-{
-  for(int y = 0; y < surface->h; ++y)
-    for(int x = 0; x < surface->w; ++x)
-    {
-      uint8_t* p = static_cast<uint8_t*>(surface->pixels) + y * surface->pitch + x * surface->format->BytesPerPixel;
-      std::swap(p[0], p[2]);
-    }
-}
-
 void draw_scene(EyeType eye_type)
 {
   OpenGLState state;
@@ -341,84 +331,6 @@ void draw_shadowmap()
   g_shadowmap_matrix = g_shadowmap_matrix * camera.get_matrix();
 
   g_scene_manager->render(camera, true);
-}
-
-void draw_models(bool shader_foo)
-{
-  GLfloat mat_specular[] = { 1.0, 1.0, 1.0, 1.0 };
-  GLfloat mat_ambient[]  = { 1.0, 1.0, 1.0, 1.0 };
-  GLfloat mat_diffuse[]  = { 1.0, 1.0, 1.0, 1.0 };
-
-  glMaterialfv(GL_FRONT, GL_AMBIENT,   mat_ambient);
-  glMaterialfv(GL_FRONT, GL_SPECULAR,  mat_specular);
-  //glMaterialfv(GL_FRONT, GL_EMISSION,  mat_specular);
-  glMaterialfv(GL_FRONT, GL_DIFFUSE,   mat_diffuse);
-
-  glMaterialf(GL_FRONT, GL_SHININESS, g_material_shininess);
-
-  /*
-  if (g_draw_look_at)
-  { // draw look-at sphere
-    auto target = g_eye + g_look_at;
-    glColor4f(1.0f, 1.0f, 1.0f, 0.5f);
-    glPushMatrix();
-    {
-      glTranslatef(target.x, target.y, target.z);
-      glutSolidSphere(2.5, 32, 32);
-    }
-    glPopMatrix();
-  }
-  */
-
-  if (g_draw_grid)
-  {
-    glDisable(GL_LIGHTING);
-    //glEnable(GL_LIGHT0);
-    //glEnable(GL_LIGHT1);
-    glDisable(GL_TEXTURE_2D);
-
-    int x_pos = g_eye.x;
-    int y_pos = g_eye.y;
-    int z_pos = g_eye.z;
-
-    glColor3f(1.0f, 1.0f, 1.0f);
-    int n = 1;
-    int n_in = 10;
-    int dist = 100;
-    int step = 1;
-    glPushMatrix();
-    
-    glBegin(GL_LINES);
-    {
-      for(int z = z_pos - n; z <= z_pos + n; z+=step)
-      {
-        for(int y = y_pos - n; y <= y_pos + n; y+=step)
-        {
-          glVertex3i(x_pos-n_in, y, z);
-          glVertex3i(x_pos+n_in, y, z);
-        }
-
-        for(int x = x_pos - n; x <= x_pos + n; x+=step)
-        {
-          glVertex3i(x, y_pos-n_in, z);
-          glVertex3i(x, y_pos+n_in, z);
-        }
-      }
-
-      for(int y = y_pos - n_in; y <= y_pos + n_in; y+=step)
-      {
-        for(int x = x_pos - n; x < x_pos + n; x+=step)
-        {
-          glVertex3i(x, y, z_pos-dist);
-          glVertex3i(x, y, z_pos+dist);
-        }
-      }
-    }
-    glEnd();
-    glPopMatrix();
-  }
-
-  assert_gl("draw_scene:exit()");
 }
 
 void display()
