@@ -44,7 +44,7 @@ vec4 anaglyph()
 {
   vec4 left  = left_eye_color(frag_uv);
   vec4 right = right_eye_color(frag_uv);
-  return vec4(left.r, right.g, 1.0, 1.0);
+  return vec4(left.r, right.g, 0.0, 1.0);
 }
 
 subroutine(fragment_color_t)
@@ -58,6 +58,18 @@ vec4 crosseye()
   {
     return left_eye_color(vec2(frag_uv.x*2.0, frag_uv.y));
   }
+}
+
+subroutine(fragment_color_t)
+vec4 mono()
+{
+  return left_eye_color(frag_uv);
+}
+
+subroutine(fragment_color_t)
+vec4 depth()
+{
+  return left_eye_color(frag_uv);
 }
 
 void main()
