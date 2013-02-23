@@ -122,7 +122,7 @@ float g_slow_factor = 0.5f;
 bool g_wiimote_camera_control = false;
 
 glm::ivec2 g_viewport_offset(-41, 16);
-float g_barrel_power = 0.09f;
+float g_barrel_power = 0.05f;
 float g_ipd = 0.0f;
 int g_screen_w = 640;
 int g_screen_h = 480;
