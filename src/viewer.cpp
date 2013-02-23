@@ -390,15 +390,31 @@ void display()
       switch(g_stereo_mode)
       {
         case StereoMode::Cybermaxx:
-          glUseProgram(m_composition_prog->get_id());
-          m_composition_prog->set_uniform("barrel_power", g_barrel_power);
-          m_composition_prog->set_uniform("tex", 0);
-          m_composition_prog->set_uniform("offset", 0);
-          g_framebuffer1->draw(0.0f, 0.0f, g_screen_w, g_screen_h, -20.0f);
+          {
+            MaterialPtr material = std::make_shared<Material>();
+            material->set_program(m_composition_prog);
 
-          m_composition_prog->set_uniform("offset", 1);
-          g_framebuffer2->draw(0.0f, 0.0f, g_screen_w, g_screen_h, -20.0f);
-          glUseProgram(0);
+            material->set_uniform("MVP", UniformSymbol::ModelViewProjectionMatrix);
+
+            material->set_uniform("barrel_power", g_barrel_power);
+            material->set_uniform("offset", 0);
+            material->set_uniform("left_eye",  0);
+            material->set_uniform("right_eye", 1);
+          
+            material->set_texture(0, g_framebuffer1->get_color_texture());
+            material->set_texture(1, g_framebuffer2->get_color_texture());
+
+            ModelPtr entity = std::make_shared<Model>();
+            entity->add_mesh(Mesh::create_rect(0.0f, 0.0f, g_screen_w, g_screen_h, -20.0f));
+            entity->set_material(material);
+            
+            Camera camera;
+            camera.ortho(0, g_screen_w, g_screen_h, 0.0f, 0.1f, 10000.0f);
+            
+            SceneManager mgr;
+            mgr.get_world()->attach_entity(entity);
+            mgr.render(camera);
+          }
           break;
 
         case StereoMode::CrossEye:
