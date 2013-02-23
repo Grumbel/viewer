@@ -11,6 +11,7 @@
 class WiimoteManager
 {
 private:
+  bool m_quit;
   CWii m_cwii;
   bool m_reload_wiimotes;
 
@@ -21,8 +22,15 @@ private:
   float m_roll;
 
   glm::vec3 m_accumulated;
+  float m_gyro_pitch;
+  float m_gyro_yaw;
+  float m_gyro_roll;
   glm::quat m_gyro_orientation;
+
+  float m_accel_pitch;
+  float m_accel_roll;
   glm::quat m_accel_orientation;
+
   glm::quat m_orientation;
   
   std::thread m_thread;
@@ -30,6 +38,7 @@ private:
   
 public:
   WiimoteManager();
+  ~WiimoteManager();
 
   glm::quat get_gyro_orientation() const;
   glm::quat get_accel_orientation() const;
@@ -39,8 +48,9 @@ public:
   void reset_gyro_orientation(const glm::quat& value = glm::quat());
 
 private:
-  void update();
+  void update(float dt);
   void handle_event(CWiimote& wm);
+  void dispatch_events();
 };
 
 #endif
