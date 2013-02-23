@@ -394,12 +394,12 @@ void display()
             material->set_uniform("MVP", UniformSymbol::ModelViewProjectionMatrix);
 
             material->set_uniform("barrel_power", g_barrel_power);
-            material->set_uniform("offset", 0);
             material->set_uniform("left_eye",  0);
             material->set_uniform("right_eye", 1);
           
             material->set_texture(0, g_framebuffer1->get_color_texture());
             material->set_texture(1, g_framebuffer2->get_color_texture());
+            material->set_subroutine_uniform(GL_FRAGMENT_SHADER, "fragment_color", "interlaced");
 
             ModelPtr entity = std::make_shared<Model>();
             entity->add_mesh(Mesh::create_rect(0.0f, 0.0f, g_screen_w, g_screen_h, -20.0f));
