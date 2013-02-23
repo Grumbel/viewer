@@ -53,8 +53,6 @@
 #include "video_processor.hpp"
 #include "wiimote_manager.hpp"
 
-void draw_models(bool shader_foo);
-
 std::string to_string(const glm::vec3& v)
 {
   std::ostringstream str;
@@ -142,7 +140,6 @@ enum class StereoMode { None, CrossEye, Cybermaxx, Anaglyph, End };
 StereoMode g_stereo_mode = StereoMode::None;
 
 bool g_headlights = false;
-bool g_draw_grid = false;
 bool g_draw_depth = false;
 bool g_render_shadowmap = true;
 
@@ -664,7 +661,7 @@ void keyboard(SDL_KeyboardEvent key, int x, int y)
           g_fov = 160.0f;
         }
         log_info("fov: %5.2f %f", g_fov, g_eye.z);
-        log_info("w: %f", tan(g_fov /2.0f /180.0*M_PI) * g_eye.z);
+        log_info("w: %f", tan(g_fov /2.0f) * g_eye.z);
       }
       break;
 
@@ -680,15 +677,15 @@ void keyboard(SDL_KeyboardEvent key, int x, int y)
         if (g_fov >= 7.0f)
         {
           g_eye.z = g_eye.z 
-            * (2.0*tan(0.5 * old_fov / 180.0 * M_PI))
-            / (2.0*tan(0.5 * g_fov / 180.0 * M_PI));
+            * (2.0*tan(0.5 * old_fov))
+            / (2.0*tan(0.5 * g_fov));
         }
         else
         {
           g_fov = 7.0f;
         }
         log_info("fov: %5.2f %f", g_fov, g_eye.z);
-        log_info("w: %f", tan(g_fov/2.0f /180.0*M_PI) * g_eye.z);
+        log_info("w: %f", tan(g_fov/2.0f) * g_eye.z);
       }
       break;
 
@@ -740,8 +737,12 @@ void init()
   g_shadowmap.reset(new Framebuffer(g_shadowmap_resolution, g_shadowmap_resolution));
   assert_gl("init()");
 
-  g_armature = Armature::from_file("/tmp/blender.bones");
-  g_pose = Pose::from_file("/tmp/blender.pose");
+  //g_armature = Armature::from_file("/tmp/blender.bones");
+  //g_pose = Pose::from_file("/tmp/blender.pose");
+
+  //m_composition_prog = Program::create(Shader::from_file(GL_FRAGMENT_SHADER, "src/newsprint.frag"));
+  m_composition_prog = Program::create(Shader::from_file(GL_FRAGMENT_SHADER, "src/composite.frag"),
+                                       Shader::from_file(GL_VERTEX_SHADER, "src/composite.vert"));
 
   {
     g_scene_manager.reset(new SceneManager);
@@ -765,6 +766,7 @@ void init()
       if (!g_opts.video3d)
       {
         g_video_material = MaterialFactory::get().create("video");
+        g_video_material_flip = g_video_material;
       }
       else
       {
@@ -779,7 +781,7 @@ void init()
 
         entity->add_mesh(Mesh::create_plane(5.0f));
         node->set_position(glm::vec3(0.0f, 0.0f, -10.0f));
-        node->set_orientation(glm::quat(glm::vec3(M_PI/2, 0.0f, 0.0f)));
+        node->set_orientation(glm::quat(glm::vec3(glm::half_pi<float>(), 0.0f, 0.0f)));
         node->set_scale(glm::vec3(4.0f, 1.0f, 2.25f));
 
         entity->set_material(g_video_material);
@@ -975,9 +977,6 @@ void init()
 
   g_calibration_texture = Texture::from_file("data/calibration.png", false);
 
-  //m_composition_prog = Program::create(Shader::from_file(GL_FRAGMENT_SHADER, "src/newsprint.frag"));
-  m_composition_prog = Program::create(Shader::from_file(GL_FRAGMENT_SHADER, "src/composite.frag"));
-
   g_dot_surface = TextSurface::create("+", TextProperties().set_line_width(3.0f));
 
   g_menu.reset(new Menu(TextProperties().set_font_size(24.0f).set_line_width(4.0f)));
@@ -1022,7 +1021,6 @@ void init()
   g_menu->add_item("wiimote.scale_y", &g_wiimote_scale.y, 0.01f);
 
   //g_menu->add_item("3D", &g_draw_3d);
-  //g_menu->add_item("Grid", &g_draw_grid);
   //g_menu->add_item("Headlights", &g_headlights);
   //g_menu->add_item("Look At Sphere", &g_draw_look_at);
   //g_menu->add_item("draw depth", &g_draw_depth);
@@ -1277,7 +1275,7 @@ void process_joystick(float dt)
     yaw   += -g_stick.rot.y * 2.0f * dt;
     pitch += g_stick.rot.x * 2.0f * dt;
 
-    pitch = glm::clamp(pitch, -static_cast<float>(M_PI)/2.0f + 0.001f, static_cast<float>(M_PI)/2.0f - 0.001f);
+    pitch = glm::clamp(pitch, -glm::half_pi<float>() + 0.001f, glm::half_pi<float>() - 0.001f);
 
     glm::vec3 forward(glm::cos(yaw), 0.0f, glm::sin(yaw));
         
@@ -1426,8 +1424,8 @@ void update_offsets(glm::vec2 p1, glm::vec2 p2)
   c = glm::rotate(c, g_roll_offset);
   c += glm::vec2(512, 384);
 
-  g_yaw_offset   = ((c.x / 1024.0f) - 0.5f) * M_PI/2.0f * g_wiimote_scale.x;
-  g_pitch_offset = ((c.y /  768.0f) - 0.5f) * (M_PI/2.0f) * g_wiimote_scale.y;
+  g_yaw_offset   = ((c.x / 1024.0f) - 0.5f) * glm::half_pi<float>() * g_wiimote_scale.x;
+  g_pitch_offset = ((c.y /  768.0f) - 0.5f) * glm::half_pi<float>() * g_wiimote_scale.y;
 
   g_wiimote_dot1.x = p1.x / 1024.0f;
   g_wiimote_dot1.y = 1.0f - (p1.y /  768.0f);
