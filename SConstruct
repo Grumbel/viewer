@@ -57,7 +57,7 @@ if True:
     test_env = env.Clone()
     test_env.Append(CPPPATH="src/")
     for filename in Glob("test/*.cpp", strings=True):
-        test_env.Program(filename[0:-4], [filename, "src/video_processor.o", "src/texture.o", "src/tokenize.o", "src/wiimote_manager.o"])
+        test_env.Program(filename[0:-4], [filename, "src/video_processor.o", "src/texture.o", "src/tokenize.o", "src/wiimote_manager.o", "src/opengl_state.o"])
 
 env.Program("viewer", Glob("src/*.cpp"))
 

@@ -190,7 +190,7 @@ Program::inspect() const
 
       glGetActiveUniform(m_program, i, name.size(), &length, &size, &type, name.data());
 
-      log_info("Uniform: %s type:%d size:%d", std::string(name.data(), length), type, size);
+      //log_info("Uniform: %s type:%d size:%d", std::string(name.data(), length), type, size);
     }    
   }
 
