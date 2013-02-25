@@ -1499,10 +1499,8 @@ void init_display(const std::string& title, bool fullscreen, int anti_aliasing)
                               0, SDL_OPENGL | SDL_RESIZABLE | (fullscreen ? SDL_FULLSCREEN : 0));
 }
 
-int main(int argc, char** argv)
+void parse_args(int argc, char** argv, Options& opts)
 {
-  Options& opts = g_opts;
-
   for(int i = 1; i < argc; ++i)
   {
     if (argv[i][0] == '-')
@@ -1533,6 +1531,11 @@ int main(int argc, char** argv)
       g_model_filename = opts.model;
     }
   }
+}
+
+int main(int argc, char** argv)
+{
+  parse_args(argc, argv, g_opts);
 
   if (SDL_Init(SDL_INIT_TIMER | SDL_INIT_VIDEO | SDL_INIT_JOYSTICK) < 0)
   {
@@ -1583,16 +1586,16 @@ int main(int argc, char** argv)
     }
   }
 #endif 
-  if (opts.wiimote)
+  if (g_opts.wiimote)
   {
     g_wiimote_manager = std::make_shared<WiimoteManager>();
   }
   
-  if (!opts.video.empty())
+  if (!g_opts.video.empty())
   {
     Gst::init(argc, argv);
-    std::cout << "Playing video: " << opts.video << std::endl;
-    g_video_player = std::make_shared<VideoProcessor>(opts.video);
+    std::cout << "Playing video: " << g_opts.video << std::endl;
+    g_video_player = std::make_shared<VideoProcessor>(g_opts.video);
   }
 
   init();
