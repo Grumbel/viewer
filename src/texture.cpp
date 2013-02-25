@@ -8,8 +8,8 @@
 #include <string.h>
 #include <vector>
 
-#include "opengl_state.hpp"
 #include "assert_gl.hpp"
+#include "opengl_state.hpp"
 
 namespace {
 
@@ -357,36 +357,6 @@ Texture::upload(int width, int height, int pitch, void* data)
   glBindTexture(m_target, m_id);
   glTexSubImage2D(m_target, 0, 0, 0, width, height, GL_RGB, GL_UNSIGNED_BYTE, data);
   assert_gl("Texture::upload");
-}
-
-void
-Texture::draw(float x, float y, float w, float h, float z)
-{
-  OpenGLState state;
-    
-  glEnable(GL_TEXTURE_2D);
-
-  float uv_left   = 0.0f;
-  float uv_right  = 1.0f;
-  float uv_top    = 0.0f;
-  float uv_bottom = 1.0f;
-
-  glBindTexture(GL_TEXTURE_2D, m_id);
-  glBegin(GL_QUADS);
-  {
-    glTexCoord2f(uv_left, uv_top);
-    glVertex3f(x, y, z);
-
-    glTexCoord2f(uv_right, uv_top);
-    glVertex3f(x+w, y, z);
-
-    glTexCoord2f(uv_right, uv_bottom);
-    glVertex3f(x+w, y+h, z);
-
-    glTexCoord2f(uv_left, uv_bottom);
-    glVertex3f(x, y+h, z);
-  }
-  glEnd();
 }
 
 /* EOF */

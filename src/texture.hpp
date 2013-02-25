@@ -34,8 +34,6 @@ public:
 
   void upload(int width, int height, int pitch, void* data);
 
-  void draw(float x, float y, float w, float h, float z);
-
 private:
   Texture(const Texture&);
   Texture& operator=(const Texture&);
