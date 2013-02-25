@@ -92,35 +92,22 @@ TextSurface::draw(RenderContext& ctx, float x, float y, float z)
     glm::vec3{ x, y, z }
   };
   
-  if (true)
-  {
-    // FIXME: wrong place for this
-    //glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
-    glBindBuffer(GL_ARRAY_BUFFER, 0);
+  GLint texcoords_loc = glGetAttribLocation(program, "texcoord");
+  GLint positions_loc = glGetAttribLocation(program, "position");
 
-    GLint texcoords_loc = glGetAttribLocation(program, "texcoord");
-    assert(texcoords_loc != -1);
-    glVertexAttribPointer(texcoords_loc, 2, GL_FLOAT, GL_FALSE, 0, texcoord.data());
-    glEnableVertexAttribArray(texcoords_loc);
+  assert(texcoords_loc != -1);
+  assert(positions_loc != -1);
 
-    GLint positions_loc = glGetAttribLocation(program, "position");
-    assert(positions_loc != -1);
-    glVertexAttribPointer(positions_loc, 3, GL_FLOAT, GL_FALSE, 0, position.data());
-    glEnableVertexAttribArray(positions_loc);
+  glVertexAttribPointer(texcoords_loc, 2, GL_FLOAT, GL_FALSE, 0, texcoord.data());
+  glVertexAttribPointer(positions_loc, 3, GL_FLOAT, GL_FALSE, 0, position.data());
 
-    assert_gl("Mesh::draw2");
+  glEnableVertexAttribArray(texcoords_loc);
+  glEnableVertexAttribArray(positions_loc);
 
-    glDrawArrays(GL_QUADS, 0, 4);
-    assert_gl("Mesh::draw--");
-  }
-  else
-  { 
-    {
-      std::unique_ptr<Mesh> mesh(new Mesh(GL_QUADS));
-      mesh->attach_float_array("position", position);
-      mesh->draw();
-    }
-  }
+  glDrawArrays(GL_QUADS, 0, 4);
+
+  glDisableVertexAttribArray(texcoords_loc);
+  glDisableVertexAttribArray(positions_loc);
 }
 
 TexturePtr

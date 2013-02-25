@@ -150,6 +150,7 @@ private:
     glGenBuffers(1, &vbo);
     glBindBuffer(target, vbo);
     glBufferData(target, sizeof(T) * vec.size(), vec.data(), GL_STATIC_DRAW);
+    glBindBuffer(target, 0);
     return vbo;
   }
 

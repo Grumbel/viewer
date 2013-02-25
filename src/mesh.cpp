@@ -295,6 +295,8 @@ Mesh::draw()
         glVertexAttribPointer(loc, array.second.size, GL_FLOAT, GL_FALSE, 0, nullptr);
       }
 
+      glBindBuffer(GL_ARRAY_BUFFER, 0);
+
       glEnableVertexAttribArray(loc);
     }
   }
@@ -307,12 +309,15 @@ Mesh::draw()
     assert_gl("Mesh::draw: glBindBuffer");
     glDrawElements(m_primitive_type, m_element_count, GL_UNSIGNED_INT, 0);
     assert_gl("Mesh::draw: glDrawElements");
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
   }
   else
   {
     glDrawArrays(m_primitive_type, 0, m_element_count);
     assert_gl("Mesh::draw: glDrawArrays");
   }
+
+  // FIXME: missing glDisableVertexAttribArray()
 }
 
 /* EOF */
