@@ -1112,7 +1112,10 @@ void process_events()
             break;
 
           case 0:
-            g_wiimote_manager->reset_gyro_orientation();
+            if (g_wiimote_manager)
+            {
+              g_wiimote_manager->reset_gyro_orientation();
+            }
             break;
 
           case 1:
