@@ -28,16 +28,16 @@ Menu::Menu(const TextProperties& text_prop) :
 }
 
 void
-Menu::draw(float x, float y)
+Menu::draw(RenderContext& ctx, float x, float y)
 {
   for(auto it = m_items.begin(); it != m_items.end(); ++it)
   {
     if (it - m_items.begin() == m_current_item)
     {
-      m_cursor_surface->draw(x - m_cursor_surface->get_width(), y);
+      m_cursor_surface->draw(ctx, x - m_cursor_surface->get_width(), y);
     }
 
-    (*it)->draw(x, y);
+    (*it)->draw(ctx, x, y);
     
     y += m_text_prop.get_font_size() + 2.0f;
   }

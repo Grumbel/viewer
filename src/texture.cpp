@@ -264,7 +264,7 @@ Texture::from_file(const std::string& filename, bool build_mipmaps)
   SDL_Surface* surface = IMG_Load(filename.c_str());
   if (!surface)
   {
-    throw std::runtime_error("couldn't open " + filename);
+    throw std::runtime_error("Texture: couldn't open " + filename);
   }
   else
   {
@@ -324,6 +324,14 @@ Texture::from_rgb_data(int width, int height, int pitch, void* data)
 
   glTexImage2D(target, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
 
+  return std::make_shared<Texture>(target, texture);
+}
+
+TexturePtr
+Texture::create_handle(GLenum target)
+{
+  GLuint texture;
+  glGenTextures(1, &texture);
   return std::make_shared<Texture>(target, texture);
 }
 

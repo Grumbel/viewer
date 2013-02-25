@@ -16,7 +16,12 @@
 
 #include "text_surface.hpp"
 
+#include <stdlib.h>
+
+#include "mesh.hpp"
 #include "assert_gl.hpp"
+#include "material_factory.hpp"
+#include "opengl_state.hpp"
 
 std::shared_ptr<TextSurface>
 TextSurface::create(const std::string& text, const TextProperties& text_props)
@@ -28,16 +33,27 @@ TextSurface::create(const std::string& text, const TextProperties& text_props)
                                                                     text_extents, font_extents);
   int width  = surface->get_width();
   int height = surface->get_height();
-  GLuint texture = create_opengl_texture(surface);
+  TexturePtr texture = create_opengl_texture(surface);
 
-  return std::make_shared<TextSurface>(texture, width, height,
+  MaterialPtr material = std::make_shared<Material>();
+  //MaterialPtr material = MaterialFactory::get().create_basic_white();
+  material->set_program(Program::create(Shader::from_file(GL_VERTEX_SHADER,   "src/font.vert"),
+                                        Shader::from_file(GL_FRAGMENT_SHADER, "src/font.frag")));
+
+  material->enable(GL_BLEND);
+  material->blend_func(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+  material->set_texture(0, texture);
+  material->set_uniform("texture_diff", 0);
+  material->set_uniform("MVP", UniformSymbol::ModelViewProjectionMatrix);
+
+  return std::make_shared<TextSurface>(material, width, height,
                                        text_extents, font_extents);
 }
 
-TextSurface::TextSurface(GLuint texture, int width, int height,
+TextSurface::TextSurface(MaterialPtr material, int width, int height,
                          const Cairo::TextExtents& text_extents,
                          const Cairo::FontExtents& font_extents) :
-  m_texture(texture),
+  m_material(material),
   m_width(width),
   m_height(height),
   m_text_extents(text_extents),
@@ -47,54 +63,78 @@ TextSurface::TextSurface(GLuint texture, int width, int height,
 
 TextSurface::~TextSurface()
 {
-  glDeleteTextures(1, &m_texture);
 }
 
 void
-TextSurface::draw(float x, float y, float z)
+TextSurface::draw(RenderContext& ctx, float x, float y, float z)
 {
-  //x -= static_cast<float>(m_text_props.get_line_width())/2.0f;
-  //y -= static_cast<float>(m_text_props.get_line_width())/2.0f;
-  
+  OpenGLState state;
+
+  m_material->apply(ctx);
+
   x += static_cast<float>(m_text_extents.x_bearing);
   y += static_cast<float>(m_text_extents.y_bearing);
-  //- static_cast<float>(m_font_extents.height)
-  //+ static_cast<float>(m_font_extents.descent);
+ 
+  GLint program;
+  glGetIntegerv(GL_CURRENT_PROGRAM, &program);
   
-  glBindTexture(GL_TEXTURE_2D, m_texture);
-  glBegin(GL_QUADS); 
+  std::vector<glm::vec2> texcoord{
+    glm::vec2{ 0.0f, 1.0f },
+    glm::vec2{ 1.0f, 1.0f },
+    glm::vec2{ 1.0f, 0.0f },
+    glm::vec2{ 0.0f, 0.0f }
+  };
+      
+  std::vector<glm::vec3> position{
+    glm::vec3{ x, y + static_cast<float>(m_height), z },
+    glm::vec3{ x + static_cast<float>(m_width), y + static_cast<float>(m_height), z },
+    glm::vec3{ x + static_cast<float>(m_width), y, z },
+    glm::vec3{ x, y, z }
+  };
+  
+  if (true)
   {
-    glTexCoord2f(0.0f, 0.0f);
-    glVertex3f(x, y, z);
+    // FIXME: wrong place for this
+    //glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+    glBindBuffer(GL_ARRAY_BUFFER, 0);
 
-    glTexCoord2f(1.0f, 0.0f);
-    glVertex3f(x + static_cast<float>(m_width), y, z);
+    GLint texcoords_loc = glGetAttribLocation(program, "texcoord");
+    assert(texcoords_loc != -1);
+    glVertexAttribPointer(texcoords_loc, 2, GL_FLOAT, GL_FALSE, 0, texcoord.data());
+    glEnableVertexAttribArray(texcoords_loc);
 
-    glTexCoord2f(1.0f, 1.0f);
-    glVertex3f(x + static_cast<float>(m_width), 
-               y + static_cast<float>(m_height),
-               z);
+    GLint positions_loc = glGetAttribLocation(program, "position");
+    assert(positions_loc != -1);
+    glVertexAttribPointer(positions_loc, 3, GL_FLOAT, GL_FALSE, 0, position.data());
+    glEnableVertexAttribArray(positions_loc);
 
-    glTexCoord2f(0.0f, 1.0f);
-    glVertex3f(x, y + static_cast<float>(m_height), z);
+    assert_gl("Mesh::draw2");
+
+    glDrawArrays(GL_QUADS, 0, 4);
+    assert_gl("Mesh::draw--");
   }
-  glEnd();
+  else
+  { 
+    {
+      std::unique_ptr<Mesh> mesh(new Mesh(GL_QUADS));
+      mesh->attach_float_array("position", position);
+      mesh->draw();
+    }
+  }
 }
 
-GLuint
+TexturePtr
 TextSurface::create_opengl_texture(Cairo::RefPtr<Cairo::ImageSurface> surface)
 {
-  GLuint texture = 0;
-
   assert(surface);
 
-  glGenTextures(1, &texture);
-  assert_gl("texture failure");
+  TexturePtr texture = Texture::create_handle(GL_TEXTURE_2D);
     
   glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
   glPixelStorei(GL_UNPACK_ROW_LENGTH, surface->get_width());
 
-  glBindTexture(GL_TEXTURE_2D, texture);
+  glActiveTexture(GL_TEXTURE0);
+  glBindTexture(GL_TEXTURE_2D, texture->get_id());
   assert_gl("Texture failure");
 
   // flip RGBA to BGRA

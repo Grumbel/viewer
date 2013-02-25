@@ -23,6 +23,7 @@ public:
   static TexturePtr create_random_noise(int width, int height);
   static TexturePtr create_empty(GLenum target, GLenum format, int width, int height);
   static TexturePtr create_shadowmap(int width, int height);
+  static TexturePtr create_handle(GLenum target);
 
 public:
   Texture(GLenum target, GLuint id);

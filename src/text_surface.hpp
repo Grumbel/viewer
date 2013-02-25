@@ -29,6 +29,10 @@
 #include <cairomm/context.h>
 #include <cairomm/surface.h>
 
+#include "texture.hpp"
+#include "material.hpp"
+
+class RenderContext;
 class TextSurface;
 
 typedef std::shared_ptr<TextSurface> TextSurfacePtr;
@@ -61,12 +65,12 @@ class TextSurface
 public:
   static std::shared_ptr<TextSurface> create(const std::string& text, const TextProperties& text_props);
 
-  TextSurface(GLuint texture, int width, int height,
+  TextSurface(MaterialPtr material, int width, int height,
               const Cairo::TextExtents& text_extents,
               const Cairo::FontExtents& font_extents);
   ~TextSurface();
 
-  void draw(float x, float y, float z = 0.0f);
+  void draw(RenderContext& ctx, float x, float y, float z = -1.0f);
 
   int get_width() const 
   {
@@ -82,10 +86,10 @@ private:
   static Cairo::RefPtr<Cairo::ImageSurface> create_cairo_surface(const std::string& text, const TextProperties& text_props,
                                                                  Cairo::TextExtents& out_text_extents,
                                                                  Cairo::FontExtents& out_font_extents);
-  static GLuint create_opengl_texture(Cairo::RefPtr<Cairo::ImageSurface> surface);
+  static TexturePtr create_opengl_texture(Cairo::RefPtr<Cairo::ImageSurface> surface);
 
 private:
-  GLuint m_texture;
+  MaterialPtr m_material;
   int m_width;
   int m_height;
 

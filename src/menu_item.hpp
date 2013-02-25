@@ -34,9 +34,9 @@ public:
   virtual ~MenuItem()
   {}
 
-  virtual void draw(float x, float y)
+  virtual void draw(RenderContext& ctx, float x, float y)
   {
-    m_label_surface->draw(x, y);
+    m_label_surface->draw(ctx, x, y);
   }
 
   virtual void left()   = 0;
@@ -77,13 +77,13 @@ public:
     left();
   }
 
-  void draw(float x, float y)
+  void draw(RenderContext& ctx, float x, float y)
   {
-    MenuItem::draw(x, y);
+    MenuItem::draw(ctx, x, y);
 
     auto& surface = (*m_value_ptr) ? m_true_surface : m_false_surface;
     
-    surface->draw(x+300.0f - surface->get_width(), y);
+    surface->draw(ctx, x+300.0f - surface->get_width(), y);
   }
 
 private:
@@ -140,13 +140,13 @@ public:
     }
   }
 
-  void draw(float x, float y)
+  void draw(RenderContext& ctx, float x, float y)
   {
-    MenuItem::draw(x, y);
+    MenuItem::draw(ctx, x, y);
 
     update_surface();
 
-    m_value_surface->draw(x+300.0f - m_value_surface->get_width(), y);
+    m_value_surface->draw(ctx, x+300.0f - m_value_surface->get_width(), y);
   }
 
   void update_surface()

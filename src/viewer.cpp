@@ -334,7 +334,8 @@ void display()
 {
   glViewport(g_viewport_offset.x, g_viewport_offset.y, g_screen_w, g_screen_h);
   
-  //log_info("display()\n");
+  // render the world, twice if stereo is enabled
+  if (true)
   {
     OpenGLState state;
 
@@ -369,11 +370,15 @@ void display()
       g_renderbuffer1->blit(*g_framebuffer1);
       g_renderbuffer2->blit(*g_framebuffer2);
     }
+  }
 
-    // composit the final image
-    if (true)
-    {
-      MaterialPtr material = std::make_shared<Material>();
+  // composit the final image
+  if (true)
+  {
+    OpenGLState state;
+
+    MaterialPtr material = std::make_shared<Material>();
+    { // setup material
       material->set_program(m_composition_prog);
 
       material->set_uniform("MVP", UniformSymbol::ModelViewProjectionMatrix);
@@ -416,60 +421,45 @@ void display()
           material->set_subroutine_uniform(GL_FRAGMENT_SHADER, "fragment_color", "mono");
           break;
       }
+    } // setup material
 
-      ModelPtr entity = std::make_shared<Model>();
-      entity->add_mesh(Mesh::create_rect(0.0f, 0.0f, g_screen_w, g_screen_h, -20.0f));
-      entity->set_material(material);
+    ModelPtr entity = std::make_shared<Model>();
+    entity->add_mesh(Mesh::create_rect(0.0f, 0.0f, g_screen_w, g_screen_h, -20.0f));
+    entity->set_material(material);
             
-      Camera camera;
-      camera.ortho(0, g_screen_w, g_screen_h, 0.0f, 0.1f, 10000.0f);
+    Camera camera;
+    camera.ortho(0, g_screen_w, g_screen_h, 0.0f, 0.1f, 10000.0f);
             
-      SceneManager mgr;
-      mgr.get_world()->attach_entity(entity);
+    SceneManager mgr;
+    mgr.get_world()->attach_entity(entity);
         
-      glClearColor(0.0, 0.0, 0.0, 1.0);
-      glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
-      mgr.render(camera);
-    }
-
-    if (g_show_menu)
-    {
-      glDisable(GL_BLEND);
-      //g_shadowmap->draw_depth(g_screen_w - 266, 10, 256, 256, -20.0f);
-      g_shadowmap->draw(g_screen_w - 266 - 276, 10, 256, 256, -20.0f);
-    }
-  }
-
-  { // 2D Rendering
-    OpenGLState state;
-
-    glMatrixMode(GL_PROJECTION);
-    glLoadIdentity();
-    gluOrtho2D(0, g_screen_w, g_screen_h, 0);
-
-    glMatrixMode(GL_MODELVIEW);
-    glLoadIdentity();
-
     glClearColor(0.0, 0.0, 0.0, 1.0);
-    //glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
+    glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
+    mgr.render(camera);
     
-    glDisable(GL_LIGHTING);
-    glDisable(GL_DEPTH_TEST);
-    glEnable(GL_TEXTURE_2D);
-    glColor3f(1.0f, 1.0f, 1.0f);
-
-    glEnable(GL_BLEND);
-    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-
-    if (g_show_menu)
+    // render menu overlay
+    if (true)
     {
-      g_menu->draw(120.0f, 64.0f);
-    }
+      glClear(GL_DEPTH_BUFFER_BIT);
+      RenderContext ctx(camera, mgr.get_world());
 
-    if (g_show_dots)
-    {
-      g_dot_surface->draw(g_wiimote_dot1.x * g_screen_w, g_wiimote_dot1.y * g_screen_h);
-      g_dot_surface->draw(g_wiimote_dot2.x * g_screen_w, g_wiimote_dot2.y * g_screen_h);
+      if (false && g_show_menu)
+      {
+        glDisable(GL_BLEND);
+        //g_shadowmap->draw_depth(g_screen_w - 266, 10, 256, 256, -20.0f);
+        g_shadowmap->draw(g_screen_w - 266 - 276, 10, 256, 256, -20.0f);
+      } 
+      
+      if (g_show_menu)
+      {
+        g_menu->draw(ctx, 120.0f, 64.0f);
+      }
+
+      if (g_show_dots)
+      {
+        g_dot_surface->draw(ctx, g_wiimote_dot1.x * g_screen_w, g_wiimote_dot1.y * g_screen_h);
+        g_dot_surface->draw(ctx, g_wiimote_dot2.x * g_screen_w, g_wiimote_dot2.y * g_screen_h);
+      }
     }
   }
 
