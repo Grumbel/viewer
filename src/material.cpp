@@ -20,8 +20,9 @@
 #include <glm/glm.hpp>
 #include <glm/ext.hpp>
 
-#include "log.hpp"
 #include "assert_gl.hpp"
+#include "log.hpp"
+#include "render_context.hpp"
 
 Material::Material() :
   m_cast_shadow(true),
@@ -77,6 +78,8 @@ Material::disable(GLenum cap)
 void
 Material::apply(const RenderContext& context)
 {
+  assert_gl("Material::apply:enter");
+
   for(const auto& cap : m_capabilities)
   {
     if (cap.second)
@@ -88,31 +91,50 @@ Material::apply(const RenderContext& context)
       glDisable(cap.first);
     }
   }
+  assert_gl("caps enable");
 
   glColorMask(m_color_mask.r, m_color_mask.g, m_color_mask.b, m_color_mask.a); 
   glDepthMask(m_depth_mask);
   glCullFace(m_cull_face);
 
   glBlendFunc(m_blend_sfactor, m_blend_dfactor);
+  assert_gl("GL props set");
 
-  for(const auto& it : m_textures)
+  switch(context.get_stereo())
   {
-    glActiveTexture(GL_TEXTURE0 + it.first);
-    glBindTexture(it.second->get_target(), it.second->get_id());
+    case Stereo::Center:
+    case Stereo::Left:
+      for(const auto& it : m_textures)
+      {
+        glActiveTexture(GL_TEXTURE0 + it.first);
+        glBindTexture(std::get<0>(it.second)->get_target(), std::get<0>(it.second)->get_id());
+      }
+      break;
+
+    case Stereo::Right:
+      for(const auto& it : m_textures)
+      {
+        glActiveTexture(GL_TEXTURE0 + it.first);
+        glBindTexture(std::get<1>(it.second)->get_target(), std::get<1>(it.second)->get_id());
+      }
+      break;
   }
+  assert_gl("textures bound");
 
   if (m_program)
   {
     glUseProgram(m_program->get_id());
+    assert_gl("program bound");
 
     if (m_uniforms)
     {
+      assert_gl("apply uniforms:enter");
       m_uniforms->apply(m_program, context);
-      assert_gl("apply uniforms");
+      assert_gl("apply uniforms:exit");
     }
   }
 
-  assert_gl("material");
+  assert_gl("Material::apply:exit");
 }
 
 /* EOF */

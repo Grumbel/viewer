@@ -4,6 +4,7 @@
 #include "camera.hpp"
 #include "material.hpp"
 #include "scene_node.hpp"
+#include "stereo.hpp"
 
 class RenderContext
 {
@@ -12,6 +13,7 @@ private:
   SceneNode* m_node;
   bool m_geometry_pass;
   MaterialPtr m_override_material;
+  Stereo m_stero;
 
 public:
   RenderContext(const Camera& camera,
@@ -19,7 +21,8 @@ public:
     m_camera(camera),
     m_node(node),
     m_geometry_pass(false),
-    m_override_material()
+    m_override_material(),
+    m_stero(Stereo::Center)
   {
   }
 
@@ -46,6 +49,16 @@ public:
   bool is_geometry_pass() const
   {
     return m_geometry_pass;
+  }
+
+  Stereo get_stereo() const
+  {
+    return m_stero;
+  }
+  
+  void set_stereo(Stereo stereo)
+  {
+    m_stero = stereo;
   }
 
   void set_override_material(MaterialPtr material)

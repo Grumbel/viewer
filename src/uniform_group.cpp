@@ -22,6 +22,7 @@
 void
 Uniform<UniformSymbol>::apply(ProgramPtr prog, const RenderContext& ctx)
 {
+  assert_gl("Uniform<UniformSymbol>::apply:enter");
   switch(m_value)
   {
     case UniformSymbol::NormalMatrix:
@@ -52,6 +53,7 @@ Uniform<UniformSymbol>::apply(ProgramPtr prog, const RenderContext& ctx)
       log_error("unknown UniformSymbol %d", static_cast<int>(m_value));
       break;
   }
+  assert_gl("Uniform<UniformSymbol>::apply:exit");
 }
 
 void
@@ -63,6 +65,7 @@ Uniform<UniformCallback>::apply(ProgramPtr prog, const RenderContext& ctx)
 void
 UniformGroup::apply(ProgramPtr prog, const RenderContext& ctx)
 {
+  assert_gl("apply:enter");
   for(auto& uniform : m_uniforms)
   {
     uniform->apply(prog, ctx);
@@ -70,12 +73,14 @@ UniformGroup::apply(ProgramPtr prog, const RenderContext& ctx)
 
   apply_subroutines(prog, GL_VERTEX_SHADER, m_vertex_subroutine_uniforms);
   apply_subroutines(prog, GL_FRAGMENT_SHADER, m_fragment_subroutine_uniforms);
+  assert_gl("apply:exit");
 }
 
 void
 UniformGroup::apply_subroutines(ProgramPtr prog, GLenum shadertype, 
                                 const std::unordered_map<std::string, std::string>& subroutines)
 {
+  assert_gl("apply_subroutines:enter");
   GLint num_uniform_locations;
   glGetProgramStageiv(prog->get_id(), shadertype, GL_ACTIVE_SUBROUTINE_UNIFORM_LOCATIONS, &num_uniform_locations);
   
@@ -114,7 +119,7 @@ UniformGroup::apply_subroutines(ProgramPtr prog, GLenum shadertype,
   //}
   glUniformSubroutinesuiv(shadertype, subroutine_mappings.size(), subroutine_mappings.data());
 
-  assert_gl("apply_subroutines");
+  assert_gl("apply_subroutines:exit");
 }
 
 /* EOF */

@@ -181,7 +181,6 @@ std::unique_ptr<Renderbuffer> g_renderbuffer2;
 
 float g_scale = 1.0f;
 
-enum EyeType { kLeftEye, kRightEye, kCenterEye };
 float g_eye_distance = 0.065f;
 float g_convergence = 1.0f;
 
@@ -248,7 +247,7 @@ void reshape(int w, int h)
   assert_gl("reshape");
 }
 
-void draw_scene(EyeType eye_type)
+void draw_scene(Stereo stereo)
 {
   OpenGLState state;
 
@@ -282,23 +281,23 @@ void draw_scene(EyeType eye_type)
   }
 
   glm::vec3 sideways = glm::normalize(glm::cross(look_at, up)) * g_eye_distance * 0.5f;
-  switch(eye_type)
+  switch(stereo)
   {
-    case kLeftEye:
+    case Stereo::Left:
       sideways = sideways;
       break;
 
-    case kRightEye:
+    case Stereo::Right:
       sideways = -sideways;
       break;
 
-    case kCenterEye:
+    case Stereo::Center:
       sideways = glm::vec3(0);
       break;
   }
   g_camera->look_at(eye + sideways, eye + look_at * g_convergence, up);
   
-  g_scene_manager->render(*g_camera);
+  g_scene_manager->render(*g_camera, false, stereo);
 }
 
 void draw_shadowmap()
@@ -350,7 +349,7 @@ void display()
     {
       g_renderbuffer1->bind();
       if (g_video_material && g_opts.video3d) g_video_material->set_uniform("offset", 0.0f);
-      draw_scene(kCenterEye);
+      draw_scene(Stereo::Center);
       g_renderbuffer1->unbind();
 
       g_renderbuffer1->blit(*g_framebuffer1);
@@ -359,12 +358,12 @@ void display()
     {
       g_renderbuffer1->bind();
       if (g_video_material && g_opts.video3d) g_video_material->set_uniform("offset", 0.0f);
-      draw_scene(kLeftEye);
+      draw_scene(Stereo::Left);
       g_renderbuffer1->unbind();
 
       g_renderbuffer2->bind();
       if (g_video_material && g_opts.video3d) g_video_material->set_uniform("offset", 0.5f);
-      draw_scene(kRightEye);
+      draw_scene(Stereo::Right);
       g_renderbuffer2->unbind();
 
       g_renderbuffer1->blit(*g_framebuffer1);
@@ -390,7 +389,7 @@ void display()
       if (!g_show_calibration)
       {
         material->set_texture(0, g_framebuffer1->get_color_texture());
-        material->set_texture(1, g_framebuffer2->get_color_texture());  
+        material->set_texture(1, g_framebuffer2->get_color_texture());
       }
       else
       {
@@ -432,6 +431,8 @@ void display()
             
     SceneManager mgr;
     mgr.get_world()->attach_entity(entity);
+
+    glViewport(g_viewport_offset.x, g_viewport_offset.y, g_screen_w, g_screen_h);
         
     glClearColor(0.0, 0.0, 0.0, 1.0);
     glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);

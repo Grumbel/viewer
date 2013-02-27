@@ -4,6 +4,7 @@
 #define GL_GLEXT_PROTOTYPES 1
 #include <GL/glext.h>
 #include <boost/lexical_cast.hpp>
+#include <boost/algorithm/string/predicate.hpp>
 #include <stdexcept>
 #include <fstream>
 #include <iostream>
@@ -89,17 +90,16 @@ MaterialParser::MaterialParser(const std::string& filename) :
 void
 MaterialParser::parse(std::istream& in)
 {
+  bool default_program = true;
   bool has_diffuse_texture  = false;
   bool has_specular_texture = false;
   int current_texture_unit = 0;
+  std::string program_vertex   = "src/default.vert";
+  std::string program_fragment = "src/default.frag";
 
   m_material->enable(GL_CULL_FACE);
   m_material->enable(GL_DEPTH_TEST);
   
-  ProgramPtr program = Program::create(Shader::from_file(GL_VERTEX_SHADER, "src/default.vert"),
-                                       Shader::from_file(GL_FRAGMENT_SHADER, "src/default.frag"));
-  m_material->set_program(program);
-
   m_material->set_uniform("material.ambient", glm::vec3(1.0f, 1.0f, 1.0f));
 
   int line_number = 0;
@@ -122,7 +122,20 @@ MaterialParser::parse(std::istream& in)
         else if (args[0] == "material.diffuse_texture")
         {
           has_diffuse_texture = true;
-          m_material->set_texture(current_texture_unit, Texture::from_file(to_string(args.begin()+1, args.end())));
+          if (args.size() == 2)
+          {
+            m_material->set_texture(current_texture_unit, Texture::from_file(to_string(args.begin()+1, args.end())));
+          }
+          else if (args.size() == 3)
+          {
+            m_material->set_texture(current_texture_unit, 
+                                    Texture::from_file(args[1]),
+                                    Texture::from_file(args[2]));
+          }
+          else
+          {
+            throw std::runtime_error("broken");
+          }
           m_material->set_uniform("material.diffuse_texture", current_texture_unit);
           current_texture_unit += 1;
         }
@@ -153,7 +166,47 @@ MaterialParser::parse(std::istream& in)
         else if (args[0] == "blend_mode")
         {
           //m_material->set_
-        }      
+        }
+        else if (args[0] == "program.vertex")
+        {
+          program_vertex = args[1];
+          default_program = false;
+        }
+        else if (args[0] == "program.fragment")
+        {
+          program_fragment = args[1];
+          default_program = false;
+        }
+        else if (args[0] == "material.disable")
+        {
+          if (args[1] == "cull_face")
+          {
+            m_material->disable(GL_CULL_FACE);
+          }
+          else
+          {
+            throw std::runtime_error("unknown token: " + args[1]);
+          }
+        }
+        else if (boost::algorithm::starts_with(args[0], "uniform."))
+        {
+          std::string uniform_name = args[0].substr(8);
+          int count = args.end() - args.begin() - 1;
+          if (count == 3)
+          {
+            m_material->set_uniform(uniform_name,
+                                    to_vec3(args.begin()+1, args.end(), 
+                                            glm::vec3(1.0f, 1.0f, 1.0f)));
+          }
+          else if (count == 1)
+          {
+            m_material->set_uniform(uniform_name, to_float(args.begin()+1, args.end()));
+          }
+          else
+          {
+            throw std::runtime_error("unknown argument count: " + args[0]);
+          }
+        }
         else
         {
           throw std::runtime_error("unknown token: " + args[0]);
@@ -169,25 +222,32 @@ MaterialParser::parse(std::istream& in)
     }
   }
 
-  if (has_diffuse_texture)
-  {
-    m_material->set_subroutine_uniform(GL_FRAGMENT_SHADER, "diffuse_color", "diffuse_color_from_texture");
-  }
-  else
-  {
-    m_material->set_subroutine_uniform(GL_FRAGMENT_SHADER, "diffuse_color", "diffuse_color_from_material");
-  }
+  ProgramPtr program = Program::create(Shader::from_file(GL_VERTEX_SHADER,   program_vertex),
+                                       Shader::from_file(GL_FRAGMENT_SHADER, program_fragment));
+  m_material->set_program(program);
 
-  if (has_specular_texture)
+  if (default_program)
   {
-    m_material->set_subroutine_uniform(GL_FRAGMENT_SHADER, "specular_color", "specular_color_from_texture");
-  }
-  else
-  {
-    m_material->set_subroutine_uniform(GL_FRAGMENT_SHADER, "specular_color", "specular_color_from_material");    
-  }
+    if (has_diffuse_texture)
+    {
+      m_material->set_subroutine_uniform(GL_FRAGMENT_SHADER, "diffuse_color", "diffuse_color_from_texture");
+    }
+    else
+    {
+      m_material->set_subroutine_uniform(GL_FRAGMENT_SHADER, "diffuse_color", "diffuse_color_from_material");
+    }
 
-  m_material->set_subroutine_uniform(GL_FRAGMENT_SHADER, "shadow_value", "shadow_value_4");
+    if (has_specular_texture)
+    {
+      m_material->set_subroutine_uniform(GL_FRAGMENT_SHADER, "specular_color", "specular_color_from_texture");
+    }
+    else
+    {
+      m_material->set_subroutine_uniform(GL_FRAGMENT_SHADER, "specular_color", "specular_color_from_material");    
+    }
+
+    m_material->set_subroutine_uniform(GL_FRAGMENT_SHADER, "shadow_value", "shadow_value_4");
+  }
 }
 
 /* EOF */

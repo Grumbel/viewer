@@ -7,6 +7,7 @@
 #include "scene_node.hpp"
 #include "opengl_state.hpp"
 #include "material.hpp"
+#include "stereo.hpp"
 
 class Camera;
 
@@ -27,8 +28,8 @@ public:
 
   LightPtr create_light();
 
-  void render(const Camera& camera, bool geometry_pass = false);
-  void render_node(const Camera& camera, SceneNode* node, bool geometry_pass);
+  void render(const Camera& camera, bool geometry_pass = false, Stereo stereo = Stereo::Center);
+  void render_node(const Camera& camera, SceneNode* node, bool geometry_pass, Stereo stereo);
 
   void set_override_material(MaterialPtr material);
 

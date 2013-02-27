@@ -35,24 +35,27 @@ SceneManager::create_light()
 }
 
 void
-SceneManager::render(const Camera& camera, bool geometry_pass)
+SceneManager::render(const Camera& camera, bool geometry_pass, Stereo stereo)
 {
   m_world->update_transform();
   m_view->update_transform();
 
-  render_node(camera, m_world.get(), geometry_pass);
+  render_node(camera, m_world.get(), geometry_pass, stereo);
 
   Camera id = camera;
   id.set_position(glm::vec3(0.0f, 0.0f, 0.0f));
-  render_node(id, m_view.get(), geometry_pass);
+  render_node(id, m_view.get(), geometry_pass, stereo);
 }
 
 void
-SceneManager::render_node(const Camera& camera, SceneNode* node, bool geometry_pass)
+SceneManager::render_node(const Camera& camera, SceneNode* node, bool geometry_pass, Stereo stereo)
 {
   OpenGLState state;
 
   RenderContext context(camera, node);
+  
+  context.set_stereo(stereo);
+
   if (geometry_pass)
   {
     context.set_override_material(m_override_material);
@@ -65,7 +68,7 @@ SceneManager::render_node(const Camera& camera, SceneNode* node, bool geometry_p
 
   for(const auto& child : node->get_children())
   {
-    render_node(camera, child.get(), geometry_pass);
+    render_node(camera, child.get(), geometry_pass, stereo);
   }
 }
 
