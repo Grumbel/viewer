@@ -1,0 +1,9 @@
+program.vertex             "src/grid.vert"
+program.fragment           "src/grid.frag"
+material.diffuse           1.0  1.0  1.0
+material.specular          0  0 0
+material.shininess         1
+material.disable           cull_face
+uniform.grid_offset        0.0  0.0  0.0
+uniform.grid_line_width    10.0
+uniform.grid_size          1.0
