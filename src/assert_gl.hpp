@@ -21,17 +21,20 @@
 #include <sstream>
 #include <stdexcept>
 
-#define assert_gl(fmt) assert_gl_1(__FILE__, __LINE__, fmt)
+#include "format.hpp"
 
-inline void assert_gl_1(const char* file, int line, const char* message)
+#define assert_gl(...) assert_gl_1(__FILE__, __LINE__, __VA_ARGS__)
+
+template<typename ...Arg>
+inline void assert_gl_1(const char* file, int line, const std::string& fmt, Arg... arg)
 {
   GLenum error = glGetError();
   if(error != GL_NO_ERROR) 
   {
-    std::ostringstream msg;
-    msg << file << ':' << line << ": OpenGLError while '" << message << "': "
-        << gluErrorString(error);
-    throw std::runtime_error(msg.str());
+    throw std::runtime_error(format("%s:%d: OpenGLError while '%s': %s", 
+                                    file, line, 
+                                    format(fmt, arg...), 
+                                    gluErrorString(error)));
   }
 }
 

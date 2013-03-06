@@ -33,12 +33,6 @@ void unpack(boost::format& fmt, const Head& head, Rest... rest)
 }
 
 template<typename ...Arg>
-void format(const std::string& str)
-{
-  std::cout << str;
-}
-
-template<typename ...Arg>
 void print(const std::string& str, Arg... arg)
 {
   boost::format fmt(str);
