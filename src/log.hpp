@@ -18,65 +18,13 @@
 #define HEADER_LOG_HPP
 
 #include <iostream>
-#include <boost/format.hpp>
 
-namespace logging {
+#include "format.hpp"
 
-inline void unpack(boost::format& fmt)
-{
-}
-
-template<typename Head, typename ...Rest> 
-void unpack(boost::format& fmt, const Head& head, Rest... rest)
-{
-  unpack(fmt % head, rest...);
-}
-
-template<typename ...Arg>
-void print(const std::string& str, Arg... arg)
-{
-  boost::format fmt(str);
-  unpack(fmt, arg...);
-  std::cout << fmt;
-  std::cout << std::endl;
-}
-
-template<typename Out, typename ...Arg>
-void print(Out& out, const std::string& str, Arg... arg)
-{
-  boost::format fmt(str);
-  unpack(fmt, arg...);
-  out << fmt;
-  out << std::endl;
-}
-
-template<typename Out, typename Head>
-void print(Out& out, const Head& head)
-{
-  out << head << std::endl;
-}
-
-/*
-template<typename ...Arg>
-void print(Arg... arg)
-{
-  print(std::cout, arg...);
-}
-
-template<typename Out, typename Head, typename ...Arg>
-void print(Out& out, const Head& head, Arg... arg)
-{
-  out << head;
-  print(out, arg...);
-}
-*/
-
-} // namespace logging
-
-#define log_info(...)  logging::print(std::cout, "[INFO] " __VA_ARGS__)
-#define log_warn(...)  logging::print(std::cout, "[WARN] " __VA_ARGS__)
-#define log_error(...)  logging::print(std::cout, "[ERROR] " __VA_ARGS__)
-#define log_debug(...) logging::print(std::cout, "[DEBUG]" __VA_ARGS__)
+#define log_info(...)  format(std::cout, "[INF] " __VA_ARGS__)
+#define log_warn(...)  format(std::cout, "[WAR] " __VA_ARGS__)
+#define log_error(...) format(std::cout, "[ERR] " __VA_ARGS__)
+#define log_debug(...) format(std::cout, "[DBG] " __VA_ARGS__)
 
 #endif
 
