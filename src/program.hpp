@@ -8,6 +8,7 @@
 #include <glm/glm.hpp>
 #include <glm/ext.hpp>
 
+#include "assert_gl.hpp"
 #include "log.hpp"
 #include "shader.hpp"
 
@@ -44,6 +45,7 @@ public:
   template<typename T>
   void set_uniform(const std::string& name, const T& v)
   {
+    assert_gl("set_uniform:enter");
     int loc = glGetUniformLocation(m_program, name.c_str());
     if (loc == -1)
     {
@@ -53,6 +55,7 @@ public:
     {
       set_uniform(loc, v);
     }
+    assert_gl("set_uniform:exit: %s", name);
   }
   
   void set_uniform(GLint loc, float v) { glProgramUniform1f(m_program, loc, v); }
