@@ -21,10 +21,10 @@
 
 #include "format.hpp"
 
-#define log_info(...)  format(std::cout, "[INF] " __VA_ARGS__); std::endl(std::cout)
-#define log_warn(...)  format(std::cout, "[WAR] " __VA_ARGS__); std::endl(std::cout)
-#define log_error(...) format(std::cout, "[ERR] " __VA_ARGS__); std::endl(std::cout)
-#define log_debug(...) format(std::cout, "[DBG] " __VA_ARGS__); std::endl(std::cout)
+#define log_info(...)  do { ::format(std::cout, "[INF] " __VA_ARGS__); std::endl(std::cout); } while(false)
+#define log_warn(...)  do { ::format(std::cout, "[WAR] " __VA_ARGS__); std::endl(std::cout); } while(false)
+#define log_error(...) do { ::format(std::cout, "[ERR] " __VA_ARGS__); std::endl(std::cout); } while(false)
+#define log_debug(...) do { ::format(std::cout, "[DBG] " __VA_ARGS__); std::endl(std::cout); } while(false)
 
 #endif
 
