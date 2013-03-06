@@ -23,7 +23,7 @@ SceneNode::SceneNode(const std::string& name) :
   m_scale(1.0f , 1.0f, 1.0f),
   m_global_transform(1),
   m_children(),
-  m_entities()
+  m_models()
 {
 }
 
@@ -89,9 +89,9 @@ SceneNode::update_transform(const glm::mat4& parent_transform)
 }
 
 void
-SceneNode::attach_entity(ModelPtr entity)
+SceneNode::attach_model(ModelPtr model)
 {
-  m_entities.push_back(entity);
+  m_models.push_back(model);
 }
 
 void

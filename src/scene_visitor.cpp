@@ -20,9 +20,9 @@ SceneVisitor::visit(SceneNode* node, const glm::mat4& matrix)
   m = glm::translate(node->get_position()) * m;
   m = glm::mat4_cast(node->get_orientation()) * m;
 
-  for(auto& entity : node->get_entities())
+  for(auto& model : node->get_models())
   {
-    visit(entity);
+    visit(model);
   }
 
   for(const auto& child : node->get_children())
@@ -32,9 +32,9 @@ SceneVisitor::visit(SceneNode* node, const glm::mat4& matrix)
 }
 
 void
-SceneVisitor::visit(ModelPtr entity)
+SceneVisitor::visit(ModelPtr model)
 {
-  // entity->visit(this);
+  // model->visit(this);
 }
 
 /* EOF */

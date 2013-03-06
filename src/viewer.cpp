@@ -422,15 +422,15 @@ void display()
       }
     } // setup material
 
-    ModelPtr entity = std::make_shared<Model>();
-    entity->add_mesh(Mesh::create_rect(0.0f, 0.0f, g_screen_w, g_screen_h, -20.0f));
-    entity->set_material(material);
+    ModelPtr model = std::make_shared<Model>();
+    model->add_mesh(Mesh::create_rect(0.0f, 0.0f, g_screen_w, g_screen_h, -20.0f));
+    model->set_material(material);
             
     Camera camera;
     camera.ortho(0, g_screen_w, g_screen_h, 0.0f, 0.1f, 10000.0f);
             
     SceneManager mgr;
-    mgr.get_world()->attach_entity(entity);
+    mgr.get_world()->attach_model(model);
 
     glViewport(g_viewport_offset.x, g_viewport_offset.y, g_screen_w, g_screen_h);
         
@@ -747,20 +747,20 @@ void init()
       if (false)
       {
         auto node = g_scene_manager->get_world()->create_child();
-        ModelPtr entity = std::make_shared<Model>();
+        ModelPtr model = std::make_shared<Model>();
 
-        entity->add_mesh(Mesh::create_plane(5.0f));
+        model->add_mesh(Mesh::create_plane(5.0f));
         node->set_position(glm::vec3(0.0f, 0.0f, -10.0f));
         node->set_orientation(glm::quat(glm::vec3(glm::half_pi<float>(), 0.0f, 0.0f)));
         node->set_scale(glm::vec3(4.0f, 1.0f, 2.25f));
 
-        entity->set_material(g_video_material);
-        node->attach_entity(entity);
+        model->set_material(g_video_material);
+        node->attach_model(model);
       }
       else
       {
         auto node = g_scene_manager->get_world()->create_child();
-        ModelPtr entity = std::make_shared<Model>();
+        ModelPtr model = std::make_shared<Model>();
 
         int rings = 16;
         int segments = 16;
@@ -770,27 +770,27 @@ void init()
         //float hfov = glm::radians(90.0f);
         //float vfov = glm::radians(50.0f);
 
-        entity->add_mesh(Mesh::create_curved_screen(15.0f, hfov, vfov, rings, segments));
+        model->add_mesh(Mesh::create_curved_screen(15.0f, hfov, vfov, rings, segments));
 
-        entity->add_mesh(Mesh::create_curved_screen(15.0f, hfov, vfov, rings, segments, 0, 16, false, true));
-        entity->add_mesh(Mesh::create_curved_screen(15.0f, hfov, vfov, rings, segments, 0, -16, false, true));
+        model->add_mesh(Mesh::create_curved_screen(15.0f, hfov, vfov, rings, segments, 0, 16, false, true));
+        model->add_mesh(Mesh::create_curved_screen(15.0f, hfov, vfov, rings, segments, 0, -16, false, true));
 
-        entity->set_material(g_video_material);
-        node->attach_entity(entity);
+        model->set_material(g_video_material);
+        node->attach_model(model);
 
-        entity = std::make_shared<Model>();
+        model = std::make_shared<Model>();
 
-        entity->add_mesh(Mesh::create_curved_screen(15.0f, hfov, vfov, rings, segments, 16, 0, true, false));
-        entity->add_mesh(Mesh::create_curved_screen(15.0f, hfov, vfov, rings, segments, -16, 0, true, false));
+        model->add_mesh(Mesh::create_curved_screen(15.0f, hfov, vfov, rings, segments, 16, 0, true, false));
+        model->add_mesh(Mesh::create_curved_screen(15.0f, hfov, vfov, rings, segments, -16, 0, true, false));
 
-        entity->add_mesh(Mesh::create_curved_screen(15.0f, hfov, vfov, rings, segments, 16, 16, true, true));
-        entity->add_mesh(Mesh::create_curved_screen(15.0f, hfov, vfov, rings, segments, -16, 16, true, true));
+        model->add_mesh(Mesh::create_curved_screen(15.0f, hfov, vfov, rings, segments, 16, 16, true, true));
+        model->add_mesh(Mesh::create_curved_screen(15.0f, hfov, vfov, rings, segments, -16, 16, true, true));
 
-        entity->add_mesh(Mesh::create_curved_screen(15.0f, hfov, vfov, rings, segments, 16, -16, true, true));
-        entity->add_mesh(Mesh::create_curved_screen(15.0f, hfov, vfov, rings, segments, -16, -16, true, true));
+        model->add_mesh(Mesh::create_curved_screen(15.0f, hfov, vfov, rings, segments, 16, -16, true, true));
+        model->add_mesh(Mesh::create_curved_screen(15.0f, hfov, vfov, rings, segments, -16, -16, true, true));
 
-        entity->set_material(g_video_material_flip);
-        node->attach_entity(entity);
+        model->set_material(g_video_material_flip);
+        node->attach_model(model);
       }
     }
 
@@ -802,35 +802,35 @@ void init()
         auto node = g_scene_manager->get_world()->create_child();
         node->set_position(glm::vec3(0, 0, 0));
         auto mesh = Mesh::create_plane(75.0f);
-        ModelPtr entity = std::make_shared<Model>();
-        entity->add_mesh(std::move(mesh));
-        entity->set_material(phong_material);
-        node->attach_entity(entity);
+        ModelPtr model = std::make_shared<Model>();
+        model->add_mesh(std::move(mesh));
+        model->set_material(phong_material);
+        node->attach_model(model);
       }
 
       auto mesh = Mesh::create_sphere(0.2, 8, 16);
-      ModelPtr entity = std::make_shared<Model>();
-      entity->add_mesh(std::move(mesh));
-      entity->set_material(phong_material);
+      ModelPtr model = std::make_shared<Model>();
+      model->add_mesh(std::move(mesh));
+      model->set_material(phong_material);
 
       auto origin = g_scene_manager->get_world()->create_child();
       origin->set_position(glm::vec3(5, 5, 5));
 
       auto sun = origin->create_child();
       sun->set_scale(glm::vec3(3.0f, 3.0f, 3.0f));
-      sun->attach_entity(entity);
+      sun->attach_model(model);
       g_nodes.push_back(sun);
 
       auto earth = sun->create_child();
       earth->set_scale(glm::vec3(0.5f, 0.5f, 0.5f));
       earth->set_position(glm::vec3(2.0f, 0, 0));
-      earth->attach_entity(entity);
+      earth->attach_model(model);
       g_nodes.push_back(earth);
 
       auto moon = earth->create_child();
       moon->set_scale(glm::vec3(0.5f, 0.5f, 0.5f));
       moon->set_position(glm::vec3(2, 0, 0));
-      moon->attach_entity(entity);
+      moon->attach_model(model);
       //g_nodes.push_back(moon);
     }
 
@@ -843,10 +843,10 @@ void init()
       {
         auto child = parent->create_child();
         child->set_position(glm::vec3(1.0f, 0.0f, -3.0f));
-        ModelPtr entity = std::make_shared<Model>();
-        entity->add_mesh(Mesh::create_sphere(0.5f, 16, 8));
-        entity->set_material(phong_material);
-        child->attach_entity(entity);
+        ModelPtr model = std::make_shared<Model>();
+        model->add_mesh(Mesh::create_sphere(0.5f, 16, 8));
+        model->set_material(phong_material);
+        child->attach_model(model);
 
         parent = child;
       }
@@ -885,12 +885,12 @@ void init()
     if (true)
     { // create a skybox
       auto mesh = Mesh::create_skybox(500.0f);
-      ModelPtr entity = std::make_shared<Model>();
-      entity->add_mesh(std::move(mesh));
-      entity->set_material(MaterialFactory::get().create("skybox"));
+      ModelPtr model = std::make_shared<Model>();
+      model->add_mesh(std::move(mesh));
+      model->set_material(MaterialFactory::get().create("skybox"));
 
       auto node = g_scene_manager->get_world()->create_child();
-      node->attach_entity(entity);
+      node->attach_model(model);
     }
 
     if (false)
@@ -934,16 +934,16 @@ void init()
         mesh->attach_float_array("alpha", alpha);
       }
 
-      ModelPtr entity = std::make_shared<Model>();
-      entity->add_mesh(std::move(mesh));
-      entity->set_material(material);
+      ModelPtr model = std::make_shared<Model>();
+      model->add_mesh(std::move(mesh));
+      model->set_material(material);
 
       for(int i = 0; i < 10; ++i)
       {
         auto node = g_scene_manager->get_world()->create_child();
         node->set_position(glm::vec3(1.0f, i * 5.0f, -1.0f));
         node->set_orientation(glm::quat());
-        node->attach_entity(entity);
+        node->attach_model(model);
       }
     }
   }

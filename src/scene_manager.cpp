@@ -61,9 +61,9 @@ SceneManager::render_node(const Camera& camera, SceneNode* node, bool geometry_p
     context.set_override_material(m_override_material);
   }
 
-  for(auto& entity : node->get_entities())
+  for(auto& model : node->get_models())
   {
-    entity->draw(context);
+    model->draw(context);
   }
 
   for(const auto& child : node->get_children())

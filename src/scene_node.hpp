@@ -35,7 +35,7 @@ private:
   glm::mat4 m_global_transform;
 
   std::vector<std::unique_ptr<SceneNode> > m_children;
-  std::vector<ModelPtr> m_entities;
+  std::vector<ModelPtr> m_models;
 
 public:
   SceneNode(const std::string& name = std::string());
@@ -54,12 +54,12 @@ public:
 
   void update_transform(const glm::mat4& parent_transform = glm::mat4(1));
 
-  void attach_entity(ModelPtr entity);
+  void attach_model(ModelPtr model);
   void attach_child(std::unique_ptr<SceneNode> child);
   SceneNode* create_child();
 
   const std::vector<std::unique_ptr<SceneNode> >& get_children() const { return m_children; }
-  const std::vector<ModelPtr>&   get_entities() const { return m_entities; }
+  const std::vector<ModelPtr>&   get_models() const { return m_models; }
 
 private:
   SceneNode(const SceneNode&);

@@ -50,8 +50,6 @@ public:
   }
 };
 
-typedef Model Entity;
-
 #endif
 
 /* EOF */

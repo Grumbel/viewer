@@ -6,7 +6,6 @@
 
 #include "model.hpp"
 
-//class Entity;
 class SceneManager;
 class SceneNode;
 

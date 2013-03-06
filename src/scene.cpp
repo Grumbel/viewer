@@ -127,7 +127,7 @@ Scene::parse_istream(std::istream& in)
         
         if (model)
         {
-          node->attach_entity(model);
+          node->attach_model(model);
         }
 
         if (nodes.find(name) != nodes.end())
