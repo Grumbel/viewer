@@ -62,6 +62,7 @@ MaterialFactory::from_file(const boost::filesystem::path& filename)
 {
   MaterialPtr material = MaterialParser::from_file(filename);
 
+  material->set_uniform("ModelMatrix", UniformSymbol::ModelMatrix);
   material->set_uniform("ModelViewMatrix", UniformSymbol::ModelViewMatrix);
   material->set_uniform("NormalMatrix", UniformSymbol::NormalMatrix);
   material->set_uniform("MVP", UniformSymbol::ModelViewProjectionMatrix);
