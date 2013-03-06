@@ -16,8 +16,7 @@ Scene::from_file(const std::string& filename)
   std::ifstream in(filename.c_str());
   if(!in)
   {
-    std::cout << filename << ": File not found" << std::endl;
-    exit(EXIT_FAILURE);
+    throw std::runtime_error(format("%s: File not found", filename));
   }
   else
   {

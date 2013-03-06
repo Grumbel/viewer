@@ -143,7 +143,6 @@ Armature::Armature() :
 void
 Armature::bind_uniform(int loc)
 {
-  //std::cout << "bonesize: " << m_bones.size() << std::endl;
   for(size_t i = 0; i < m_bones.size(); ++i)
   {
     //matrices.push_back(glm::mat4(1));

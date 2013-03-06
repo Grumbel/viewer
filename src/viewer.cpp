@@ -692,7 +692,7 @@ void keyboard(SDL_KeyboardEvent key, int x, int y)
       break;
 
     default:
-      std::cout << "unknown key: " << static_cast<int>(key.keysym.sym) << std::endl;
+      log_info("unknown key: %d", static_cast<int>(key.keysym.sym));
       break;
   }
 }
@@ -1465,7 +1465,6 @@ wiimote_mesg_callback(cwiid_wiimote_t*, int mesg_count, union cwiid_mesg msg[], 
           {
             update_offsets(p[0], p[1]);
           }
-          //std::cout << std::endl;
         }
         break;
         

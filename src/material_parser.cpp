@@ -215,10 +215,7 @@ MaterialParser::parse(std::istream& in)
     }
     catch(const std::exception& err)
     {
-      std::ostringstream out;
-      out << m_filename << ":" << line_number << ": error: " << err.what() << std::endl;
-      out << line << std::endl;
-      throw std::runtime_error(out.str());
+      throw std::runtime_error(format("%s:%d: error: %s at line:\n%s", m_filename, line_number, err.what(), line));
     }
   }
 

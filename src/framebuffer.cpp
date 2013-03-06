@@ -46,13 +46,13 @@ Framebuffer::Framebuffer(int width, int height) :
   GLenum complete = glCheckFramebufferStatus(GL_FRAMEBUFFER);
   if (complete != GL_FRAMEBUFFER_COMPLETE)
   {
-    std::cout << "Framebuffer incomplete: " << complete << std::endl;
+    log_error("Framebuffer incomplete: %s", complete);
   }
   assert_gl("framebuffer");
 
-  std::cout << "FBO: " << m_fbo << std::endl;
-  std::cout << "Depth Buffer: " << m_depth_buffer << std::endl;
-  std::cout << "Color Buffer: " << m_color_buffer << std::endl;
+  log_info("FBO: %s", m_fbo);
+  log_info("Depth Buffer: %s", m_depth_buffer);
+  log_info("Color Buffer: %s", m_color_buffer);
 
   glBindFramebuffer(GL_FRAMEBUFFER, 0);
 }

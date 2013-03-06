@@ -28,6 +28,8 @@
 #include <stdexcept>
 #include <vector>
 
+#include "log.hpp"
+
 VideoProcessor::VideoProcessor(const std::string& filename) :
   m_mainloop(Glib::MainLoop::create()),
   m_pipeline(),
@@ -55,7 +57,7 @@ VideoProcessor::VideoProcessor(const std::string& filename) :
   m_pipeline = Glib::RefPtr<Gst::Pipeline>::cast_dynamic(m_playbin);
 
   Glib::RefPtr<Gst::Element> source = m_pipeline->get_element("mysource");
-  std::cout << "SOURC: " << source << std::endl;
+  log_info("SOURC: %s", source);
   source->set_property("location", filename);
 
   m_fakesink = m_pipeline->get_element("mysink");
@@ -107,13 +109,13 @@ VideoProcessor::get_position()
     }
     else
     {
-      std::cout << "error: could not get format" << std::endl;
+      log_error("could not get format");
       return 0;
     }
   }
   else
   {
-    std::cout << "QUERY FAILURE" << std::endl;
+    log_error("QUERY FAILURE");
     return 0;
   }
 }
@@ -138,9 +140,7 @@ VideoProcessor::on_bus_message(const Glib::RefPtr<Gst::Message>& msg)
   if (msg->get_message_type() & Gst::MESSAGE_ERROR)
   {
     Glib::RefPtr<Gst::MessageError> error_msg = Glib::RefPtr<Gst::MessageError>::cast_dynamic(msg);
-    std::cout << "Error: "
-              << msg->get_source()->get_name() << ": "
-              << error_msg->parse().what() << std::endl;
+    log_error("Error: %s: %s", msg->get_source()->get_name(), error_msg->parse().what());
     //assert(!"Failure");
     Glib::signal_idle().connect(sigc::mem_fun(this, &VideoProcessor::shutdown));
   }
@@ -152,26 +152,26 @@ VideoProcessor::on_bus_message(const Glib::RefPtr<Gst::Message>& msg)
     Gst::State pending;
     state_msg->parse(oldstate, newstate, pending);
 
-    std::cout << "message: " << msg->get_source()->get_name() << " " << oldstate << " " << newstate << std::endl;
+    log_info("message: %s %s %s",  msg->get_source()->get_name(), oldstate, newstate);
 
     if (msg->get_source() == m_fakesink)
     {
       if (newstate == Gst::STATE_PAUSED)
       {
-        std::cout << "                       --------->>>>>>> PAUSE" << std::endl;
+        log_info("                       --------->>>>>>> PAUSE");
       }
 
       if (newstate == Gst::STATE_PAUSED)
       {
         if (!m_running)
         {
-          std::cout << "##################################### ONLY ONCE: " << " ################" << std::endl;
+          log_info("##################################### ONLY ONCE: ################");
           //m_thumbnailer_pos = m_thumbnailer.get_thumbnail_pos(get_duration());
           //std::reverse(m_thumbnailer_pos.begin(), m_thumbnailer_pos.end());
           m_running = true;
           //seek_step();
 
-          std::cout << "---------- send_buffer_probe()" << std::endl;
+          log_info("---------- send_buffer_probe()");
           Glib::RefPtr<Gst::Pad> pad = m_fakesink->get_static_pad("sink");
           pad->add_buffer_probe(sigc::mem_fun(this, &VideoProcessor::on_buffer_probe));
         }
@@ -180,52 +180,52 @@ VideoProcessor::on_bus_message(const Glib::RefPtr<Gst::Message>& msg)
   }
   else if (msg->get_message_type() & Gst::MESSAGE_EOS)
   {
-    std::cout << "end of stream" << std::endl;
+    log_info("end of stream");
     Glib::signal_idle().connect(sigc::mem_fun(this, &VideoProcessor::shutdown));
   }
   else if (msg->get_message_type() & Gst::MESSAGE_TAG) 
   {
-    std::cout << "MESSAGE_TAG" << std::endl;
+    log_info("MESSAGE_TAG");
   }
   else if (msg->get_message_type() & Gst::MESSAGE_ASYNC_DONE)
   {
-    std::cout << "MESSAGE_ASYNC_DONE" << std::endl;
+    log_info("MESSAGE_ASYNC_DONE");
   }
   else if (msg->get_message_type() & Gst::MESSAGE_STREAM_STATUS) 
   {
-    std::cout << "MESSAGE_STREAM_STATUS" << std::endl;
+    log_info("MESSAGE_STREAM_STATUS");
   }
   else if (msg->get_message_type() & Gst::MESSAGE_REQUEST_STATE) 
   {
-    std::cout << "MESSAGE_REQUEST_STATE" << std::endl;
+    log_info("MESSAGE_REQUEST_STATE");
   }
   else if (msg->get_message_type() & Gst::MESSAGE_STEP_START) 
   {
-    std::cout << "MESSAGE_STEP_START" << std::endl;
+    log_info("MESSAGE_STEP_START");
   }
   else if (msg->get_message_type() & Gst::MESSAGE_REQUEST_STATE)
   {
-    std::cout << "MESSAGE_REQUEST_STATE" << std::endl;
+    log_info("MESSAGE_REQUEST_STATE");
   }
   else if (msg->get_message_type() & Gst::MESSAGE_QOS) 
   {
-    std::cout << "MESSAGE_QOS" << std::endl;
+    log_info("MESSAGE_QOS");
   }
   else if (msg->get_message_type() & Gst::MESSAGE_LATENCY)
   {
-    std::cout << "MESSAGE_LATENCY" << std::endl;
+    log_info("MESSAGE_LATENCY");
   }
   else if (msg->get_message_type() & Gst::MESSAGE_DURATION)
   {
-    std::cout << "MESSAGE_DURATION" << std::endl;
+    log_info("MESSAGE_DURATION");
   }
   else if (msg->get_message_type() & GST_MESSAGE_NEW_CLOCK)
   {
-    std::cout << "MESSAGE_NEW_CLOCK" << std::endl;
+    log_info("MESSAGE_NEW_CLOCK");
   }
   else
   {
-    std::cout << "unknown message: " << msg->get_message_type() << std::endl;
+    log_info("unknown message: %d", msg->get_message_type());
     Glib::signal_idle().connect(sigc::mem_fun(this, &VideoProcessor::shutdown));
   }
 }
@@ -233,7 +233,7 @@ VideoProcessor::on_bus_message(const Glib::RefPtr<Gst::Message>& msg)
 bool
 VideoProcessor::shutdown()
 {
-  std::cout << "Going to shutdown!!!!!!!!!!!" << std::endl;
+  log_info("Going to shutdown!!!!!!!!!!!");
   m_playbin->set_state(Gst::STATE_NULL);
   m_mainloop->quit();
   return false;
@@ -244,7 +244,7 @@ VideoProcessor::update()
 {
   while(m_mainloop->get_context()->iteration(false))
   {
-    //std::cout << "looping" << std::endl;
+    //log_info("looping");
   }
 
   std::lock_guard<std::mutex> lock(m_buffer_mutex);
@@ -263,13 +263,13 @@ VideoProcessor::update()
     
     if (false)
     {
-      std::cout << std::this_thread::get_id() << ": on_buffer_probe: " 
-                << " " << m_buffer->get_size() << " " << get_position() / Gst::SECOND
-                << " " << width << "x" << height 
-                << std::endl;
+      log_info("%s: on_buffer_probe: %s %s %sx%s",
+               std::this_thread::get_id(),
+               m_buffer->get_size(),
+               get_position() / Gst::SECOND,
+               width, height);
     }
 
-    // std::cout << "Size: " << width << "x" << height << " pitch: " << m_buffer->get_size() / height << std::endl;
     if (!m_texture)
     {
       m_texture = Texture::from_rgb_data(width, height, m_buffer->get_size() / height, m_buffer->get_data());
@@ -322,7 +322,7 @@ VideoProcessor::seek(gint64 seek_pos)
                         Gst::SEEK_FLAG_FLUSH | Gst::SEEK_FLAG_ACCURATE,
                         seek_pos))
   {
-    std::cout << "seek failure" << std::endl;
+    log_info("seek failure");
   }
 }
 
