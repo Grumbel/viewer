@@ -764,11 +764,11 @@ void init()
 
         int rings = 16;
         int segments = 16;
-        //float hfov = glm::radians(125.0f);
-        //float vfov = glm::radians(70.3f);
+        float hfov = glm::radians(125.0f);
+        float vfov = glm::radians(70.3f);
 
-        float hfov = glm::radians(90.0f);
-        float vfov = glm::radians(50.0f);
+        //float hfov = glm::radians(90.0f);
+        //float vfov = glm::radians(50.0f);
 
         entity->add_mesh(Mesh::create_curved_screen(15.0f, hfov, vfov, rings, segments));
 
@@ -861,22 +861,25 @@ void init()
       g_scene_manager->get_world()->attach_child(std::move(node));
     }
 
+    if (false)
     {
-      auto node = Scene::from_file("data/wiimote.mod");
-      g_wiimote_gyro_node = node.get();
-      g_scene_manager->get_world()->attach_child(std::move(node));
-    }
+      {
+        auto node = Scene::from_file("data/wiimote.mod");
+        g_wiimote_gyro_node = node.get();
+        g_scene_manager->get_world()->attach_child(std::move(node));
+      }
 
-    {
-      auto node = Scene::from_file("data/wiimote.mod");
-      g_wiimote_node = node.get();
-      g_scene_manager->get_world()->attach_child(std::move(node));
-    }
+      {
+        auto node = Scene::from_file("data/wiimote.mod");
+        g_wiimote_node = node.get();
+        g_scene_manager->get_world()->attach_child(std::move(node));
+      }
 
-    {
-      auto node = Scene::from_file("data/wiimote.mod");
-      g_wiimote_accel_node = node.get();
-      g_scene_manager->get_world()->attach_child(std::move(node));
+      {
+        auto node = Scene::from_file("data/wiimote.mod");
+        g_wiimote_accel_node = node.get();
+        g_scene_manager->get_world()->attach_child(std::move(node));
+      }
     }
 
     if (true)
@@ -1251,7 +1254,7 @@ void process_joystick(float dt)
 
     pitch = glm::clamp(pitch, -glm::half_pi<float>() + 0.001f, glm::half_pi<float>() - 0.001f);
 
-    if (g_wiimote_camera_control)
+    if (false && g_wiimote_camera_control)
     {
       pitch = 0.0f;
     }
@@ -1335,7 +1338,7 @@ void main_loop()
     process_events();
     process_joystick(delta / 1000.0f);
 
-    if (g_wiimote_manager)
+    if (false && g_wiimote_manager)
     {
       //g_wiimote_manager->update();
       //g_wiimote_manager->get_accumulated();
