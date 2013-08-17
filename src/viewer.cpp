@@ -102,7 +102,8 @@ Options g_opts;
 int g_mouse_x = 0;
 int g_mouse_y = 0;
 
-SDL_Surface* g_screen = nullptr;
+SDL_Window* g_window = nullptr;
+SDL_GLContext g_gl_context = nullptr;
 
 TexturePtr g_calibration_left_texture;
 TexturePtr g_calibration_right_texture;
@@ -239,8 +240,6 @@ void reshape(int w, int h)
 
   g_renderbuffer1.reset(new Renderbuffer(g_screen_w, g_screen_h));
   g_renderbuffer2.reset(new Renderbuffer(g_screen_w, g_screen_h));
-
-  g_screen = SDL_SetVideoMode(g_screen_w, g_screen_h, 0, SDL_OPENGL | SDL_RESIZABLE);
 
   g_aspect_ratio = static_cast<GLfloat>(g_screen_w)/static_cast<GLfloat>(g_screen_h);
 
@@ -464,70 +463,69 @@ void display()
     }
   }
 
-  //glutSwapBuffers();
-  SDL_GL_SwapBuffers();
+  SDL_GL_SwapWindow(g_window);
   assert_gl("display:exit()");
 }
 
 void keyboard(SDL_KeyboardEvent key, int x, int y)
 {
-  switch (key.keysym.sym)
+  switch (key.keysym.scancode)
   {
-    case SDLK_TAB:
+    case SDL_SCANCODE_TAB:
       g_show_menu = !g_show_menu;
       break;
 
-    case SDLK_F3:
+    case SDL_SCANCODE_F3:
       g_show_calibration = !g_show_calibration;
       break;
 
-    case SDLK_ESCAPE:
+    case SDL_SCANCODE_ESCAPE:
       exit(EXIT_SUCCESS);
       break;
 
-    case SDLK_9:
+    case SDL_SCANCODE_9:
       if (g_video_player)
       {
         g_video_player->seek(g_video_player->get_position() - 10 * Gst::SECOND);
       }     
       break;
 
-    case SDLK_0:
+    case SDL_SCANCODE_0:
       if (g_video_player)
       {
         g_video_player->seek(g_video_player->get_position() + 10 * Gst::SECOND);
       }
       break;
 
-    case SDLK_n:
+    case SDL_SCANCODE_N:
       g_eye_distance += 0.01f;
       break;
 
-    case SDLK_t:
+    case SDL_SCANCODE_T:
       g_eye_distance -= 0.01f;
       break;
 
-    case SDLK_SPACE:
+    case SDL_SCANCODE_SPACE:
       g_draw_look_at = !g_draw_look_at;
       break;
 
-    case SDLK_c:
+    case SDL_SCANCODE_C:
       g_ipd += 1;
       break;
 
-    case SDLK_r:
+    case SDL_SCANCODE_R:
       g_ipd -= 1;
       break;
 
-    case SDLK_PLUS:
+    case SDL_SCANCODE_KP_PLUS:
       g_scale *= 1.05f;
       break;
 
-    case SDLK_MINUS:
+    case SDL_SCANCODE_KP_MINUS:
       g_scale /= 1.05f;
       break;
 
-    case SDLK_z:
+    case SDL_SCANCODE_Z:
       {
         GLdouble clip_plane[] = { 0.0, 0.0, 1.0, 1.0 };
 
@@ -541,7 +539,7 @@ void keyboard(SDL_KeyboardEvent key, int x, int y)
       }
       break;
 
-    case SDLK_g:
+    case SDL_SCANCODE_G:
       {
         GLdouble clip_plane[] = { 0.0, 1.0, 1.0, 0.0 };
         glClipPlane(GL_CLIP_PLANE0, clip_plane);
@@ -549,7 +547,7 @@ void keyboard(SDL_KeyboardEvent key, int x, int y)
       }
       break;
 
-    case SDLK_d:
+    case SDL_SCANCODE_D:
       {
         int stereo_mode = static_cast<int>(g_stereo_mode) + 1;
         if (stereo_mode >= static_cast<int>(StereoMode::End))
@@ -563,15 +561,15 @@ void keyboard(SDL_KeyboardEvent key, int x, int y)
       }
       break;
 
-    case SDLK_KP8: // up
+    case SDL_SCANCODE_KP_8: // up
       g_eye += glm::normalize(g_look_at);
       break;
 
-    case SDLK_KP2: // down
+    case SDL_SCANCODE_KP_2: // down
       g_eye -= glm::normalize(g_look_at);
       break;
 
-    case SDLK_KP4: // left
+    case SDL_SCANCODE_KP_4: // left
       {
         glm::vec3 dir = glm::normalize(g_look_at);
         dir = glm::rotate(dir, 90.0f, g_up);
@@ -579,7 +577,7 @@ void keyboard(SDL_KeyboardEvent key, int x, int y)
       }
       break;
 
-    case SDLK_KP6: // right
+    case SDL_SCANCODE_KP_6: // right
       {
         glm::vec3 dir = glm::normalize(g_look_at);
         dir = glm::rotate(dir, 90.0f, g_up);
@@ -587,31 +585,31 @@ void keyboard(SDL_KeyboardEvent key, int x, int y)
       }
       break;
 
-    case SDLK_KP7: // kp_pos1
+    case SDL_SCANCODE_KP_7: // kp_pos1
       g_look_at = glm::rotate(g_look_at, 5.0f, g_up);
       break;
 
-    case SDLK_KP9: // kp_raise
+    case SDL_SCANCODE_KP_9: // kp_raise
       g_look_at = glm::rotate(g_look_at, -5.0f, g_up);
       break;
 
-    case SDLK_KP1:
+    case SDL_SCANCODE_KP_1:
       g_eye -= glm::normalize(g_up);
       break;
 
-    case SDLK_KP3:
+    case SDL_SCANCODE_KP_3:
       g_eye += glm::normalize(g_up);
       break;
 
-    case SDLK_KP_MULTIPLY:
+    case SDL_SCANCODE_KP_MULTIPLY:
       g_fov += glm::radians(1.0f);
       break;
 
-    case SDLK_KP_DIVIDE:
+    case SDL_SCANCODE_KP_DIVIDE:
       g_fov -= glm::radians(1.0f);
       break;
 
-    case SDLK_F1:
+    case SDL_SCANCODE_F1:
       {
         // Hitchcock zoom in
         //float old_eye_z = g_eye.z;
@@ -635,7 +633,7 @@ void keyboard(SDL_KeyboardEvent key, int x, int y)
       }
       break;
 
-    case SDLK_F2:
+    case SDL_SCANCODE_F2:
       // Hitchcock zoom out
       {
         //float old_eye_z = g_eye.z;
@@ -659,35 +657,35 @@ void keyboard(SDL_KeyboardEvent key, int x, int y)
       }
       break;
 
-    case SDLK_F10:
+    case SDL_SCANCODE_F10:
       //glutReshapeWindow(1600, 1000);
       break;
 
-    case SDLK_F11:
+    case SDL_SCANCODE_F11:
       //glutFullScreen();
       break;
 
-    case SDLK_UP:
+    case SDL_SCANCODE_UP:
       g_convergence *= 1.1f;
       break;
 
-    case SDLK_DOWN:
+    case SDL_SCANCODE_DOWN:
       g_convergence /= 1.1f;
       break;
 
-    case SDLK_LEFT:
+    case SDL_SCANCODE_LEFT:
       //g_look_at.x += 1.0f;
       break;
 
-    case SDLK_RIGHT:
+    case SDL_SCANCODE_RIGHT:
       //g_look_at.x -= 1.0f;
       break;
 
-    case SDLK_PAGEUP:
+    case SDL_SCANCODE_PAGEUP:
       //g_look_at.y -= 1.0f;
       break;
 
-    case SDLK_PAGEDOWN:
+    case SDL_SCANCODE_PAGEDOWN:
       //g_look_at.y += 1.0f;
       break;
 
@@ -1061,8 +1059,16 @@ void process_events()
   {
     switch(ev.type)
     {
-      case SDL_VIDEORESIZE:
-        reshape(ev.resize.w, ev.resize.h);
+      case SDL_WINDOWEVENT:
+        switch (ev.window.event) 
+        {
+          case SDL_WINDOWEVENT_RESIZED:
+            reshape(ev.window.data1, ev.window.data2);
+            break;
+
+          default:
+            break;
+        }
         break;
 
       case SDL_QUIT:
@@ -1507,11 +1513,22 @@ void init_display(const std::string& title, bool fullscreen, int anti_aliasing)
     SDL_GL_SetAttribute( SDL_GL_MULTISAMPLESAMPLES, anti_aliasing ); // 0, 2, or 4 for number of samples
   }
   
-  SDL_WM_SetCaption(title.c_str(), title.c_str());
   //SDL_WM_SetIcon(IMG_Load(Pathname("icon.png").get_sys_path().c_str()), NULL);
+  g_window = SDL_CreateWindow(title.c_str(),
+                              SDL_WINDOWPOS_UNDEFINED,
+                              SDL_WINDOWPOS_UNDEFINED,
+                              g_screen_w, g_screen_h,
+                              SDL_WINDOW_OPENGL | SDL_WINDOW_RESIZABLE | (fullscreen ? SDL_WINDOW_FULLSCREEN : 0));
+  if (!g_window)
+  {
+    throw std::runtime_error("Couldn't create window");
+  }
 
-  g_screen = SDL_SetVideoMode(g_screen_w, g_screen_h,
-                              0, SDL_OPENGL | SDL_RESIZABLE | (fullscreen ? SDL_FULLSCREEN : 0));
+  g_gl_context = SDL_GL_CreateContext(g_window);
+  if (!g_gl_context)
+  {
+    throw std::runtime_error("failed to create GLContext");
+  }
 }
 
 void parse_args(int argc, char** argv, Options& opts)

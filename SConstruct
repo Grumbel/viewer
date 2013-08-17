@@ -37,7 +37,6 @@ env = Environment(ENV=os.environ,
                               "-Winit-self", # only works with >= -O1
                               "-Wno-unused-parameter"])
 
-env.Append( LIBS = [ "SDL_image" ])
 env.Append( LIBS = [ "cwiid", libwiicpp, libwiic, "bluetooth" ])
 env.Append( LIBS = [ "boost_system", "boost_filesystem" ])
 env.Append( CXXFLAGS = [ "-isystemexternal/glm-0.9.4.2",
@@ -48,7 +47,7 @@ env.Append( CXXFLAGS = [ "-isystemexternal/glm-0.9.4.2",
                          "-isystemexternal/wiic-2013-02-12/src/log" ])
 env.ParseConfig("pkg-config --libs --cflags bluez | sed 's/-I/-isystem/g'")
 env.ParseConfig("pkg-config --cflags --libs gstreamermm-0.10 | sed 's/-I/-isystem/g'")
-env.ParseConfig("sdl-config --libs --cflags | sed 's/-I/-isystem/g'")
+env.ParseConfig("pkg-config --libs --cflags sdl2 SDL2_image | sed 's/-I/-isystem/g'")
 env.ParseConfig("pkg-config --libs --cflags  gl glu | sed 's/-I/-isystem/g'")
 env.ParseConfig("pkg-config --libs --cflags cairomm-1.0 gl glu | sed 's/-I/-isystem/g'")
 env.Append( LIBS = [ libglew ])
