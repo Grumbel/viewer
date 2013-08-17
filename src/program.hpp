@@ -49,7 +49,7 @@ public:
     int loc = glGetUniformLocation(m_program, name.c_str());
     if (loc == -1)
     {
-      log_warn("uniform location '%s' not found, ignoring", name);
+      //log_debug("uniform location '%s' not found, ignoring", name);
     }
     else
     {

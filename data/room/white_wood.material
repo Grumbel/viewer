@@ -1,3 +1,3 @@
-material.diffuse           1.0  1.0  1.0
+material.diffuse           0.8  0.8  0.8
 material.specular          0.2  0.2  0.2
-material.shininess         1
+material.shininess         50

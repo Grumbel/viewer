@@ -15,6 +15,9 @@ libwiicpp = wiicpp_env.StaticLibrary("wiicpp",
 glew = Environment(CPPPATH = [ "external/glew-1.9.0/include/" ])
 libglew = glew.StaticLibrary(Glob("external/glew-1.9.0/src/*.c"))
 
+yaml = Environment(CPPPATH = [ "external/yaml-cpp-0.5.0/include/" ])
+libyaml = yaml.StaticLibrary(Glob("external/yaml-cpp-0.5.0/src/*.cpp"))
+
 env = Environment(ENV=os.environ,
                   CXX="g++-snapshot",
                   CXXFLAGS= [ "-O3", "-g3",
@@ -38,6 +41,7 @@ env.Append( LIBS = [ "SDL_image" ])
 env.Append( LIBS = [ "cwiid", libwiicpp, libwiic, "bluetooth" ])
 env.Append( LIBS = [ "boost_system", "boost_filesystem" ])
 env.Append( CXXFLAGS = [ "-isystemexternal/glm-0.9.4.2",
+                         "-isystemexternal/yaml-cpp-0.5.0/include/",
                          "-isystemexternal/glew-1.9.0/include",
                          "-isystemexternal/wiic-2013-02-12/src/wiic",
                          "-isystemexternal/wiic-2013-02-12/src/wiicpp",
@@ -48,6 +52,7 @@ env.ParseConfig("sdl-config --libs --cflags | sed 's/-I/-isystem/g'")
 env.ParseConfig("pkg-config --libs --cflags  gl glu | sed 's/-I/-isystem/g'")
 env.ParseConfig("pkg-config --libs --cflags cairomm-1.0 gl glu | sed 's/-I/-isystem/g'")
 env.Append( LIBS = [ libglew ])
+env.Append( LIBS = [ libyaml ])
 
 if False: 
     env.Append(LINKFLAGS=["-pg"], CXXFLAGS="-pg")

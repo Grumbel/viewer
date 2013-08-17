@@ -48,7 +48,7 @@ VideoProcessor::VideoProcessor(const std::string& filename) :
                                  "  ! queue "
                                  "  ! ffmpegcolorspace "
                                  "  ! videoscale "
-                                 "  ! video/x-raw-rgb,depth=24,bpp=24,width=512,height=512 "
+                                 "  ! video/x-raw-rgb,depth=24,bpp=24,width=1024,height=1024 "
                                  "  ! fakesink name=mysink signal-handoffs=True sync=true "
                                  "src. "
                                  "  ! queue "

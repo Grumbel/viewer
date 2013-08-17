@@ -760,37 +760,46 @@ void init()
       else
       {
         auto node = g_scene_manager->get_world()->create_child();
-        ModelPtr model = std::make_shared<Model>();
 
-        int rings = 16;
-        int segments = 16;
-        float hfov = glm::radians(125.0f);
-        float vfov = glm::radians(70.3f);
+        int rings = 32;
+        int segments = 32;
+
+        float hfov = glm::radians(360.0f);
+        float vfov = glm::radians(180.0f);
+
+        //float hfov = glm::radians(90.0f);
+        //float vfov = glm::radians(64.0f);
+
+        //float hfov = glm::radians(125.0f);
+        //float vfov = glm::radians(70.3f);
 
         //float hfov = glm::radians(90.0f);
         //float vfov = glm::radians(50.0f);
 
-        model->add_mesh(Mesh::create_curved_screen(15.0f, hfov, vfov, rings, segments));
-
-        model->add_mesh(Mesh::create_curved_screen(15.0f, hfov, vfov, rings, segments, 0, 16, false, true));
-        model->add_mesh(Mesh::create_curved_screen(15.0f, hfov, vfov, rings, segments, 0, -16, false, true));
-
+        ModelPtr model = std::make_shared<Model>();
         model->set_material(g_video_material);
+        model->add_mesh(Mesh::create_curved_screen(15.0f, hfov, vfov, rings, segments));
         node->attach_model(model);
 
-        model = std::make_shared<Model>();
+        if (false)
+        {
+          model->add_mesh(Mesh::create_curved_screen(15.0f, hfov, vfov, rings, segments, 0, 16, false, true));
+          model->add_mesh(Mesh::create_curved_screen(15.0f, hfov, vfov, rings, segments, 0, -16, false, true));
+          
+          ModelPtr model_flip = std::make_shared<Model>();
 
-        model->add_mesh(Mesh::create_curved_screen(15.0f, hfov, vfov, rings, segments, 16, 0, true, false));
-        model->add_mesh(Mesh::create_curved_screen(15.0f, hfov, vfov, rings, segments, -16, 0, true, false));
+          model_flip->add_mesh(Mesh::create_curved_screen(15.0f, hfov, vfov, rings, segments, 16, 0, true, false));
+          model_flip->add_mesh(Mesh::create_curved_screen(15.0f, hfov, vfov, rings, segments, -16, 0, true, false));
 
-        model->add_mesh(Mesh::create_curved_screen(15.0f, hfov, vfov, rings, segments, 16, 16, true, true));
-        model->add_mesh(Mesh::create_curved_screen(15.0f, hfov, vfov, rings, segments, -16, 16, true, true));
+          model_flip->add_mesh(Mesh::create_curved_screen(15.0f, hfov, vfov, rings, segments, 16, 16, true, true));
+          model_flip->add_mesh(Mesh::create_curved_screen(15.0f, hfov, vfov, rings, segments, -16, 16, true, true));
 
-        model->add_mesh(Mesh::create_curved_screen(15.0f, hfov, vfov, rings, segments, 16, -16, true, true));
-        model->add_mesh(Mesh::create_curved_screen(15.0f, hfov, vfov, rings, segments, -16, -16, true, true));
+          model_flip->add_mesh(Mesh::create_curved_screen(15.0f, hfov, vfov, rings, segments, 16, -16, true, true));
+          model_flip->add_mesh(Mesh::create_curved_screen(15.0f, hfov, vfov, rings, segments, -16, -16, true, true));
 
-        model->set_material(g_video_material_flip);
-        node->attach_model(model);
+          model_flip->set_material(g_video_material_flip);
+          node->attach_model(model_flip);
+        }
       }
     }
 
@@ -1354,7 +1363,7 @@ void main_loop()
 
     num_frames += 1;
 
-    if (num_frames == 1000)
+    if (num_frames > 100)
     {
       int t = SDL_GetTicks() - start_ticks;
       std::cout << "frames: " << num_frames << " time: " << t 

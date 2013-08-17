@@ -7,3 +7,4 @@ non-free
 .sconsign.dblite
 *.blend[1-9]
 /test/*_test
+/external/SDL/

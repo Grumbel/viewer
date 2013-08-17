@@ -226,6 +226,27 @@ def write_armature(obj):
 # [(x.name, k) for k,v in enumerate(bpy.data.objects[0].data.bones)]
 # [(v.name, v.index) for v in bpy.data.objects[1].vertex_groups]
 
+def export_material(fout, mat):
+    mat.name
+    mat.specular_alpha
+    mat.specular_color
+    mat.diffuse_color
+    mat.alpha
+    for tex in mat.texture_slots:
+        tex.specular_factor
+        tex.specular_color_factor
+
+        tex.diffuse_factor # intensity
+        if tex.use_map_color_diffuse:
+            tex.diffuse_color_factor
+        
+        tex.texture_coords == 'UV'
+
+        tex.texture.type == 'IMAGE'
+        tex.texture.image
+        tex.texture.image.source == 'FILE'
+        tex.texture.image.save_render("/tmp/out.png")
+
 with open("/tmp/blender.mod", "w") as outfile:
     outfile.write("# exported by %s\n" % __file__)
     objects = [obj for obj in bpy.data.objects if obj.layers[0]]

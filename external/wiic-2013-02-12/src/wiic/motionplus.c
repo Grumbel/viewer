@@ -167,7 +167,7 @@ int motion_plus_handshake(struct wiimote_t* wm, byte* data, unsigned short len)
 		wm->exp.mp.gyro_rate.roll = wm->exp.mp.a_gyro_rate.roll = 0.0;
 		wm->exp.mp.gyro_rate.pitch = wm->exp.mp.a_gyro_rate.pitch = 0.0;
 		wm->exp.mp.gyro_rate.yaw = wm->exp.mp.a_gyro_rate.yaw = 0.0;
-		wm->exp.mp.raw_gyro_threshold = 15;
+		wm->exp.mp.raw_gyro_threshold = 1;
 		wm->exp.mp.smooth = 1;
 		wm->exp.mp.smooth_alpha = MP_SMOOTH_ALPHA;
 		
