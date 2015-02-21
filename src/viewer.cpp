@@ -1598,6 +1598,11 @@ int main(int argc, char** argv)
   glewInit();
   glGetError();
 
+  // In OpenGL3.3Core VAO are mandatory, this hack might work
+  GLuint vao;
+  glGenVertexArrays(1, &vao);
+  glBindVertexArray(vao);
+
 #if 0
   if (opts.wiimote)
   {
