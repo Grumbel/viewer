@@ -1,11 +1,11 @@
 #version 330 core
 
-in vec3 texcoord;
-in vec3 normal;
-in vec3 position;
+attribute vec3 texcoord;
+attribute vec3 normal;
+attribute vec3 position;
 
-out vec3 texcoord_var;
-out vec3 normal_var;
+varying vec3 texcoord_var;
+varying vec3 normal_var;
 
 uniform mat4 MVP;
 

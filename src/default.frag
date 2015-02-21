@@ -45,10 +45,10 @@ uniform mat3 NormalMatrix;
 //uniform mat4 ProjectionMatrix;
 uniform mat4 MVP;
 
-in vec3 world_normal;
-in vec3 frag_normal;
-in vec3 frag_position;
-in vec2 frag_uv;
+varying vec3 world_normal;
+varying vec3 frag_normal;
+varying vec3 frag_position;
+varying vec2 frag_uv;
 
 //subroutine float shadow_value_t();
 subroutine vec3  diffuse_color_t();
@@ -61,7 +61,7 @@ subroutine uniform specular_color_t specular_color;
 // ---------------------------------------------------------------------------
 // shadow map
 uniform sampler2DShadow ShadowMap;
-in vec4 shadow_position;
+varying vec4 shadow_position;
 
 float offset_lookup(sampler2DShadow map,
                     vec4 loc,

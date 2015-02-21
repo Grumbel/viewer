@@ -42,16 +42,16 @@ uniform mat3 NormalMatrix;
 //uniform mat4 ProjectionMatrix;
 uniform mat4 MVP;
 
-in vec3 world_normal;
-in vec3 frag_normal;
-in vec3 frag_position;
+varying vec3 world_normal;
+varying vec3 frag_normal;
+varying vec3 frag_position;
 
 //uniform samplerCube LightMap;
 
 // ---------------------------------------------------------------------------
 // shadow map
 uniform sampler2DShadow ShadowMap;
-in vec4 shadow_position;
+varying vec4 shadow_position;
 
 float offset_lookup(sampler2DShadow map,
                     vec4 loc,

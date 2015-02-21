@@ -1,10 +1,10 @@
 #version 330 core
 
-in vec3  position;
-in vec3  point_size;
-in float alpha;
+attribute vec3  position;
+attribute vec3  point_size;
+attribute float alpha;
 
-out float frag_alpha;
+varying float frag_alpha;
 
 uniform mat4 ModelViewMatrix;
 uniform mat4 MVP;

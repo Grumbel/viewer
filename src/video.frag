@@ -18,7 +18,7 @@
 
 uniform mat4 MVP;
 
-in vec2 frag_uv;
+varying vec2 frag_uv;
 
 uniform sampler2D texture_diff;
 

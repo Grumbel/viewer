@@ -1,6 +1,6 @@
 #version 330 core
 
-in vec3 position;
+attribute vec3 position;
 
 uniform mat4 MVP;
 

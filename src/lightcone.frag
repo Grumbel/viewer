@@ -2,7 +2,7 @@
 
 uniform sampler2D diffuse_texture;
 
-in float frag_alpha;
+varying float frag_alpha;
 
 void main(void)
 {
