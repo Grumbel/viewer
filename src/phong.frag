@@ -75,7 +75,7 @@ float shadow_value_1()
 float shadow_value_16()
 {
   float shadowCoeff = 1.0f;
-  if (shadow_position.w)
+  if (shadow_position.w != 0.0)
   {
     float sum = 0;
     for (float y = -1.5; y <= 1.5; y += 1.0)
