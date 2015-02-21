@@ -14,7 +14,7 @@
 //  You should have received a copy of the GNU General Public License
 //  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-#version 420 core
+#version 330 core
 
 uniform mat4 MVP;
 

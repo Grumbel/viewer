@@ -1,6 +1,6 @@
-#version 420 core
+#version 330 core
 
-in vec2 frag_uv;
+varying vec2 frag_uv;
 
 uniform sampler2D left_eye;
 uniform sampler2D right_eye;
