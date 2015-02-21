@@ -98,6 +98,7 @@ TextSurface::draw(RenderContext& ctx, float x, float y, float z)
   assert(texcoords_loc != -1);
   assert(positions_loc != -1);
 
+#ifdef DOES_NOT_WORK_IN_OPENGL33CORE
   glVertexAttribPointer(texcoords_loc, 2, GL_FLOAT, GL_FALSE, 0, texcoord.data());
   glVertexAttribPointer(positions_loc, 3, GL_FLOAT, GL_FALSE, 0, position.data());
 
@@ -105,6 +106,7 @@ TextSurface::draw(RenderContext& ctx, float x, float y, float z)
   glEnableVertexAttribArray(positions_loc);
 
   glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
+#endif
 
   glDisableVertexAttribArray(texcoords_loc);
   glDisableVertexAttribArray(positions_loc);
