@@ -16,11 +16,11 @@
 
 #version 330 core
 
-in vec3 position;
-in vec3 normal;
+attribute vec3 position;
+attribute vec3 normal;
 
-out vec3 frag_position;
-out vec3 frag_world_position;
+varying vec3 frag_position;
+varying vec3 frag_world_position;
 
 uniform mat4 ModelMatrix;
 uniform mat4 ModelViewMatrix;
