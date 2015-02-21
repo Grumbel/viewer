@@ -78,14 +78,14 @@ TextSurface::draw(RenderContext& ctx, float x, float y, float z)
   GLint program;
   glGetIntegerv(GL_CURRENT_PROGRAM, &program);
   
-  std::vector<glm::vec2> texcoord{
+  std::vector<glm::vec2> texcoords{
     glm::vec2{ 0.0f, 1.0f },
     glm::vec2{ 1.0f, 1.0f },
     glm::vec2{ 1.0f, 0.0f },
     glm::vec2{ 0.0f, 0.0f }
   };
       
-  std::vector<glm::vec3> position{
+  std::vector<glm::vec3> positions{
     glm::vec3{ x, y + static_cast<float>(m_height), z },
     glm::vec3{ x + static_cast<float>(m_width), y + static_cast<float>(m_height), z },
     glm::vec3{ x + static_cast<float>(m_width), y, z },
@@ -98,18 +98,32 @@ TextSurface::draw(RenderContext& ctx, float x, float y, float z)
   assert(texcoords_loc != -1);
   assert(positions_loc != -1);
 
-#ifdef DOES_NOT_WORK_IN_OPENGL33CORE
-  glVertexAttribPointer(texcoords_loc, 2, GL_FLOAT, GL_FALSE, 0, texcoord.data());
-  glVertexAttribPointer(positions_loc, 3, GL_FLOAT, GL_FALSE, 0, position.data());
+  GLuint positions_vbo;
+  GLuint texcoords_vbo;
+
+  glGenBuffers(1, &positions_vbo);
+  glGenBuffers(1, &texcoords_vbo);
+
+  glBindBuffer(GL_ARRAY_BUFFER, positions_vbo);
+  glBufferData(GL_ARRAY_BUFFER, sizeof(positions.front()) * positions.size(), positions.data(), GL_STATIC_DRAW);
+  glVertexAttribPointer(positions_loc, 3, GL_FLOAT, GL_FALSE, 0, nullptr);
+
+  glBindBuffer(GL_ARRAY_BUFFER, texcoords_vbo);
+  glBufferData(GL_ARRAY_BUFFER, sizeof(texcoords.front()) * texcoords.size(), texcoords.data(), GL_STATIC_DRAW);
+  glVertexAttribPointer(texcoords_loc, 2, GL_FLOAT, GL_FALSE, 0, nullptr);
+
+  glBindBuffer(GL_ARRAY_BUFFER, 0);
 
   glEnableVertexAttribArray(texcoords_loc);
   glEnableVertexAttribArray(positions_loc);
 
   glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
-#endif
 
   glDisableVertexAttribArray(texcoords_loc);
   glDisableVertexAttribArray(positions_loc);
+
+  glDeleteBuffers(1, &texcoords_vbo);
+  glDeleteBuffers(1, &positions_vbo);
 }
 
 TexturePtr
