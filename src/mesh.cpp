@@ -162,7 +162,7 @@ Mesh::create_cube(float size)
 std::unique_ptr<Mesh>
 Mesh::create_curved_screen(float size, float hfov, float vfov, int rings, int segments, int offset_x, int offset_y, bool flip_uv_x, bool flip_uv_y)
 {
-  std::unique_ptr<Mesh> mesh(new Mesh(GL_TRIANGLE_FAN));
+  std::unique_ptr<Mesh> mesh(new Mesh(GL_TRIANGLES));
 
   NormalLst   vn;
   TexCoordLst vt;
@@ -191,6 +191,9 @@ Mesh::create_curved_screen(float size, float hfov, float vfov, int rings, int se
     for(int seg = 0; seg < segments; ++seg)
     {
       add_point(ring+1, seg  );
+      add_point(ring+1, seg+1);
+      add_point(ring,   seg  );
+
       add_point(ring+1, seg+1);
       add_point(ring,   seg+1);
       add_point(ring,   seg  );
