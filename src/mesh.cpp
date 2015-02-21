@@ -75,18 +75,18 @@ Mesh::create_skybox(float size)
 
   // skybox
   int faces[] = {
-    0, 1, 2, 3, // top
-    4, 5, 6, 7, // bottom
-    3, 2, 6, 5, // front
-    1, 0, 4, 7, // back
-    2, 1, 7, 6, // left 
-    0, 3, 5, 4  // right 
+    0, 1, 3, 1, 2, 3, // top
+    4, 5, 7, 5, 6, 7, // bottom
+    3, 2, 5, 2, 6, 5, // front
+    1, 0, 7, 0, 4, 7, // back
+    2, 1, 6, 1, 7, 6, // left
+    0, 3, 4, 3, 5, 4  // right
   };
 
   // flip front/back faces
   // std::reverse(faces, faces + sizeof(faces)/sizeof(faces[0]));
 
-  std::unique_ptr<Mesh> mesh(new Mesh(GL_TRIANGLE_FAN));
+  std::unique_ptr<Mesh> mesh(new Mesh(GL_TRIANGLES));
 
   mesh->attach_float_array("normal", vn);
   mesh->attach_float_array("texcoord", vt);
