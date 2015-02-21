@@ -71,8 +71,11 @@ UniformGroup::apply(ProgramPtr prog, const RenderContext& ctx)
     uniform->apply(prog, ctx);
   }
 
+#if 0
+  // not supported in OpenGL3.3 Core
   apply_subroutines(prog, GL_VERTEX_SHADER, m_vertex_subroutine_uniforms);
   apply_subroutines(prog, GL_FRAGMENT_SHADER, m_fragment_subroutine_uniforms);
+#endif
   assert_gl("apply:exit");
 }
 
