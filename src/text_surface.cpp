@@ -104,7 +104,7 @@ TextSurface::draw(RenderContext& ctx, float x, float y, float z)
   glEnableVertexAttribArray(texcoords_loc);
   glEnableVertexAttribArray(positions_loc);
 
-  glDrawArrays(GL_QUADS, 0, 4);
+  glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
 
   glDisableVertexAttribArray(texcoords_loc);
   glDisableVertexAttribArray(positions_loc);

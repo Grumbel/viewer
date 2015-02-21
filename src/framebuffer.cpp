@@ -76,7 +76,7 @@ Framebuffer::draw(float x, float y, float w, float h, float z)
   glEnable(GL_TEXTURE_2D);
 
   glBindTexture(GL_TEXTURE_2D, m_color_buffer->get_id());
-  glBegin(GL_QUADS);
+  glBegin(GL_TRIANGLE_FAN);
   {
     glTexCoord2f(0.0f, 0.0f);
     glVertex3f(x, y, z);
@@ -116,7 +116,7 @@ Framebuffer::draw_depth(float x, float y, float w, float h, float z)
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_FUNC, GL_LEQUAL);
   glTexParameteri(GL_TEXTURE_2D, GL_DEPTH_TEXTURE_MODE, GL_LUMINANCE); 
 
-  glBegin(GL_QUADS);
+  glBegin(GL_TRIANGLE_FAN);
   {
     glTexCoord2f(0.0f, 0.0f);
     glVertex3f(x, y, z);
