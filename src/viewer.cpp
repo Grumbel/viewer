@@ -804,6 +804,7 @@ void init()
     MaterialPtr phong_material = MaterialFactory::get().create("phong");
     if (false)
     {
+      // little animated planetary system thing
       if (false)
       {
         auto node = g_scene_manager->get_world()->create_child();
@@ -843,6 +844,7 @@ void init()
 
     if (false)
     {
+      // some spheres in a line
       auto root_parent = g_scene_manager->get_world()->create_child();
       auto parent = root_parent;
       parent->set_position(glm::vec3(10.0f, 0.0f, 0.0f));
