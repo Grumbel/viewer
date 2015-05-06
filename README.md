@@ -22,6 +22,8 @@ Stuff that works:
 
     $ build/viewer data/room/blender.mod
 
+    $ build/viewer data/mech-with-landscape.mod
+
 Video doesn't play:
 
     $ build/viewer --video BigBuckBunny_320x180.mp4
