@@ -1,10 +1,10 @@
-#version 420 core
+#version 330 core
 // ---------------------------------------------------------------------------
-in vec3 position;
-in vec3 normal;
-in vec2 texcoord;
+attribute vec3 position;
+attribute vec3 normal;
+attribute vec2 texcoord;
 
-out vec2 frag_uv;
+varying vec2 frag_uv;
 
 uniform mat4 MVP;
 

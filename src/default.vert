@@ -14,20 +14,20 @@
 //  You should have received a copy of the GNU General Public License
 //  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-#version 420 core
+#version 330 core
 // ---------------------------------------------------------------------------
-in vec3 position;
-in vec3 normal;
-in vec2 texcoord;
+attribute vec3 position;
+attribute vec3 normal;
+attribute vec2 texcoord;
 
-out vec3 world_normal;
-out vec3 frag_position;
-out vec3 frag_normal;
-out vec2 frag_uv;
+varying vec3 world_normal;
+varying vec3 frag_position;
+varying vec3 frag_normal;
+varying vec2 frag_uv;
 
 // ---------------------------------------------------------------------------
 uniform mat4 ShadowMapMatrix;
-out vec4 shadow_position;
+varying vec4 shadow_position;
 // ---------------------------------------------------------------------------
 
 uniform mat4 ModelViewMatrix;

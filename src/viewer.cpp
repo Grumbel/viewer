@@ -76,7 +76,7 @@ std::string to_string(const glm::quat& q)
 
 void print_scene_graph(SceneNode* node, int depth = 0)
 {
-  std::cout << std::string(depth, ' ') << node 
+  std::cout << std::string(depth, ' ') << node
             << ": " << to_string(node->get_position())
             << " " << to_string(node->get_scale())
             << " " << to_string(node->get_orientation()) << std::endl;
@@ -272,7 +272,7 @@ void draw_scene(Stereo stereo)
     look_at = (q * orientation) * glm::vec3(0,0,-1);
     up = (q * orientation) * glm::vec3(0,1,0);
   }
-  else 
+  else
   {
     look_at = glm::rotate(look_at, g_yaw_offset, up);
     look_at = glm::rotate(look_at, -g_pitch_offset, sideways_);
@@ -295,7 +295,7 @@ void draw_scene(Stereo stereo)
       break;
   }
   g_camera->look_at(eye + sideways, eye + look_at * g_convergence, up);
-  
+
   g_scene_manager->render(*g_camera, false, stereo);
 }
 
@@ -315,10 +315,10 @@ void draw_shadowmap()
   Camera camera;
   camera.perspective(g_shadowmap_fov, 1.0f, g_near_z, g_far_z);
   //camera.ortho(-25.0f, 25.0f, -25.0f, 25.0f, g_near_z, g_far_z);
-  
+
   camera.look_at(light_pos, look_at, up);
 
-  g_shadowmap_matrix = glm::mat4(0.5, 0.0, 0.0, 0.0, 
+  g_shadowmap_matrix = glm::mat4(0.5, 0.0, 0.0, 0.0,
                                   0.0, 0.5, 0.0, 0.0,
                                   0.0, 0.0, 0.5, 0.0,
                                   0.5, 0.5, 0.5, 1.0);
@@ -331,7 +331,7 @@ void draw_shadowmap()
 void display()
 {
   glViewport(g_viewport_offset.x, g_viewport_offset.y, g_screen_w, g_screen_h);
-  
+
   // render the world, twice if stereo is enabled
   if (true)
   {
@@ -401,11 +401,11 @@ void display()
         case StereoMode::Cybermaxx:
           material->set_subroutine_uniform(GL_FRAGMENT_SHADER, "fragment_color", "interlaced");
           break;
-                
+
         case StereoMode::CrossEye:
           material->set_subroutine_uniform(GL_FRAGMENT_SHADER, "fragment_color", "crosseye");
           break;
-                
+
         case StereoMode::Anaglyph:
           material->set_subroutine_uniform(GL_FRAGMENT_SHADER, "fragment_color", "anaglyph");
           break;
@@ -424,19 +424,19 @@ void display()
     ModelPtr model = std::make_shared<Model>();
     model->add_mesh(Mesh::create_rect(0.0f, 0.0f, g_screen_w, g_screen_h, -20.0f));
     model->set_material(material);
-            
+
     Camera camera;
     camera.ortho(0, g_screen_w, g_screen_h, 0.0f, 0.1f, 10000.0f);
-            
+
     SceneManager mgr;
     mgr.get_world()->attach_model(model);
 
     glViewport(g_viewport_offset.x, g_viewport_offset.y, g_screen_w, g_screen_h);
-        
+
     glClearColor(0.0, 0.0, 0.0, 1.0);
     glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
     mgr.render(camera);
-    
+
     // render menu overlay
     if (true)
     {
@@ -448,8 +448,8 @@ void display()
         glDisable(GL_BLEND);
         //g_shadowmap->draw_depth(g_screen_w - 266, 10, 256, 256, -20.0f);
         g_shadowmap->draw(g_screen_w - 266 - 276, 10, 256, 256, -20.0f);
-      } 
-      
+      }
+
       if (g_show_menu)
       {
         g_menu->draw(ctx, 120.0f, 64.0f);
@@ -487,7 +487,7 @@ void keyboard(SDL_KeyboardEvent key, int x, int y)
       if (g_video_player)
       {
         g_video_player->seek(g_video_player->get_position() - 10 * Gst::SECOND);
-      }     
+      }
       break;
 
     case SDL_SCANCODE_0:
@@ -620,7 +620,7 @@ void keyboard(SDL_KeyboardEvent key, int x, int y)
         g_fov += glm::radians(1.0f);
         if (g_fov < glm::radians(160.0f))
         {
-          g_eye.z = g_eye.z 
+          g_eye.z = g_eye.z
             * (2.0*tan(0.5 * old_fov))
             / (2.0*tan(0.5 * g_fov));
         }
@@ -639,12 +639,12 @@ void keyboard(SDL_KeyboardEvent key, int x, int y)
         //float old_eye_z = g_eye.z;
         //g_eye.z /= 1.005f;
         //g_fov = g_fov / std::atan(1.0f / old_eye_z) * std::atan(1.0f / g_eye.z);
-        
+
         float old_fov = g_fov;
         g_fov -= 1.0f;
         if (g_fov >= 7.0f)
         {
-          g_eye.z = g_eye.z 
+          g_eye.z = g_eye.z
             * (2.0*tan(0.5 * old_fov))
             / (2.0*tan(0.5 * g_fov));
         }
@@ -783,7 +783,7 @@ void init()
         {
           model->add_mesh(Mesh::create_curved_screen(15.0f, hfov, vfov, rings, segments, 0, 16, false, true));
           model->add_mesh(Mesh::create_curved_screen(15.0f, hfov, vfov, rings, segments, 0, -16, false, true));
-          
+
           ModelPtr model_flip = std::make_shared<Model>();
 
           model_flip->add_mesh(Mesh::create_curved_screen(15.0f, hfov, vfov, rings, segments, 16, 0, true, false));
@@ -804,6 +804,7 @@ void init()
     MaterialPtr phong_material = MaterialFactory::get().create("phong");
     if (false)
     {
+      // little animated planetary system thing
       if (false)
       {
         auto node = g_scene_manager->get_world()->create_child();
@@ -843,6 +844,7 @@ void init()
 
     if (false)
     {
+      // some spheres in a line
       auto root_parent = g_scene_manager->get_world()->create_child();
       auto parent = root_parent;
       parent->set_position(glm::vec3(10.0f, 0.0f, 0.0f));
@@ -864,7 +866,10 @@ void init()
     if (!g_model_filename.empty())
     { // load a mesh from file
       auto node = Scene::from_file(g_model_filename);
+
+      std::cout << "SceneGraph:\n";
       print_scene_graph(node.get());
+
       g_scene_manager->get_world()->attach_child(std::move(node));
     }
 
@@ -902,7 +907,7 @@ void init()
 
     if (false)
     { // light cone
-      MaterialPtr material(new Material);     
+      MaterialPtr material(new Material);
       material->blend_func(GL_SRC_ALPHA, GL_ONE);
       material->depth_mask(false);
       material->cast_shadow(false);
@@ -1060,7 +1065,7 @@ void process_events()
     switch(ev.type)
     {
       case SDL_WINDOWEVENT:
-        switch (ev.window.event) 
+        switch (ev.window.event)
         {
           case SDL_WINDOWEVENT_RESIZED:
             reshape(ev.window.data1, ev.window.data2);
@@ -1125,7 +1130,7 @@ void process_events()
           case 4:
             g_stick.dir.y = -ev.jbutton.state;
             break;
-            
+
           case 5:
             g_stick.dir.y = +ev.jbutton.state;
             break;
@@ -1187,7 +1192,7 @@ void process_joystick(float dt)
     {
       g_menu->up();
     }
-        
+
     if (g_stick.hat & SDL_HAT_DOWN)
     {
       g_menu->down();
@@ -1214,7 +1219,7 @@ void process_joystick(float dt)
   if (fabs(g_stick.rot.z) < deadzone) g_stick.rot.z = 0.0f;
 
   if (false)
-    log_debug("stick: %2.2f %2.2f %2.2f  -  %2.2f %2.2f %2.2f", 
+    log_debug("stick: %2.2f %2.2f %2.2f  -  %2.2f %2.2f %2.2f",
               g_stick.dir.x, g_stick.dir.y, g_stick.dir.z,
               g_stick.rot.x, g_stick.rot.y, g_stick.rot.z);
 
@@ -1225,7 +1230,7 @@ void process_joystick(float dt)
     //log_debug("light angle: %f", g_light_angle);
     g_light_angle += delta * 30.0f;
   }
-  
+
   if (false)
   { // free flight mode
     {
@@ -1249,7 +1254,7 @@ void process_joystick(float dt)
 
       // roll
       g_up = glm::rotate(g_up, angle_d * g_stick.rot.z * delta, g_look_at);
-    
+
       // pitch
       glm::vec3 cross = glm::cross(g_look_at, g_up);
       g_up = glm::rotate(g_up, angle_d * g_stick.rot.x * delta, cross);
@@ -1263,7 +1268,7 @@ void process_joystick(float dt)
     auto xz_dist = glm::sqrt(tmp.x * tmp.x + tmp.z * tmp.z);
     float pitch = glm::atan(tmp.y, xz_dist);
     float yaw   = glm::atan(tmp.z, tmp.x);
-    
+
     yaw   += -g_stick.rot.y * 2.0f * dt;
     pitch += g_stick.rot.x * 2.0f * dt;
 
@@ -1275,7 +1280,7 @@ void process_joystick(float dt)
     }
 
     glm::vec3 forward(glm::cos(yaw), 0.0f, glm::sin(yaw));
-        
+
     //log_debug("focus distance: %f", focus_distance);
     //log_debug("yaw: %f pitch: %f", yaw, pitch);
 
@@ -1288,10 +1293,10 @@ void process_joystick(float dt)
     // up/down
     g_eye.y += 10.0f * g_stick.dir.y * dt * g_slow_factor;
 
-    g_look_at = focus_distance * glm::vec3(glm::cos(pitch) * glm::cos(yaw), 
+    g_look_at = focus_distance * glm::vec3(glm::cos(pitch) * glm::cos(yaw),
                                            glm::sin(pitch),
                                            glm::cos(pitch) * glm::sin(yaw));
-    
+
     float f = sqrt(g_look_at.x*g_look_at.x + g_look_at.z*g_look_at.z);
     g_up.x = -g_look_at.x/f * g_look_at.y;
     g_up.y = f;
@@ -1323,13 +1328,13 @@ void update_arcball()
 
 void update_world(float dt)
 {
-  int i = 1; 
+  int i = 1;
   for(auto& node : g_nodes)
   {
     float f = SDL_GetTicks()/1000.0f;
     node->set_orientation(glm::quat(glm::vec3(0.0f, f*1.3*static_cast<float>(i), 0.0f)));
     i += 3;
-  } 
+  }
 }
 
 void main_loop()
@@ -1344,7 +1349,7 @@ void main_loop()
     int delta = next - ticks;
     ticks = next;
     update_world(delta / 1000.0f);
-      
+
     display();
     SDL_Delay(1);
 
@@ -1372,7 +1377,7 @@ void main_loop()
     if (num_frames > 100)
     {
       int t = SDL_GetTicks() - start_ticks;
-      std::cout << "frames: " << num_frames << " time: " << t 
+      std::cout << "frames: " << num_frames << " time: " << t
                 << " frame_delay: " << static_cast<float>(t) / static_cast<float>(num_frames)
                 << " fps: " << static_cast<float>(num_frames) / static_cast<float>(t) * 1000.0f
                 << std::endl;
@@ -1440,7 +1445,7 @@ wiimote_mesg_callback(cwiid_wiimote_t*, int mesg_count, union cwiid_mesg msg[], 
   // syncronize it with SDL_PushEvent() or only do things that are thread-safe
   for (int i=0; i < mesg_count; ++i)
   {
-    switch (msg[i].type) 
+    switch (msg[i].type)
     {
       case CWIID_MESG_STATUS:
         std::cout << "wiimote mesg status" << std::endl;
@@ -1467,7 +1472,7 @@ wiimote_mesg_callback(cwiid_wiimote_t*, int mesg_count, union cwiid_mesg msg[], 
               if (false)
               {
                 std::cout << j << "[ "
-                          << ir.src[j].pos[0] << "," << ir.src[j].pos[1] << " - " 
+                          << ir.src[j].pos[0] << "," << ir.src[j].pos[1] << " - "
                           << static_cast<int>(ir.src[j].size)
                           << "] ";
               }
@@ -1482,7 +1487,7 @@ wiimote_mesg_callback(cwiid_wiimote_t*, int mesg_count, union cwiid_mesg msg[], 
           }
         }
         break;
-        
+
       case CWIID_MESG_ERROR:
         std::cout << "wiimote mesg error" << std::endl;
         break;
@@ -1498,7 +1503,7 @@ wiimote_mesg_callback(cwiid_wiimote_t*, int mesg_count, union cwiid_mesg msg[], 
 void init_display(const std::string& title, bool fullscreen, int anti_aliasing)
 {
   //SDL_GL_SetAttribute(SDL_GL_SWAP_CONTROL, 1); // vsync
-  SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 1); 
+  SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 1);
 
   SDL_GL_SetAttribute(SDL_GL_RED_SIZE,     8);
   SDL_GL_SetAttribute(SDL_GL_GREEN_SIZE,   8);
@@ -1512,7 +1517,7 @@ void init_display(const std::string& title, bool fullscreen, int anti_aliasing)
     SDL_GL_SetAttribute( SDL_GL_MULTISAMPLEBUFFERS, 1 ); // boolean value, either it's enabled or not
     SDL_GL_SetAttribute( SDL_GL_MULTISAMPLESAMPLES, anti_aliasing ); // 0, 2, or 4 for number of samples
   }
-  
+
   //SDL_WM_SetIcon(IMG_Load(Pathname("icon.png").get_sys_path().c_str()), NULL);
   g_window = SDL_CreateWindow(title.c_str(),
                               SDL_WINDOWPOS_UNDEFINED,
@@ -1523,6 +1528,10 @@ void init_display(const std::string& title, bool fullscreen, int anti_aliasing)
   {
     throw std::runtime_error("Couldn't create window");
   }
+
+  SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_CORE);
+  SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 3);
+  SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 3);
 
   g_gl_context = SDL_GL_CreateContext(g_window);
   if (!g_gl_context)
@@ -1551,6 +1560,17 @@ void parse_args(int argc, char** argv, Options& opts)
         opts.video3d = true;
         opts.video = argv[i+1];
         ++i;
+      }
+      else if (strcmp("--help", argv[i]) == 0 ||
+               strcmp("-h", argv[i]) == 0)
+      {
+        std::cout << "Usage: " << argv[0] << " [OPTIONS]\n"
+                  << "\n"
+                  << "Options:\n"
+                  << "  --wiimote       Enable Wiimote support\n"
+                  << "  --video FILE    Play video\n"
+                  << "  --video3d FILE  Play 3D video\n";
+        exit(0);
       }
       else
       {
@@ -1589,7 +1609,15 @@ int main(int argc, char** argv)
     joystick = SDLCALL SDL_JoystickOpen(0);
   }
 
+  // glew throws 'invalid enum' error in OpenGL3.3Core, thus we eat up the error code
+  glewExperimental = true;
   glewInit();
+  glGetError();
+
+  // In OpenGL3.3Core VAO are mandatory, this hack might work
+  GLuint vao;
+  glGenVertexArrays(1, &vao);
+  glBindVertexArray(vao);
 
 #if 0
   if (opts.wiimote)
@@ -1602,12 +1630,12 @@ int main(int argc, char** argv)
     if (g_wiimote)
     {
       std::cout << "Wiimote connected: " << g_wiimote << std::endl;
-      if (cwiid_set_mesg_callback(g_wiimote, &wiimote_mesg_callback)) 
+      if (cwiid_set_mesg_callback(g_wiimote, &wiimote_mesg_callback))
       {
         std::cerr << "Unable to set message callback" << std::endl;
       }
-      
-      if (cwiid_command(g_wiimote, CWIID_CMD_RPT_MODE, 
+
+      if (cwiid_command(g_wiimote, CWIID_CMD_RPT_MODE,
                         CWIID_RPT_STATUS  |
                         //CWIID_RPT_ACC   |
                         CWIID_RPT_IR      |
@@ -1617,12 +1645,12 @@ int main(int argc, char** argv)
       }
     }
   }
-#endif 
+#endif
   if (g_opts.wiimote)
   {
     g_wiimote_manager = std::make_shared<WiimoteManager>();
   }
-  
+
   if (!g_opts.video.empty())
   {
     Gst::init(argc, argv);
@@ -1641,7 +1669,7 @@ int main(int argc, char** argv)
     SDL_JoystickClose(joystick);
   }
 
-  return 0; 
+  return 0;
 }
 
 

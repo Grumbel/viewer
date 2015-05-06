@@ -1,9 +1,9 @@
-#version 420 core
+#version 330 core
 
 uniform samplerCube diffuse_texture;
 uniform vec4 diffuse;
 
-in vec3 texcoord_var;
+varying vec3 texcoord_var;
 
 void main(void)
 {

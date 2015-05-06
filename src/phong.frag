@@ -14,7 +14,7 @@
 //  You should have received a copy of the GNU General Public License
 //  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-#version 420 core
+#version 330 core
 
 struct LightInfo
 {
@@ -42,16 +42,16 @@ uniform mat3 NormalMatrix;
 //uniform mat4 ProjectionMatrix;
 uniform mat4 MVP;
 
-in vec3 world_normal;
-in vec3 frag_normal;
-in vec3 frag_position;
+varying vec3 world_normal;
+varying vec3 frag_normal;
+varying vec3 frag_position;
 
 //uniform samplerCube LightMap;
 
 // ---------------------------------------------------------------------------
 // shadow map
 uniform sampler2DShadow ShadowMap;
-in vec4 shadow_position;
+varying vec4 shadow_position;
 
 float offset_lookup(sampler2DShadow map,
                     vec4 loc,
@@ -75,7 +75,7 @@ float shadow_value_1()
 float shadow_value_16()
 {
   float shadowCoeff = 1.0f;
-  if (shadow_position.w)
+  if (shadow_position.w != 0.0)
   {
     float sum = 0;
     for (float y = -1.5; y <= 1.5; y += 1.0)

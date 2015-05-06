@@ -14,11 +14,11 @@
 //  You should have received a copy of the GNU General Public License
 //  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-#version 420 core
+#version 330 core
 
 uniform mat4 MVP;
 
-in vec2 frag_uv;
+varying vec2 frag_uv;
 
 uniform float offset;
 uniform float offset_scale;

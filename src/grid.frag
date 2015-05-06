@@ -14,10 +14,10 @@
 //  You should have received a copy of the GNU General Public License
 //  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-#version 420 core
+#version 330 core
 
-in vec3 frag_position;
-in vec3 frag_world_position;
+varying vec3 frag_position;
+varying vec3 frag_world_position;
 
 uniform vec3  grid_offset;
 uniform float grid_line_width;
@@ -26,7 +26,7 @@ uniform float grid_size;
 float grid_value()
 {
   //float grid_line_width = 0.001;
-  vec3 v = abs(fract((frag_world_position + grid_offset) * grid_size) - vec4(0.5, 0.5, 0.5, 0.0));
+  vec3 v = abs(fract((frag_world_position + grid_offset) * grid_size) - vec3(0.5, 0.5, 0.5));
   float grid_dist = 1.0 - float(min(min(v.x, v.y), v.z));
 
   float attenuation = 1.0; //max(0.0, (1.0f - pow(length(position)/25.0, 1)));

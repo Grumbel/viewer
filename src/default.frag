@@ -14,7 +14,7 @@
 //  You should have received a copy of the GNU General Public License
 //  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-#version 420 core
+#version 330 core
 
 struct LightInfo
 {
@@ -45,23 +45,23 @@ uniform mat3 NormalMatrix;
 //uniform mat4 ProjectionMatrix;
 uniform mat4 MVP;
 
-in vec3 world_normal;
-in vec3 frag_normal;
-in vec3 frag_position;
-in vec2 frag_uv;
+varying vec3 world_normal;
+varying vec3 frag_normal;
+varying vec3 frag_position;
+varying vec2 frag_uv;
 
 //subroutine float shadow_value_t();
-subroutine vec3  diffuse_color_t();
-subroutine vec3  specular_color_t();
+//subroutine vec3  diffuse_color_t();
+//subroutine vec3  specular_color_t();
 
 //subroutine uniform shadow_value_t   shadow_value;
-subroutine uniform diffuse_color_t  diffuse_color;
-subroutine uniform specular_color_t specular_color;
+//subroutine uniform diffuse_color_t  diffuse_color;
+//subroutine uniform specular_color_t specular_color;
 
 // ---------------------------------------------------------------------------
 // shadow map
 uniform sampler2DShadow ShadowMap;
-in vec4 shadow_position;
+varying vec4 shadow_position;
 
 float offset_lookup(sampler2DShadow map,
                     vec4 loc,
@@ -87,7 +87,7 @@ float shadow_value_1()
 float shadow_value_16()
 {
   float shadowCoeff = 1.0f;
-  if (shadow_position.w)
+  if (shadow_position.w > 0.0)
   {
     float sum = 0;
     for (float y = -1.5; y <= 1.5; y += 1.0)
@@ -154,25 +154,25 @@ vec3 phong_model(vec3 position, vec3 normal, vec3 diff, vec3 spec)
 
 // ---------------------------------------------------------------------------
 
-subroutine( diffuse_color_t )
+//subroutine( diffuse_color_t )
 vec3 diffuse_color_from_texture()
 {
   return material.diffuse * texture2D(material.diffuse_texture, frag_uv).rgb;
 }
 
-subroutine( diffuse_color_t )
+//subroutine( diffuse_color_t )
 vec3 diffuse_color_from_material()
 {
   return material.diffuse;
 }
 
-subroutine( specular_color_t )
+//subroutine( specular_color_t )
 vec3 specular_color_from_texture()
 {
   return material.specular * texture2D(material.specular_texture, frag_uv).rgb;
 }
 
-subroutine( specular_color_t )
+//subroutine( specular_color_t )
 vec3 specular_color_from_material()
 {
   return material.specular;
@@ -181,8 +181,8 @@ vec3 specular_color_from_material()
 void main(void)
 {
   //float light = texture(LightMap, world_normal, 3);
-  vec3 diff = diffuse_color();
-  vec3 spec = specular_color();
+  vec3 diff = diffuse_color_from_texture();
+  vec3 spec = specular_color_from_material();
   vec3 intensity = phong_model(frag_position, frag_normal, diff, spec);
 
   gl_FragColor = vec4(intensity, 1.0);

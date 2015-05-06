@@ -75,18 +75,18 @@ Mesh::create_skybox(float size)
 
   // skybox
   int faces[] = {
-    0, 1, 2, 3, // top
-    4, 5, 6, 7, // bottom
-    3, 2, 6, 5, // front
-    1, 0, 4, 7, // back
-    2, 1, 7, 6, // left 
-    0, 3, 5, 4  // right 
+    0, 1, 3, 1, 2, 3, // top
+    4, 5, 7, 5, 6, 7, // bottom
+    3, 2, 5, 2, 6, 5, // front
+    1, 0, 7, 0, 4, 7, // back
+    2, 1, 6, 1, 7, 6, // left
+    0, 3, 4, 3, 5, 4  // right
   };
 
   // flip front/back faces
   // std::reverse(faces, faces + sizeof(faces)/sizeof(faces[0]));
 
-  std::unique_ptr<Mesh> mesh(new Mesh(GL_QUADS));
+  std::unique_ptr<Mesh> mesh(new Mesh(GL_TRIANGLES));
 
   mesh->attach_float_array("normal", vn);
   mesh->attach_float_array("texcoord", vt);
@@ -99,7 +99,7 @@ Mesh::create_skybox(float size)
 std::unique_ptr<Mesh>
 Mesh::create_plane(float size, glm::vec3 center)
 {
-  std::unique_ptr<Mesh> mesh(new Mesh(GL_QUADS));
+  std::unique_ptr<Mesh> mesh(new Mesh(GL_TRIANGLE_FAN));
 
   NormalLst   vn;
   TexCoordLst vt;
@@ -130,7 +130,7 @@ Mesh::create_plane(float size, glm::vec3 center)
 std::unique_ptr<Mesh>
 Mesh::create_rect(float x1, float y1, float x2, float y2, float z)
 {
-  std::unique_ptr<Mesh> mesh(new Mesh(GL_QUADS));
+  std::unique_ptr<Mesh> mesh(new Mesh(GL_TRIANGLE_FAN));
 
   TexCoordLst vt;
   VertexLst   vp;
@@ -154,7 +154,7 @@ Mesh::create_rect(float x1, float y1, float x2, float y2, float z)
 std::unique_ptr<Mesh>
 Mesh::create_cube(float size)
 {
-  std::unique_ptr<Mesh> mesh(new Mesh(GL_QUADS));
+  std::unique_ptr<Mesh> mesh(new Mesh(GL_TRIANGLE_FAN));
   assert(!"not implemented");
   return mesh;
 }
@@ -162,7 +162,7 @@ Mesh::create_cube(float size)
 std::unique_ptr<Mesh>
 Mesh::create_curved_screen(float size, float hfov, float vfov, int rings, int segments, int offset_x, int offset_y, bool flip_uv_x, bool flip_uv_y)
 {
-  std::unique_ptr<Mesh> mesh(new Mesh(GL_QUADS));
+  std::unique_ptr<Mesh> mesh(new Mesh(GL_TRIANGLES));
 
   NormalLst   vn;
   TexCoordLst vt;
@@ -192,6 +192,9 @@ Mesh::create_curved_screen(float size, float hfov, float vfov, int rings, int se
     {
       add_point(ring+1, seg  );
       add_point(ring+1, seg+1);
+      add_point(ring,   seg  );
+
+      add_point(ring+1, seg+1);
       add_point(ring,   seg+1);
       add_point(ring,   seg  );
     }
@@ -207,7 +210,7 @@ Mesh::create_curved_screen(float size, float hfov, float vfov, int rings, int se
 std::unique_ptr<Mesh>
 Mesh::create_sphere(float size, int rings, int segments)
 {
-  std::unique_ptr<Mesh> mesh(new Mesh(GL_QUADS));
+  std::unique_ptr<Mesh> mesh(new Mesh(GL_TRIANGLES));
 
   NormalLst   vn;
   TexCoordLst vt;
@@ -233,6 +236,9 @@ Mesh::create_sphere(float size, int rings, int segments)
     for(int seg = 0; seg < segments; ++seg)
     {
       add_point(ring,   seg  );
+      add_point(ring,   seg+1);
+      add_point(ring+1, seg  );
+
       add_point(ring,   seg+1);
       add_point(ring+1, seg+1);
       add_point(ring+1, seg  );

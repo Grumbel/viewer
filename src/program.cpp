@@ -170,7 +170,7 @@ Program::inspect() const
 
       glGetActiveAttrib(m_program, i, name.size(), &length, &size, &type, name.data());
 
-      log_info("Attribute: %s type:%d size:%d", std::string(name.data(), length), type, size);
+      //log_info("Attribute: %s type:%d size:%d", std::string(name.data(), length), type, size);
     }
   }
   
