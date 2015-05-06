@@ -93,7 +93,7 @@ Material::apply(const RenderContext& context)
   }
   assert_gl("caps enable");
 
-  glColorMask(m_color_mask.r, m_color_mask.g, m_color_mask.b, m_color_mask.a); 
+  glColorMask(m_color_mask.r, m_color_mask.g, m_color_mask.b, m_color_mask.a);
   glDepthMask(m_depth_mask);
   glCullFace(m_cull_face);
 

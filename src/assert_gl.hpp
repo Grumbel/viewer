@@ -29,11 +29,11 @@ template<typename ...Arg>
 inline void assert_gl_1(const char* file, int line, const std::string& fmt, Arg... arg)
 {
   GLenum error = glGetError();
-  if(error != GL_NO_ERROR) 
+  if(error != GL_NO_ERROR)
   {
-    throw std::runtime_error(format("%s:%d: OpenGLError while '%s': %s", 
-                                    file, line, 
-                                    format(fmt, arg...), 
+    throw std::runtime_error(format("%s:%d: OpenGLError while '%s': %s",
+                                    file, line,
+                                    format(fmt, arg...),
                                     gluErrorString(error)));
   }
 }

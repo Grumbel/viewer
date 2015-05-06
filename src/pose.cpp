@@ -29,7 +29,7 @@ namespace {
 
 glm::mat4 mat4(const std::vector<std::string>& args)
 {
-  glm::mat4 m;  
+  glm::mat4 m;
   for(int i = 0; i < 16; ++i)
   {
     glm::value_ptr(m)[i] = boost::lexical_cast<float>(args[i+1]);
@@ -43,7 +43,7 @@ std::unique_ptr<Pose>
 Pose::from_file(const std::string& filename)
 {
   std::ifstream in(filename);
-    
+
   std::unique_ptr<Pose> pose(new Pose);
   std::unique_ptr<PoseBone> bone;
 
@@ -106,7 +106,7 @@ Pose::bind_uniform(int loc)
   for(size_t i = 0; i < m_bones.size(); ++i)
   {
     //matrices.push_back(glm::mat4(1));
-    glUniformMatrix4fv(loc + i, 1, GL_FALSE, 
+    glUniformMatrix4fv(loc + i, 1, GL_FALSE,
                        glm::value_ptr(m_bones[i]->matrix));
   }
 }

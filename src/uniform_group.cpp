@@ -32,11 +32,11 @@ Uniform<UniformSymbol>::apply(ProgramPtr prog, const RenderContext& ctx)
     case UniformSymbol::ViewMatrix:
       prog->set_uniform(m_name, ctx.get_view_matrix());
       break;
-      
+
     case UniformSymbol::ModelMatrix:
       prog->set_uniform(m_name, ctx.get_model_matrix());
       break;
-      
+
     case UniformSymbol::ModelViewMatrix:
       prog->set_uniform(m_name, ctx.get_view_matrix() * ctx.get_model_matrix());
       break;
@@ -48,7 +48,7 @@ Uniform<UniformSymbol>::apply(ProgramPtr prog, const RenderContext& ctx)
     case UniformSymbol::ModelViewProjectionMatrix:
       prog->set_uniform(m_name, ctx.get_projection_matrix() * ctx.get_view_matrix() * ctx.get_model_matrix());
       break;
-      
+
     default:
       log_error("unknown UniformSymbol %d", static_cast<int>(m_value));
       break;
@@ -80,20 +80,20 @@ UniformGroup::apply(ProgramPtr prog, const RenderContext& ctx)
 }
 
 void
-UniformGroup::apply_subroutines(ProgramPtr prog, GLenum shadertype, 
+UniformGroup::apply_subroutines(ProgramPtr prog, GLenum shadertype,
                                 const std::unordered_map<std::string, std::string>& subroutines)
 {
   assert_gl("apply_subroutines:enter");
   GLint num_uniform_locations;
   glGetProgramStageiv(prog->get_id(), shadertype, GL_ACTIVE_SUBROUTINE_UNIFORM_LOCATIONS, &num_uniform_locations);
-  
+
   std::vector<GLuint> subroutine_mappings;
   for(int i = 0; i < num_uniform_locations; ++i)
   {
     char name[256];
     GLsizei length;
     glGetActiveSubroutineUniformName(prog->get_id(), shadertype, i, sizeof(name), &length, name);
-    
+
     const auto& it = subroutines.find(name);
     if (it == subroutines.end())
     {
@@ -108,7 +108,7 @@ UniformGroup::apply_subroutines(ProgramPtr prog, GLenum shadertype,
       }
       else
       {
-        subroutine_mappings.emplace_back(loc);  
+        subroutine_mappings.emplace_back(loc);
       }
     }
   }

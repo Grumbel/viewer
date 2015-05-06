@@ -99,7 +99,7 @@ MaterialParser::parse(std::istream& in)
 
   m_material->enable(GL_CULL_FACE);
   m_material->enable(GL_DEPTH_TEST);
-  
+
   m_material->set_uniform("material.ambient", glm::vec3(1.0f, 1.0f, 1.0f));
 
   int line_number = 0;
@@ -116,7 +116,7 @@ MaterialParser::parse(std::istream& in)
         if (args[0] == "material.diffuse")
         {
           m_material->set_uniform("material.diffuse",
-                                  to_vec3(args.begin()+1, args.end(), 
+                                  to_vec3(args.begin()+1, args.end(),
                                           glm::vec3(1.0f, 1.0f, 1.0f)));
         }
         else if (args[0] == "material.diffuse_texture")
@@ -128,7 +128,7 @@ MaterialParser::parse(std::istream& in)
           }
           else if (args.size() == 3)
           {
-            m_material->set_texture(current_texture_unit, 
+            m_material->set_texture(current_texture_unit,
                                     Texture::from_file(args[1]),
                                     Texture::from_file(args[2]));
           }
@@ -142,7 +142,7 @@ MaterialParser::parse(std::istream& in)
         else if (args[0] == "material.specular")
         {
           m_material->set_uniform("material.specular",
-                                  to_vec3(args.begin()+1, args.end(), 
+                                  to_vec3(args.begin()+1, args.end(),
                                           glm::vec3(1.0f, 1.0f, 1.0f)));
         }
         else if (args[0] == "material.specular_texture")
@@ -160,7 +160,7 @@ MaterialParser::parse(std::istream& in)
         else if (args[0] == "material.ambient")
         {
           m_material->set_uniform("material.ambient",
-                                  to_vec3(args.begin()+1, args.end(), 
+                                  to_vec3(args.begin()+1, args.end(),
                                           glm::vec3(1.0f, 1.0f, 1.0f)));
         }
         else if (args[0] == "blend_mode")
@@ -195,7 +195,7 @@ MaterialParser::parse(std::istream& in)
           if (count == 3)
           {
             m_material->set_uniform(uniform_name,
-                                    to_vec3(args.begin()+1, args.end(), 
+                                    to_vec3(args.begin()+1, args.end(),
                                             glm::vec3(1.0f, 1.0f, 1.0f)));
           }
           else if (count == 1)
@@ -240,7 +240,7 @@ MaterialParser::parse(std::istream& in)
     }
     else
     {
-      m_material->set_subroutine_uniform(GL_FRAGMENT_SHADER, "specular_color", "specular_color_from_material");    
+      m_material->set_subroutine_uniform(GL_FRAGMENT_SHADER, "specular_color", "specular_color_from_material");
     }
 
     m_material->set_subroutine_uniform(GL_FRAGMENT_SHADER, "shadow_value", "shadow_value_4");

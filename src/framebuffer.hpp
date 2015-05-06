@@ -34,7 +34,7 @@ private:
   TexturePtr m_depth_buffer;
 
 public:
-  Framebuffer(int width, int height);  
+  Framebuffer(int width, int height);
   ~Framebuffer();
 
   void draw(float x, float y, float w, float h, float z);

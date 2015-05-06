@@ -40,7 +40,7 @@ struct Bone
     tail_local(),
     matrix(),
     matrix_local()
-  {} 
+  {}
 };
 
 class Armature
@@ -53,7 +53,7 @@ public:
 
 public:
   Armature();
-  
+
   void bind_uniform(int loc);
 
 private:

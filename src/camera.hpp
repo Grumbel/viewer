@@ -24,7 +24,7 @@
 class Camera
 {
 private:
-  enum Type { kOrtho, kPerspective }; 
+  enum Type { kOrtho, kPerspective };
   Type m_type;
 
   // perspective
@@ -92,8 +92,8 @@ public:
     m_zfar = zfar;
   }
 
-  void look_at(const glm::vec3& eye, 
-               const glm::vec3& obj, 
+  void look_at(const glm::vec3& eye,
+               const glm::vec3& obj,
                const glm::vec3& up)
   {
     glm::mat4 m = glm::lookAt(eye, obj, up);
@@ -115,8 +115,8 @@ public:
 
   glm::mat4 get_view_matrix() const
   {
-    return 
-      glm::mat4_cast(m_orientation) * 
+    return
+      glm::mat4_cast(m_orientation) *
       glm::translate(-m_position);
   }
 

@@ -32,10 +32,10 @@ private:
   glm::quat m_accel_orientation;
 
   glm::quat m_orientation;
-  
+
   std::thread m_thread;
   mutable std::mutex m_mutex;
-  
+
 public:
   WiimoteManager();
   ~WiimoteManager();

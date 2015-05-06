@@ -49,7 +49,7 @@ MaterialFactory::MaterialFactory() :
                                      glm::vec3(1.0f, 1.0f, 1.0f),
                                      glm::vec3(0.5f, 0.5f, 0.5f),
                                      2.5f);
-                                      
+
   m_materials["skybox"] = create_skybox();
   m_materials["textured"] = create_textured();
   m_materials["video"] = create_video();
@@ -70,7 +70,7 @@ MaterialFactory::from_file(const boost::filesystem::path& filename)
   material->set_uniform("light.diffuse",   glm::vec3(1.0f, 1.0f, 1.0f));
   material->set_uniform("light.ambient",   glm::vec3(0.25f, 0.25f, 0.25f));
   material->set_uniform("light.specular",  glm::vec3(0.6f, 0.6f, 0.6f));
-  material->set_uniform("light.position", 
+  material->set_uniform("light.position",
                               UniformCallback(
                                 [](ProgramPtr prog, const std::string& name, const RenderContext& ctx) {
                                   glm::vec3 pos(ctx.get_view_matrix() * glm::vec4(50.0f, 50.0f, 50.0f, 1.0f));
@@ -125,10 +125,10 @@ MaterialFactory::create_basic_white()
 }
 
 MaterialPtr
-MaterialFactory::create_phong(const glm::vec3& diffuse, 
-                              const glm::vec3& ambient, 
+MaterialFactory::create_phong(const glm::vec3& diffuse,
+                              const glm::vec3& ambient,
                               const glm::vec3& specular,
-                              float shininess) 
+                              float shininess)
 {
   MaterialPtr phong = std::make_shared<Material>();
 
@@ -143,7 +143,7 @@ MaterialFactory::create_phong(const glm::vec3& diffuse,
   phong->set_uniform("light.specular",  glm::vec3(1.0f, 1.0f, 1.0f));
   //phong->set_uniform("light.shininess", 3.0f);
   //phong->set_uniform("light.position",  glm::vec3(5.0f, 5.0f, 5.0f));
-  phong->set_uniform("light.position", 
+  phong->set_uniform("light.position",
                               UniformCallback(
                                 [](ProgramPtr prog, const std::string& name, const RenderContext& ctx) {
                                   glm::vec3 pos(ctx.get_view_matrix() * glm::vec4(50.0f, 50.0f, 50.0f, 1.0f));
@@ -217,7 +217,7 @@ MaterialFactory::create_textured()
   material->set_uniform("light.specular",  glm::vec3(0.6f, 0.6f, 0.6f));
   //material->set_uniform("light.shininess", 3.0f);
   //material->set_uniform("light.position",  glm::vec3(5.0f, 5.0f, 5.0f));
-  material->set_uniform("light.position", 
+  material->set_uniform("light.position",
                               UniformCallback(
                                 [](ProgramPtr prog, const std::string& name, const RenderContext& ctx) {
                                   glm::vec3 pos(ctx.get_view_matrix() * glm::vec4(50.0f, 50.0f, 50.0f, 1.0f));

@@ -37,7 +37,7 @@ Framebuffer::Framebuffer(int width, int height) :
 
   m_color_buffer = Texture::create_empty(GL_TEXTURE_2D, GL_RGB16F, width, height);
   m_depth_buffer = Texture::create_shadowmap(width, height);
-    
+
   // attach color and depth buffer
   glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, m_color_buffer->get_target(), m_color_buffer->get_id(), 0);
   glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT,  m_depth_buffer->get_target(), m_depth_buffer->get_id(), 0);
@@ -56,7 +56,7 @@ Framebuffer::Framebuffer(int width, int height) :
 
   glBindFramebuffer(GL_FRAMEBUFFER, 0);
 }
-  
+
 Framebuffer::~Framebuffer()
 {
   assert_gl("~Framebuffer-enter()");
@@ -72,7 +72,7 @@ void
 Framebuffer::draw(float x, float y, float w, float h, float z)
 {
   OpenGLState state;
-    
+
   glEnable(GL_TEXTURE_2D);
 
   glBindTexture(GL_TEXTURE_2D, m_color_buffer->get_id());
@@ -90,22 +90,22 @@ Framebuffer::draw(float x, float y, float w, float h, float z)
     glTexCoord2f(0.0f, 1.0f);
     glVertex3f(x, y+h, z);
   }
-  glEnd();  
+  glEnd();
 }
 
 void
 Framebuffer::draw_depth(float x, float y, float w, float h, float z)
 {
   OpenGLState state;
-    
+
   glEnable(GL_TEXTURE_2D);
 
   glBindTexture(GL_TEXTURE_2D, m_depth_buffer->get_id());
-  
+
   GLint compare_mode;
   GLint compare_func;
   GLint depth_texture_mode;
-  
+
   // capture old values
   glGetTexParameteriv(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_MODE, &compare_mode);
   glGetTexParameteriv(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_FUNC, &compare_func);
@@ -114,7 +114,7 @@ Framebuffer::draw_depth(float x, float y, float w, float h, float z)
   // set new values
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_MODE, GL_NONE);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_FUNC, GL_LEQUAL);
-  glTexParameteri(GL_TEXTURE_2D, GL_DEPTH_TEXTURE_MODE, GL_LUMINANCE); 
+  glTexParameteri(GL_TEXTURE_2D, GL_DEPTH_TEXTURE_MODE, GL_LUMINANCE);
 
   glBegin(GL_TRIANGLE_FAN);
   {
@@ -130,7 +130,7 @@ Framebuffer::draw_depth(float x, float y, float w, float h, float z)
     glTexCoord2f(0.0f, 1.0f);
     glVertex3f(x, y+h, z);
   }
-  glEnd();  
+  glEnd();
 
   // restore old values
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_MODE, compare_mode);
@@ -144,7 +144,7 @@ Framebuffer::bind()
   glBindFramebuffer(GL_FRAMEBUFFER, m_fbo);
 }
 
-void 
+void
 Framebuffer::unbind()
 {
   glBindFramebuffer(GL_FRAMEBUFFER, 0);

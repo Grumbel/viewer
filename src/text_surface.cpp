@@ -74,24 +74,24 @@ TextSurface::draw(RenderContext& ctx, float x, float y, float z)
 
   x += static_cast<float>(m_text_extents.x_bearing);
   y += static_cast<float>(m_text_extents.y_bearing);
- 
+
   GLint program;
   glGetIntegerv(GL_CURRENT_PROGRAM, &program);
-  
+
   std::vector<glm::vec2> texcoords{
     glm::vec2{ 0.0f, 1.0f },
     glm::vec2{ 1.0f, 1.0f },
     glm::vec2{ 1.0f, 0.0f },
     glm::vec2{ 0.0f, 0.0f }
   };
-      
+
   std::vector<glm::vec3> positions{
     glm::vec3{ x, y + static_cast<float>(m_height), z },
     glm::vec3{ x + static_cast<float>(m_width), y + static_cast<float>(m_height), z },
     glm::vec3{ x + static_cast<float>(m_width), y, z },
     glm::vec3{ x, y, z }
   };
-  
+
   GLint texcoords_loc = glGetAttribLocation(program, "texcoord");
   GLint positions_loc = glGetAttribLocation(program, "position");
 
@@ -132,7 +132,7 @@ TextSurface::create_opengl_texture(Cairo::RefPtr<Cairo::ImageSurface> surface)
   assert(surface);
 
   TexturePtr texture = Texture::create_handle(GL_TEXTURE_2D);
-    
+
   glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
   glPixelStorei(GL_UNPACK_ROW_LENGTH, surface->get_width());
 
@@ -167,7 +167,7 @@ TextSurface::create_opengl_texture(Cairo::RefPtr<Cairo::ImageSurface> surface)
   }
 
   glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA,
-               surface->get_width(), surface->get_height(), 0, 
+               surface->get_width(), surface->get_height(), 0,
                GL_RGBA, GL_UNSIGNED_BYTE, surface->get_data());
   assert_gl("Texture failure");
 
@@ -195,8 +195,8 @@ TextSurface::create_cairo_surface(const std::string& text, const TextProperties&
   }
 
   Cairo::RefPtr<Cairo::ImageSurface>
-    surface = Cairo::ImageSurface::create(Cairo::FORMAT_ARGB32, 
-                                          static_cast<int>(out_text_extents.width  + text_props.get_line_width()), 
+    surface = Cairo::ImageSurface::create(Cairo::FORMAT_ARGB32,
+                                          static_cast<int>(out_text_extents.width  + text_props.get_line_width()),
                                           static_cast<int>(out_text_extents.height + text_props.get_line_width()));
 
   Cairo::RefPtr<Cairo::Context> cr = Cairo::Context::create(surface);

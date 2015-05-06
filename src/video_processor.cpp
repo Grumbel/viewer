@@ -75,7 +75,7 @@ VideoProcessor::~VideoProcessor()
 }
 
 gint64
-VideoProcessor::get_duration() 
+VideoProcessor::get_duration()
 {
   Gst::Format format = Gst::FORMAT_TIME;
   gint64 duration;
@@ -97,7 +97,7 @@ VideoProcessor::get_duration()
 }
 
 gint64
-VideoProcessor::get_position() 
+VideoProcessor::get_position()
 {
   Gst::Format format = Gst::FORMAT_TIME;
   gint64 position;
@@ -183,7 +183,7 @@ VideoProcessor::on_bus_message(const Glib::RefPtr<Gst::Message>& msg)
     log_info("end of stream");
     Glib::signal_idle().connect(sigc::mem_fun(this, &VideoProcessor::shutdown));
   }
-  else if (msg->get_message_type() & Gst::MESSAGE_TAG) 
+  else if (msg->get_message_type() & Gst::MESSAGE_TAG)
   {
     log_info("MESSAGE_TAG");
   }
@@ -191,15 +191,15 @@ VideoProcessor::on_bus_message(const Glib::RefPtr<Gst::Message>& msg)
   {
     log_info("MESSAGE_ASYNC_DONE");
   }
-  else if (msg->get_message_type() & Gst::MESSAGE_STREAM_STATUS) 
+  else if (msg->get_message_type() & Gst::MESSAGE_STREAM_STATUS)
   {
     log_info("MESSAGE_STREAM_STATUS");
   }
-  else if (msg->get_message_type() & Gst::MESSAGE_REQUEST_STATE) 
+  else if (msg->get_message_type() & Gst::MESSAGE_REQUEST_STATE)
   {
     log_info("MESSAGE_REQUEST_STATE");
   }
-  else if (msg->get_message_type() & Gst::MESSAGE_STEP_START) 
+  else if (msg->get_message_type() & Gst::MESSAGE_STEP_START)
   {
     log_info("MESSAGE_STEP_START");
   }
@@ -207,7 +207,7 @@ VideoProcessor::on_bus_message(const Glib::RefPtr<Gst::Message>& msg)
   {
     log_info("MESSAGE_REQUEST_STATE");
   }
-  else if (msg->get_message_type() & Gst::MESSAGE_QOS) 
+  else if (msg->get_message_type() & Gst::MESSAGE_QOS)
   {
     log_info("MESSAGE_QOS");
   }
@@ -260,7 +260,7 @@ VideoProcessor::update()
       structure.get_field("width",  width);
       structure.get_field("height", height);
     }
-    
+
     if (false)
     {
       log_info("%s: on_buffer_probe: %s %s %sx%s",
@@ -278,7 +278,7 @@ VideoProcessor::update()
     {
       m_texture->upload(width, height, m_buffer->get_size() / height, m_buffer->get_data());
     }
-    
+
     if (false)
     {
       Cairo::RefPtr<Cairo::ImageSurface> img = Cairo::ImageSurface::create(Cairo::FORMAT_RGB24, width, height);
@@ -298,7 +298,7 @@ VideoProcessor::update()
           }
         }
       }
-      
+
       img->write_to_png("/tmp/out.png");
     }
   }

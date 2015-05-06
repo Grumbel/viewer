@@ -15,7 +15,7 @@ void main()
 
   eyeVec = -vVertex;
 
-  gl_Position = ftransform();		
+  gl_Position = ftransform();
 
   gl_TexCoord[0] = gl_TextureMatrix[0] * gl_MultiTexCoord0;
 }

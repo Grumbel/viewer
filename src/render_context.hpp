@@ -30,17 +30,17 @@ public:
   {
     return m_camera.get_view_matrix();
   }
-  
+
   glm::mat4 get_model_matrix() const
   {
     return m_node->get_transform();
   }
-  
+
   glm::mat4 get_projection_matrix() const
   {
     return m_camera.get_projection_matrix();
   }
-  
+
   void set_geometry_pass()
   {
     m_geometry_pass = true;
@@ -55,7 +55,7 @@ public:
   {
     return m_stero;
   }
-  
+
   void set_stereo(Stereo stereo)
   {
     m_stero = stereo;

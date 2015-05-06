@@ -56,7 +56,7 @@ Texture::create_empty(GLenum target, GLenum format, int width, int height)
   glTexParameterf(target, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
   glTexParameterf(target, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
   assert_gl("framebuffer");
-  
+
   return std::make_shared<Texture>(target, texture);
 }
 
@@ -70,7 +70,7 @@ Texture::create_shadowmap(int width, int height)
   assert_gl("Texture::create_shadowmap: start");
   glGenTextures(1, &texture);
   glBindTexture(GL_TEXTURE_2D, texture);
-  
+
   glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT,  width, height, 0, GL_DEPTH_COMPONENT, GL_UNSIGNED_BYTE, NULL);
 
   // glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
@@ -103,7 +103,7 @@ Texture::create_random_noise(int width, int height)
 
   glGenTextures(1, &texture);
   glBindTexture(GL_TEXTURE_2D, texture);
-   
+
   glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
   glPixelStorei(GL_UNPACK_ROW_LENGTH, width);
 
@@ -116,7 +116,7 @@ Texture::create_random_noise(int width, int height)
 
   gluBuild2DMipmaps(GL_TEXTURE_2D, GL_RGB, width, height, GL_RGB, GL_UNSIGNED_BYTE, data.data());
   assert_gl("texture0()");
-    
+
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
   assert_gl("texture-0()");
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
@@ -152,7 +152,7 @@ Texture::create_lightspot(int width, int height)
     {
       float xf = (static_cast<float>(x) / static_cast<float>(width)  - 0.5f) * 2.0f;
       float yf = (static_cast<float>(y) / static_cast<float>(height) - 0.5f) * 2.0f;
-        
+
       float f = 1.0f - sqrtf(xf*xf + yf*yf);
 
       data[y * pitch + 3*x+0] = static_cast<uint8_t>(std::max(0.0f, std::min(f * 255.0f, 255.0f)));
@@ -162,7 +162,7 @@ Texture::create_lightspot(int width, int height)
 
   gluBuild2DMipmaps(GL_TEXTURE_2D, GL_RGB, width, height, GL_RGB, GL_UNSIGNED_BYTE, data.data());
   assert_gl("texture0()");
-    
+
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
@@ -230,7 +230,7 @@ Texture::cubemap_from_file(const std::string& filename)
   glTexParameteri(target, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
   glTexParameteri(target, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
   glTexParameteri(target, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
-   
+
   gluBuild2DMipmaps(GL_TEXTURE_CUBE_MAP_POSITIVE_Y, GL_RGB, up->w, up->h, up->format->BytesPerPixel == 4 ? GL_RGBA : GL_RGB, GL_UNSIGNED_BYTE, up->pixels);
   gluBuild2DMipmaps(GL_TEXTURE_CUBE_MAP_NEGATIVE_Y, GL_RGB, dn->w, dn->h, dn->format->BytesPerPixel == 4 ? GL_RGBA : GL_RGB, GL_UNSIGNED_BYTE, dn->pixels);
 
@@ -276,7 +276,7 @@ Texture::from_file(const std::string& filename, bool build_mipmaps)
     glBindTexture(target, texture);
 
     glPixelStorei(GL_UNPACK_ALIGNMENT, 4);
-    glPixelStorei(GL_UNPACK_ROW_LENGTH, surface->pitch / surface->format->BytesPerPixel);  
+    glPixelStorei(GL_UNPACK_ROW_LENGTH, surface->pitch / surface->format->BytesPerPixel);
 
     glTexParameteri(target, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
     glTexParameteri(target, GL_TEXTURE_MIN_FILTER, build_mipmaps ? GL_LINEAR_MIPMAP_LINEAR : GL_LINEAR);

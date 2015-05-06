@@ -38,7 +38,7 @@ Menu::draw(RenderContext& ctx, float x, float y)
     }
 
     (*it)->draw(ctx, x, y);
-    
+
     y += m_text_prop.get_font_size() + 2.0f;
   }
 }

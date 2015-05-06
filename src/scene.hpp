@@ -19,7 +19,7 @@ private:
 
 public:
   Scene();
-  
+
   void set_directory(const boost::filesystem::path& path);
   void parse_istream(std::istream& in);
   std::unique_ptr<SceneNode> get_node();

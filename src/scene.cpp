@@ -51,7 +51,7 @@ void
 Scene::parse_istream(std::istream& in)
 {
   // This is not a fully featured .obj file reader, it just takes some
-  // inspiration from it: 
+  // inspiration from it:
   // http://www.martinreddy.net/gfx/3d/OBJ.spec
   std::unordered_map<std::string, SceneNode*> nodes;
   std::unordered_map<std::string, std::unique_ptr<SceneNode> > unattached_children;
@@ -74,7 +74,7 @@ Scene::parse_istream(std::istream& in)
     if (!name.empty())
     {
       ModelPtr model;
-        
+
       if (!position.empty())
       {
         // fill in some texcoords if there aren't enough
@@ -105,7 +105,7 @@ Scene::parse_istream(std::istream& in)
           // create Model
           model = std::make_shared<Model>();
           model->add_mesh(std::move(mesh));
-          
+
           if (boost::algorithm::ends_with(material, ".material"))
           {
             model->set_material(MaterialFactory::get().from_file(m_directory / boost::filesystem::path(material)));
@@ -123,7 +123,7 @@ Scene::parse_istream(std::istream& in)
         node->set_position(location);
         node->set_orientation(rotation);
         node->set_scale(scale);
-        
+
         if (model)
         {
           node->attach_model(model);
@@ -177,7 +177,7 @@ Scene::parse_istream(std::istream& in)
       }
 
       try
-      {  
+      {
         if (*it == "o")
         {
           // object
@@ -240,7 +240,7 @@ Scene::parse_istream(std::istream& in)
           v.y = boost::lexical_cast<float>(*it);
           INCR_AND_CHECK;
           v.z = boost::lexical_cast<float>(*it);
-          
+
           position.push_back(v);
         }
         else if (*it == "vt")
@@ -279,7 +279,7 @@ Scene::parse_istream(std::istream& in)
           bw.z = boost::lexical_cast<float>(*it);
           INCR_AND_CHECK;
           bw.w = boost::lexical_cast<float>(*it);
-          
+
           bone_weight.push_back(bw);
         }
         else if (*it == "bi")
@@ -294,7 +294,7 @@ Scene::parse_istream(std::istream& in)
           bi.z = boost::lexical_cast<int>(*it);
           INCR_AND_CHECK;
           bi.w = boost::lexical_cast<int>(*it);
-          
+
           bone_index.push_back(bi);
         }
         else if (*it == "f")

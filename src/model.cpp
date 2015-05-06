@@ -25,7 +25,7 @@
 #include "log.hpp"
 #include "render_context.hpp"
 
-void 
+void
 Model::draw(const RenderContext& context)
 {
   if (!m_material)

@@ -72,14 +72,14 @@ public:
 
   void draw(RenderContext& ctx, float x, float y, float z = -1.0f);
 
-  int get_width() const 
+  int get_width() const
   {
     return static_cast<int>(m_text_extents.x_advance);
   }
 
-  int get_height() const 
+  int get_height() const
   {
-    return static_cast<int>(m_font_extents.height); 
+    return static_cast<int>(m_font_extents.height);
   }
 
 private:

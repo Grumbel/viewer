@@ -41,17 +41,17 @@ public:
     m_shininess(0)
   {}
 
-  void set_diffuse(const glm::vec4& diffuse) 
+  void set_diffuse(const glm::vec4& diffuse)
   {
     m_diffuse = diffuse;
   }
 
-  void set_ambient(const glm::vec4& ambient) 
+  void set_ambient(const glm::vec4& ambient)
   {
     m_ambient = ambient;
   }
 
-  void set_specular(const glm::vec4& specular) 
+  void set_specular(const glm::vec4& specular)
   {
     m_specular = specular;
   }

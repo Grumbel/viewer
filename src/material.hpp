@@ -45,7 +45,7 @@ private:
 
   GLenum m_blend_sfactor;
   GLenum m_blend_dfactor;
-  
+
   GLenum m_cull_face;
 
 public:
@@ -71,7 +71,7 @@ public:
   {
     m_uniforms->set_uniform(name, value);
   }
-  
+
   void set_subroutine_uniform(GLenum shadertype, const std::string& name, const std::string& subroutine)
   {
     m_uniforms->set_subroutine_uniform(shadertype, name, subroutine);

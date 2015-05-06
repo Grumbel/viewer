@@ -37,7 +37,7 @@ glm::vec3 vec3(const std::vector<std::string>& args)
 
 glm::mat3 mat3(const std::vector<std::string>& args)
 {
-  glm::mat3 m;  
+  glm::mat3 m;
   for(int i = 0; i < 9; ++i)
   {
     glm::value_ptr(m)[i] = boost::lexical_cast<float>(args[i+1]);
@@ -47,7 +47,7 @@ glm::mat3 mat3(const std::vector<std::string>& args)
 
 glm::mat4 mat4(const std::vector<std::string>& args)
 {
-  glm::mat4 m;  
+  glm::mat4 m;
   for(int i = 0; i < 16; ++i)
   {
     glm::value_ptr(m)[i] = boost::lexical_cast<float>(args[i+1]);
@@ -63,7 +63,7 @@ Armature::from_file(const std::string& filename)
   std::ifstream in;
   in.exceptions( std::ifstream::badbit );
   in.open(filename.c_str());
-    
+
   std::unique_ptr<Armature> armature(new Armature);
   std::unique_ptr<Bone> bone;
 
@@ -146,7 +146,7 @@ Armature::bind_uniform(int loc)
   for(size_t i = 0; i < m_bones.size(); ++i)
   {
     //matrices.push_back(glm::mat4(1));
-    glUniformMatrix4fv(loc + i, 1, GL_FALSE, 
+    glUniformMatrix4fv(loc + i, 1, GL_FALSE,
                        glm::value_ptr(m_bones[i]->matrix_local));
   }
 }

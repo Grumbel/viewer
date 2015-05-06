@@ -6,7 +6,7 @@ const float steps = 100.0;
 
 void main(void)
 {
-  vec2 uv_trunc; 
+  vec2 uv_trunc;
   vec2 uv_fract = modf(gl_TexCoord[0].xy * steps, uv_trunc);
 
   uv_trunc /= steps;

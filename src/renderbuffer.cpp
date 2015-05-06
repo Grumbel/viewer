@@ -103,7 +103,7 @@ Renderbuffer::blit(Framebuffer& target_fbo,
   // Specifies the interpolation to be applied if the image is
   // stretched. Must be GL_NEAREST or GL_LINEAR.
 
-  // http://www.opengl.org/registry/specs/EXT/framebuffer_blit.txt  
+  // http://www.opengl.org/registry/specs/EXT/framebuffer_blit.txt
   // http://www.opengl.org/wiki/GLAPI/glBlitFramebuffer
 
   assert_gl("enter: BlitFramebuffer");
@@ -120,11 +120,11 @@ Renderbuffer::blit(Framebuffer& target_fbo,
   glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
   glBindFramebuffer(GL_READ_FRAMEBUFFER, 0);
 }
-                                               
+
 void
 Renderbuffer::blit(Framebuffer& target_fbo)
 {
-  blit(target_fbo, 
+  blit(target_fbo,
        0, 0, m_width, m_height,
        0, 0, target_fbo.get_width(), target_fbo.get_height());
 }
@@ -132,7 +132,7 @@ Renderbuffer::blit(Framebuffer& target_fbo)
 void
 Renderbuffer::bind()
 {
-  glBindFramebuffer(GL_FRAMEBUFFER, m_fbo); 
+  glBindFramebuffer(GL_FRAMEBUFFER, m_fbo);
 }
 
 void

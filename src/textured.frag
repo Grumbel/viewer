@@ -62,8 +62,8 @@ float offset_lookup(sampler2DShadow map,
   vec2 texmapscale = vec2(1.0/textureSize(map, 0).x, 1.0/textureSize(map, 0).y);
   //vec2 texmapscale = vec2(1.0/1600.0, 1.0/1000.0);
   //vec2 texmapscale = vec2(0.02, 0.02) / loc.q;
-  
-  return textureProj(map, vec4(loc.st + offset * texmapscale * loc.q, 
+
+  return textureProj(map, vec4(loc.st + offset * texmapscale * loc.q,
                                //loc.p-0.0001,//ortho
                                loc.p, //perspective
                                loc.q));
@@ -106,7 +106,7 @@ float shadow_value_4()
     offset_lookup(ShadowMap, shadow_position, offset + vec2(-1.5,  0.5)) +
     offset_lookup(ShadowMap, shadow_position, offset + vec2( 0.5,  0.5)) +
     offset_lookup(ShadowMap, shadow_position, offset + vec2(-1.5, -1.5)) +
-    offset_lookup(ShadowMap, shadow_position, offset + vec2( 0.5, -1.5)) 
+    offset_lookup(ShadowMap, shadow_position, offset + vec2( 0.5, -1.5))
     ) * 0.25;
 }
 
@@ -123,7 +123,7 @@ vec3 phong_model(vec3 position, vec3 normal, vec3 diff, vec3 spec)
   {
     // in light
     intensity += light.diffuse * diff * lambertTerm;
-		
+
     vec3 E = normalize(-position); // eye vec
     vec3 R = reflect(-L, N);
 

@@ -34,7 +34,7 @@ private:
   MeshLst m_meshes;
 
   MaterialPtr m_material;
-  
+
 public:
   Model() :
     m_meshes(),

@@ -57,7 +57,7 @@ private:
 class BoolMenuItem : public MenuItem
 {
 public:
-  BoolMenuItem(const std::string& label, const TextProperties& text_prop, bool* value_ptr) : 
+  BoolMenuItem(const std::string& label, const TextProperties& text_prop, bool* value_ptr) :
     MenuItem(label, text_prop),
     m_value_ptr(value_ptr),
     m_true_surface(),
@@ -67,13 +67,13 @@ public:
     m_false_surface = TextSurface::create("[ ]", text_prop);
   }
 
-  void left()   
+  void left()
   {
     *m_value_ptr = !*m_value_ptr;
   }
 
-  void right() 
-  { 
+  void right()
+  {
     left();
   }
 
@@ -82,7 +82,7 @@ public:
     MenuItem::draw(ctx, x, y);
 
     auto& surface = (*m_value_ptr) ? m_true_surface : m_false_surface;
-    
+
     surface->draw(ctx, x+300.0f - surface->get_width(), y);
   }
 
@@ -94,7 +94,7 @@ private:
 
 private:
   BoolMenuItem(const BoolMenuItem&) = delete;
-  BoolMenuItem& operator=(const BoolMenuItem&) = delete; 
+  BoolMenuItem& operator=(const BoolMenuItem&) = delete;
 };
 
 template<typename T>
@@ -102,8 +102,8 @@ class ValueMenuItem : public MenuItem
 {
 public:
   ValueMenuItem(const std::string& label, const TextProperties& text_prop, T* value_ptr, T step,
-                boost::optional<T> min = boost::optional<T>(), 
-                boost::optional<T> max = boost::optional<T>()) : 
+                boost::optional<T> min = boost::optional<T>(),
+                boost::optional<T> max = boost::optional<T>()) :
     MenuItem(label, text_prop),
     m_value_ptr(value_ptr),
     m_step(step),
@@ -115,15 +115,15 @@ public:
     check_range();
   }
 
-  void left()   
+  void left()
   {
-    *m_value_ptr -= m_step; 
+    *m_value_ptr -= m_step;
     check_range();
   }
 
-  void right() 
-  { 
-    *m_value_ptr += m_step; 
+  void right()
+  {
+    *m_value_ptr += m_step;
     check_range();
   }
 

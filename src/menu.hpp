@@ -32,7 +32,7 @@ public:
   void draw(RenderContext& ctx, float x, float y);
   void add_item(const std::string& label, int* value_ptr, int step = 1,
                 boost::optional<int> min = boost::optional<int>(),
-                boost::optional<int> max = boost::optional<int>());  
+                boost::optional<int> max = boost::optional<int>());
   void add_item(const std::string& label, float* value_ptr, float step = 1.0f,
                 boost::optional<float> min = boost::optional<float>(),
                 boost::optional<float> max = boost::optional<float>());

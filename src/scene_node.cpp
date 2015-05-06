@@ -32,56 +32,56 @@ SceneNode::~SceneNode()
 }
 
 void
-SceneNode::set_position(const glm::vec3& p) 
+SceneNode::set_position(const glm::vec3& p)
 {
-  m_position = p; 
+  m_position = p;
 }
 
 glm::vec3
-SceneNode::get_position() const 
+SceneNode::get_position() const
 {
- return m_position; 
+ return m_position;
 }
 
 void
-SceneNode::set_orientation(const glm::quat& q) 
+SceneNode::set_orientation(const glm::quat& q)
 {
- m_orientation = q; 
+ m_orientation = q;
 }
 
 glm::quat
-SceneNode::get_orientation() const 
+SceneNode::get_orientation() const
 {
- return m_orientation; 
+ return m_orientation;
 }
 
 void
-SceneNode::set_scale(const glm::vec3& s) 
+SceneNode::set_scale(const glm::vec3& s)
 {
- m_scale = s; 
+ m_scale = s;
 }
 
 glm::vec3
-SceneNode::get_scale() const 
+SceneNode::get_scale() const
 {
- return m_scale; 
+ return m_scale;
 }
 
 glm::mat4
-SceneNode::get_transform() const 
+SceneNode::get_transform() const
 {
- return m_global_transform; 
+ return m_global_transform;
 }
 
 void
 SceneNode::update_transform(const glm::mat4& parent_transform)
 {
-  m_global_transform = 
+  m_global_transform =
     parent_transform *
     glm::translate(m_position) *
     glm::mat4_cast(m_orientation) *
     glm::scale(m_scale);
-    
+
   for(auto& child : m_children)
   {
     child->update_transform(m_global_transform);
@@ -101,9 +101,9 @@ SceneNode::attach_child(std::unique_ptr<SceneNode> child)
 }
 
 SceneNode*
-SceneNode::create_child() 
+SceneNode::create_child()
 {
-  std::unique_ptr<SceneNode> child(new SceneNode); 
+  std::unique_ptr<SceneNode> child(new SceneNode);
   SceneNode* ptr = child.get();
   attach_child(std::move(child));
   return ptr;

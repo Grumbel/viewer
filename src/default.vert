@@ -42,7 +42,7 @@ void main(void)
   frag_position = vec3(ModelViewMatrix * vec4(position, 1.0));
   frag_normal = NormalMatrix * normal;
   frag_uv = texcoord;
-  world_normal = normal; 
+  world_normal = normal;
 
   gl_Position = MVP * vec4(position, 1.0);
 }

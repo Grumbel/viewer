@@ -37,21 +37,21 @@ private:
 public:
   Renderbuffer(int width, int height);
   ~Renderbuffer();
-  
+
   void bind();
   void unbind();
 
   int get_width()  const { return m_width; }
   int get_height() const { return m_height; }
 
-  void blit(Framebuffer& target_fbo, 
+  void blit(Framebuffer& target_fbo,
             int srcX0, int srcY0, int srcX1, int srcY1,
             int dstX0, int dstY0, int dstX1, int dstY1,
             GLbitfield mask = GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT,
             GLenum filter = GL_NEAREST);
 
   void blit(Framebuffer& target_fbo);
-  
+
 private:
   Renderbuffer(const Renderbuffer&);
   Renderbuffer& operator=(const Renderbuffer&);

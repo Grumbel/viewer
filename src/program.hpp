@@ -37,7 +37,7 @@ public:
   std::string get_info_log() const;
   bool get_link_status() const;
   bool get_validate_status() const;
-  
+
   GLuint get_id() const { return m_program; }
 
   void inspect() const;
@@ -57,7 +57,7 @@ public:
     }
     assert_gl("set_uniform:exit: %s", name);
   }
-  
+
   void set_uniform(GLint loc, float v) { glProgramUniform1f(m_program, loc, v); }
   void set_uniform(GLint loc, const glm::vec2& v) { glProgramUniform2f(m_program, loc, v.x, v.y); }
   void set_uniform(GLint loc, const glm::vec3& v) { glProgramUniform3f(m_program, loc, v.x, v.y, v.z); }

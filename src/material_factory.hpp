@@ -33,8 +33,8 @@ public:
 
   MaterialPtr from_file(const boost::filesystem::path& name);
   MaterialPtr create(const std::string& name);
-  static MaterialPtr create_phong(const glm::vec3& diffuse, 
-                                  const glm::vec3& ambient, 
+  static MaterialPtr create_phong(const glm::vec3& diffuse,
+                                  const glm::vec3& ambient,
                                   const glm::vec3& specular,
                                   float shininess);
   static MaterialPtr create_skybox();

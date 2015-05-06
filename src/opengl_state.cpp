@@ -7,7 +7,7 @@ OpenGLState::OpenGLState()
   //glPushClientAttrib(GL_CLIENT_ALL_ATTRIB_BITS);
   assert_gl("OpenGLState-exit");
 }
-  
+
 OpenGLState::~OpenGLState()
 {
   assert_gl("~OpenGLState");

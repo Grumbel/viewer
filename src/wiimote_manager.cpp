@@ -45,7 +45,7 @@ WiimoteManager::WiimoteManager() :
 
         clock::time_point t0 = clock::now();
         clock::time_point t1 = clock::now();
-  
+
         while(!m_quit)
         {
           t1 = clock::now();
@@ -144,15 +144,15 @@ WiimoteManager::dispatch_events()
         //wiimote.EnableMotionPlus(CWiimote::ON);
         cout << "Motion Plus inserted." << endl;
         break;
-								
+
       case CWiimote::EVENT_BALANCE_BOARD_INSERTED:
         cout << "Balance Board connected.\n"  << endl;
         break;
-						
+
       case CWiimote::EVENT_BALANCE_BOARD_REMOVED:
         cout << "Balance Board disconnected.\n"  << endl;
         break;
-						
+
       case CWiimote::EVENT_NUNCHUK_REMOVED:
       case CWiimote::EVENT_CLASSIC_CTRL_REMOVED:
       case CWiimote::EVENT_GUITAR_HERO_3_CTRL_REMOVED:
@@ -217,19 +217,19 @@ WiimoteManager::handle_event(CWiimote& wm)
     float alpha = 0.05f;
     m_smoothed_gravity = alpha * gravity + (1.0f - alpha) * m_smoothed_gravity;
     gravity = m_smoothed_gravity;
-    
+
     // calculate the roll
     float roll  = atan2f(gravity.y, gravity.x) - glm::half_pi<float>();
     glm::quat roll_rot = glm::quat(glm::vec3(0.0f, 0.0f, roll));
-    
+
     // remove the roll from the gravity vector, so that pitch can be calculated properly
     glm::quat rot_undo = glm::normalize(glm::quat(glm::vec3(0.0f, 0.0f, -roll)));
     gravity = rot_undo * gravity;
-    
+
     // calculate pitch
     float pitch = atan2f(gravity.z, gravity.y);
     glm::quat pitch_rot = glm::quat(glm::vec3(pitch, 0.0f, 0.0f));
-   
+
     m_accel_orientation = pitch_rot * roll_rot;
 
     m_accel_roll  = roll;
@@ -240,17 +240,17 @@ WiimoteManager::handle_event(CWiimote& wm)
     m_roll  = glm::roll(m_gyro_orientation);
 
     //m_accel_orientation = glm::quat(glm::vec3(0.0f, glm::radians(glm::yaw(m_gyro_orientation)), 0.0f)) * m_accel_orientation;
-    
+
     //std::cout << m_yaw << std::endl;
     //printf("%8.2f %8.2f   %8.2f %8.2f %8.2f\n", glm::degrees(pitch), glm::degrees(roll), gravity.x, gravity.y, gravity.z);
   }
 
   // if the Motion Plus is turned on then print angles
-  if(wm.isUsingMotionPlus()) 
+  if(wm.isUsingMotionPlus())
   {
     float pitch, yaw, roll;
     wm.ExpansionDevice.MotionPlus.Gyroscope.GetRates(roll, pitch, yaw);
-    
+
     // convert into radians
     roll  = glm::radians(roll  * 0.01f);
     pitch = glm::radians(pitch * -0.01f);
@@ -309,7 +309,7 @@ WiimoteManager::handle_event(CWiimote& wm)
 
   if (false)
   {
-    printf("a.p: %8.2f a.r: %8.2f -- g.p: %8.2f g.y: %8.2f g.r: %8.2f\n", 
+    printf("a.p: %8.2f a.r: %8.2f -- g.p: %8.2f g.y: %8.2f g.r: %8.2f\n",
            glm::degrees(m_accel_pitch), glm::degrees(m_accel_roll),
            glm::degrees(m_gyro_pitch), glm::degrees(m_gyro_yaw), glm::degrees(m_gyro_roll));
   }
@@ -338,19 +338,19 @@ WiimoteManager::get_accel_orientation() const
 
 void
 WiimoteManager::reset_gyro_orientation(const glm::quat& value)
-{  
+{
   std::lock_guard<std::mutex> lock(m_mutex);
   m_gyro_orientation = value;
 }
 
 glm::quat
 WiimoteManager::get_orientation() const
-{ 
+{
   std::lock_guard<std::mutex> lock(m_mutex);
   //glm::quat pitch_q(glm::vec3(m_pitch, 0.0f, 0.0f));
   //glm::quat yaw_q(glm::vec3(0.0f, m_yaw, 0.0f)); // only gets half the yaw?!
   //glm::quat roll_q(glm::vec3(0.0f, 0.0f, m_roll));
-  
+
   //glm::quat pitch(glm::vec3(m_gyro_pitch, 0.0f, 0.0f));
   //glm::quat yaw(glm::vec3(0.0f, m_gyro_yaw, 0.0f));
   //glm::quat roll(glm::vec3(0.0f, 0.0f, m_gyro_roll));
@@ -358,7 +358,7 @@ WiimoteManager::get_orientation() const
 
   //glm::vec3 o = glm::eulerAngles(m_gyro_orientation);
   //return glm::quat(o);
-  
+
   return m_orientation;
 }
 

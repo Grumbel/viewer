@@ -15,7 +15,7 @@ Shader::from_file(GLenum type, const std::string& filename)
   }
   else
   {
-    std::string source{std::istreambuf_iterator<char>(in), std::istreambuf_iterator<char>()}; 
+    std::string source{std::istreambuf_iterator<char>(in), std::istreambuf_iterator<char>()};
 
     //log_debug("shader source:\n %s\n", source);
 

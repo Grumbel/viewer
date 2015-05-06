@@ -40,16 +40,16 @@ float grid_value()
 vec4 reflection()
 {
   vec3 o = reflect(frag_world_position - world_eye_pos, normalize(world_normal));
-  
+
   vec4 col = textureCubeLod(cubemap, normalize(o), 3);// * textureCube(cubemap, world_normal);
   vec4 specular = vec4(pow(col.rgb, vec3(20,20,20)), 1.0);
-  
+
   vec4 diffuse = textureCubeLod(cubemap, normalize(world_normal), 5);
 
   return /*specular + */diffuse;
-  
+
   //return textureCube(cubemap, world_position - world_eye_pos);
-  //return vec4(world_normal, 1.0); 
+  //return vec4(world_normal, 1.0);
   //return world_eye_pos;
   //return world_position;
   //return vec4(o, 1.0);

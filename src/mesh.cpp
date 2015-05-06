@@ -28,32 +28,32 @@ namespace {
 
 } // namespace
 
-std::unique_ptr<Mesh> 
+std::unique_ptr<Mesh>
 Mesh::create_skybox(float size)
 {
   NormalLst   vn;
   TexCoordLst vt;
   VertexLst   vp;
-  
+
   float d = size;
   float t = 1.0f;
   float n = 1.0f;
 
   // top
-  vn.emplace_back(-n,  n, -n); 
-  vt.emplace_back(-t,  t, -t); 
+  vn.emplace_back(-n,  n, -n);
+  vt.emplace_back(-t,  t, -t);
   vp.emplace_back(-d,  d, -d);
 
-  vn.emplace_back( n,  n, -n); 
-  vt.emplace_back( t,  t, -t); 
+  vn.emplace_back( n,  n, -n);
+  vt.emplace_back( t,  t, -t);
   vp.emplace_back( d,  d, -d);
 
-  vn.emplace_back( n,  n,  n); 
+  vn.emplace_back( n,  n,  n);
   vt.emplace_back( t,  t,  t);
   vp.emplace_back( d,  d,  d);
 
-  vn.emplace_back(-n,  n,  n); 
-  vt.emplace_back(-t,  t,  t); 
+  vn.emplace_back(-n,  n,  n);
+  vt.emplace_back(-t,  t,  t);
   vp.emplace_back(-d,  d,  d);
 
   // bottom
@@ -124,7 +124,7 @@ Mesh::create_plane(float size, glm::vec3 center)
   mesh->attach_float_array("texcoord", vt);
   mesh->attach_float_array("position", vp);
 
-  return mesh;  
+  return mesh;
 }
 
 std::unique_ptr<Mesh>
@@ -148,7 +148,7 @@ Mesh::create_rect(float x1, float y1, float x2, float y2, float z)
   mesh->attach_float_array("texcoord", vt);
   mesh->attach_float_array("position", vp);
 
-  return mesh;  
+  return mesh;
 }
 
 std::unique_ptr<Mesh>
@@ -177,7 +177,7 @@ Mesh::create_curved_screen(float size, float hfov, float vfov, int rings, int se
     float s = static_cast<float>(seg + offset_x)  / segments;
 
     float f = sinf((r-0.5f) * vfov + glm::half_pi<float>());
-    glm::vec3 p(cosf((s-0.5f) * hfov - glm::half_pi<float>()) * f, 
+    glm::vec3 p(cosf((s-0.5f) * hfov - glm::half_pi<float>()) * f,
                 cosf((r-0.5f) * vfov + glm::half_pi<float>()),
                 sinf((s-0.5f) * hfov - glm::half_pi<float>()) * f);
 
@@ -204,7 +204,7 @@ Mesh::create_curved_screen(float size, float hfov, float vfov, int rings, int se
   mesh->attach_float_array("texcoord", vt);
   mesh->attach_float_array("position", vp);
 
-  return mesh;  
+  return mesh;
 }
 
 std::unique_ptr<Mesh>
@@ -222,8 +222,8 @@ Mesh::create_sphere(float size, int rings, int segments)
     float s = static_cast<float>(seg)  / segments;
 
     float f = sinf(r * glm::pi<float>());
-    glm::vec3 p(cosf(s * 2.0f * glm::pi<float>()) * f, 
-                cosf(r * glm::pi<float>()), 
+    glm::vec3 p(cosf(s * 2.0f * glm::pi<float>()) * f,
+                cosf(r * glm::pi<float>()),
                 sinf(s * 2.0f * glm::pi<float>()) * f);
 
     vn.push_back(p);
@@ -249,7 +249,7 @@ Mesh::create_sphere(float size, int rings, int segments)
   mesh->attach_float_array("texcoord", vt);
   mesh->attach_float_array("position", vp);
 
-  return mesh;  
+  return mesh;
 }
 
 Mesh::Mesh(GLenum primitive_type) :
@@ -270,7 +270,7 @@ Mesh::~Mesh()
 }
 
 void
-Mesh::draw() 
+Mesh::draw()
 {
   OpenGLState state;
 

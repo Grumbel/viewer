@@ -33,8 +33,8 @@ typedef std::vector<glm::vec4>  BoneWeights;
 typedef std::vector<glm::ivec4> BoneIndices;
 typedef std::vector<int>        BoneCounts;
 
-template<typename C> 
-inline size_t glm_vec_length() 
+template<typename C>
+inline size_t glm_vec_length()
 {
   assert(!"glm_vec_length not implemented");
   return 0;
@@ -68,7 +68,7 @@ private:
   std::unordered_map<std::string, Array> m_attribute_arrays;
   GLuint m_element_array_vbo;
   int m_element_count;
-  
+
 public:
   /** Create a cube with cubemap texture coordinates */
   static std::unique_ptr<Mesh> create_skybox(float size);
@@ -76,7 +76,7 @@ public:
   static std::unique_ptr<Mesh> create_rect(float x1, float y1, float x2, float y2, float z);
   static std::unique_ptr<Mesh> create_cube(float size);
   static std::unique_ptr<Mesh> create_sphere(float size, int rings = 16, int segments = 32);
-  static std::unique_ptr<Mesh> create_curved_screen(float size, float hfov, float vfov, int rings = 16, int segments = 32, 
+  static std::unique_ptr<Mesh> create_curved_screen(float size, float hfov, float vfov, int rings = 16, int segments = 32,
                                                     int offset_x = 0, int offset_y = 0,
                                                     bool flip_uv_x = false, bool flip_uv_y = false);
 
@@ -109,7 +109,7 @@ public:
     attach_array(name, Array(Array::Float, 1, vbo), vec.size());
   }
 
-  template<typename T>  
+  template<typename T>
   void attach_float_array(const std::string& name, const std::vector<T>& vec)
   {
     GLuint vbo = build_vbo(GL_ARRAY_BUFFER, vec);
@@ -122,12 +122,12 @@ public:
     attach_array(name, Array(Array::Integer, 1, vbo), vec.size());
   }
 
-  template<typename T>  
+  template<typename T>
   void attach_int_array(const std::string& name, const std::vector<T>& vec)
   {
     GLuint vbo = build_vbo(GL_ARRAY_BUFFER, vec);
     attach_array(name, Array(Array::Integer, glm_vec_length<T>(), vbo), vec.size());
-  } 
+  }
 
   void attach_element_array(const std::vector<int>& vec)
   {

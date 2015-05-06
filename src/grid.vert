@@ -33,7 +33,7 @@ void main(void)
   frag_position = vec3(ModelViewMatrix * vec4(position, 1.0));
   frag_world_position = vec3(ModelMatrix * vec4(position, 1.0));
   //frag_normal = NormalMatrix * normal;
-  
+
   gl_Position = MVP * vec4(position, 1.0);
 }
 

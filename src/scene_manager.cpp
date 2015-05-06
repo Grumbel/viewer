@@ -20,14 +20,14 @@ SceneManager::get_world() const
   return m_world.get();
 }
 
-SceneNode* 
+SceneNode*
 SceneManager::get_view() const
 {
   return m_view.get();
 }
 
 LightPtr
-SceneManager::create_light() 
+SceneManager::create_light()
 {
   LightPtr light = std::make_shared<Light>();
   m_lights.push_back(light);
@@ -53,7 +53,7 @@ SceneManager::render_node(const Camera& camera, SceneNode* node, bool geometry_p
   OpenGLState state;
 
   RenderContext context(camera, node);
-  
+
   context.set_stereo(stereo);
 
   if (geometry_pass)

@@ -39,7 +39,7 @@ private:
 
 public:
   SceneNode(const std::string& name = std::string());
-  ~SceneNode(); 
+  ~SceneNode();
 
   void set_position(const glm::vec3& p);
   glm::vec3 get_position() const;
