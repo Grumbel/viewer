@@ -1558,6 +1558,17 @@ void parse_args(int argc, char** argv, Options& opts)
         opts.video = argv[i+1];
         ++i;
       }
+      else if (strcmp("--help", argv[i]) == 0 ||
+               strcmp("-h", argv[i]) == 0)
+      {
+        std::cout << "Usage: " << argv[0] << " [OPTIONS]\n"
+                  << "\n"
+                  << "Options:\n"
+                  << "  --wiimote       Enable Wiimote support\n"
+                  << "  --video FILE    Play video\n"
+                  << "  --video3d FILE  Play 3D video\n";
+        exit(0);
+      }
       else
       {
         throw std::runtime_error("unknown option: " + std::string(argv[i]));
