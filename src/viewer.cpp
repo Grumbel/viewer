@@ -1117,7 +1117,7 @@ void process_events()
             break;
 
           case 4: // y2
-            g_stick.rot.x = ev.jaxis.value / 32768.0f;
+            g_stick.rot.x = -ev.jaxis.value / 32768.0f;
             break;
         }
         break;
