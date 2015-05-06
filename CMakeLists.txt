@@ -43,7 +43,6 @@ file(GLOB VIEWER_SOURCES src/*.cpp)
 add_executable(viewer ${VIEWER_SOURCES})
 target_compile_options(viewer PRIVATE -std=c++11 ${WARNINGS_CXX_FLAGS})
 target_include_directories(viewer SYSTEM PRIVATE
-  ${CMAKE_CURRENT_SOURCE_DIR}/external/glm-0.9.4.2
   ${BLUEZ_INCLUDE_DIRS}
   ${GSTREAMERMM_INCLUDE_DIRS}
   ${SDL2_INCLUDE_DIRS}
