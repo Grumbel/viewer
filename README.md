@@ -10,6 +10,23 @@ A video of the thing in action is available at:
 
 * https://www.youtube.com/watch?v=9Vs-L52stfw
 
+
+Usage
+-----
+
+Stuff that works:
+
+    $ build/viewer data/cube.mod
+
+    $ build/viewer data/textured_cube.mod
+
+    $ build/viewer data/room/blender.mod
+
+Video doesn't play:
+
+    $ build/viewer --video BigBuckBunny_320x180.mp4
+
+
 Screenshot
 ----------
 
