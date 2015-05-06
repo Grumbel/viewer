@@ -16,7 +16,7 @@ Shader::from_file(GLenum type, const std::string& filename)
   else
   {
     std::string source{std::istreambuf_iterator<char>(in), std::istreambuf_iterator<char>()}; 
-  
+
     //log_debug("shader source:\n %s\n", source);
 
     ShaderPtr shader = std::make_shared<Shader>(type);
@@ -29,7 +29,8 @@ Shader::from_file(GLenum type, const std::string& filename)
       throw std::runtime_error((boost::format("%s: error:\n %s") % filename % shader->get_info_log()).str());
     }
 
-    log_debug("%s: shader compile successful", filename);
+    //log_debug("%s: shader compile successful", filename);
+
     return shader;
   }
 }

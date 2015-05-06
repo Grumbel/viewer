@@ -866,7 +866,10 @@ void init()
     if (!g_model_filename.empty())
     { // load a mesh from file
       auto node = Scene::from_file(g_model_filename);
+
+      std::cout << "SceneGraph:\n";
       print_scene_graph(node.get());
+
       g_scene_manager->get_world()->attach_child(std::move(node));
     }
 
