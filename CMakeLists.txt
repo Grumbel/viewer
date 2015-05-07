@@ -17,7 +17,7 @@ find_package(Threads REQUIRED)
 
 find_package(PkgConfig REQUIRED)
 pkg_search_module(BLUEZ REQUIRED bluez)
-pkg_search_module(GSTREAMERMM REQUIRED gstreamermm-0.10)
+pkg_search_module(GSTREAMER REQUIRED gstreamer-1.0)
 pkg_search_module(SDL2 REQUIRED sdl2)
 pkg_search_module(SDL2_IMAGE REQUIRED SDL2_image)
 pkg_search_module(CAIROMM REQUIRED cairomm-1.0)
@@ -44,7 +44,7 @@ add_executable(viewer ${VIEWER_SOURCES})
 target_compile_options(viewer PRIVATE -std=c++11 ${WARNINGS_CXX_FLAGS})
 target_include_directories(viewer SYSTEM PRIVATE
   ${BLUEZ_INCLUDE_DIRS}
-  ${GSTREAMERMM_INCLUDE_DIRS}
+  ${GSTREAMER_INCLUDE_DIRS}
   ${SDL2_INCLUDE_DIRS}
   ${SDL2_IMAGE_INCLUDE_DIRS}
   ${CAIROMM_INCLUDE_DIRS}
@@ -58,7 +58,7 @@ target_link_libraries(viewer
   ${Boost_FILESYSTEM_LIBRARY}
   ${Boost_SIGNALS_LIBRARY}
   ${BLUEZ_LIBRARIES}
-  ${GSTREAMERMM_LIBRARIES}
+  ${GSTREAMER_LIBRARIES}
   ${SDL2_LIBRARIES}
   ${SDL2_IMAGE_LIBRARIES}
   ${CAIROMM_LIBRARIES}
