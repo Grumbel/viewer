@@ -24,6 +24,8 @@ if(USE_OPENGLES2 OR HAVE_BCMHOST)
   set(OPENGL_INCLUDE_DIR /opt/vc/include)
   set(OPENGL_LIBRARIES GLESv2)
   set(OPENGL_CFLAGS_OTHER -DHAVE_OPENGLES2)
+
+  find_library(OPENGL_LIBRARIES GLESv2 ${OPENGL_LIBPATH})
 else()
   message(STATUS "Using OpenGL3.3")
   find_package(OpenGL REQUIRED)
@@ -60,6 +62,7 @@ target_include_directories(wiicpp SYSTEM PUBLIC
 file(GLOB VIEWER_SOURCES src/*.cpp)
 add_executable(viewer ${VIEWER_SOURCES})
 target_compile_options(viewer PRIVATE -std=c++11 ${WARNINGS_CXX_FLAGS})
+target_compile_definitions(viewer PRIVATE ${OPENGL_CFLAGS_OTHER})
 target_include_directories(viewer SYSTEM PRIVATE
   ${BLUEZ_INCLUDE_DIRS}
   ${GSTREAMER_INCLUDE_DIRS}
