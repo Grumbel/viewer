@@ -11,8 +11,9 @@ if(WARNINGS)
   # -Winline -Wfloat-equal -Wunreachable-code
 endif()
 
-include(CheckIncludeFile)
-check_include_file(/opt/vc/include/bcm_host.h HAVE_BCMHOST)
+if(EXISTS /opt/vc/include/bcm_host.h)
+  set(HAVE_BCMHOST TRUE)
+endif()
 if(USE_OPENGLES2 OR HAVE_BCMHOST)
   set(OPENGL_LIBPATH /opt/vc/lib)
   set(OPENGL_INCLUDE_DIR /opt/vc/include)
