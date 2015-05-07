@@ -35,7 +35,11 @@ Framebuffer::Framebuffer(int width, int height) :
   glBindFramebuffer(GL_FRAMEBUFFER, m_fbo);
   assert_gl("framebuffer");
 
+#ifdef HAVE_OPENGLES2
+  m_color_buffer = Texture::create_empty(GL_TEXTURE_2D, GL_RGBA, width, height);
+#else
   m_color_buffer = Texture::create_empty(GL_TEXTURE_2D, GL_RGB16F, width, height);
+#endif
   m_depth_buffer = Texture::create_shadowmap(width, height);
 
   // attach color and depth buffer
@@ -71,6 +75,7 @@ Framebuffer::~Framebuffer()
 void
 Framebuffer::draw(float x, float y, float w, float h, float z)
 {
+#ifndef HAVE_OPENGLES2
   OpenGLState state;
 
   glEnable(GL_TEXTURE_2D);
@@ -91,11 +96,13 @@ Framebuffer::draw(float x, float y, float w, float h, float z)
     glVertex3f(x, y+h, z);
   }
   glEnd();
+#endif
 }
 
 void
 Framebuffer::draw_depth(float x, float y, float w, float h, float z)
 {
+#ifndef HAVE_OPENGLES2
   OpenGLState state;
 
   glEnable(GL_TEXTURE_2D);
@@ -136,6 +143,7 @@ Framebuffer::draw_depth(float x, float y, float w, float h, float z)
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_MODE, compare_mode);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_FUNC, compare_func);
   glTexParameteri(GL_TEXTURE_2D, GL_DEPTH_TEXTURE_MODE, depth_texture_mode);
+#endif
 }
 
 void

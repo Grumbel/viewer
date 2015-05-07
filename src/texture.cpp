@@ -82,12 +82,16 @@ Texture::create_shadowmap(int width, int height)
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 
+#ifndef HAVE_OPENGLES2
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_FUNC, GL_LESS);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_MODE, GL_COMPARE_REF_TO_TEXTURE);
+#endif
 
+#ifndef HAVE_OPENGLES2
   //GLfloat border_color[] = { 1.0f, 1.0f, 1.0f, 1.0f };
   GLfloat border_color[] = { 0.0f, 0.0f, 0.0f, 0.0f };
   glTexParameterfv(GL_TEXTURE_2D, GL_TEXTURE_BORDER_COLOR, border_color);
+#endif
 
   assert_gl("Texture::create_shadowmap");
 
@@ -104,8 +108,10 @@ Texture::create_random_noise(int width, int height)
   glGenTextures(1, &texture);
   glBindTexture(GL_TEXTURE_2D, texture);
 
+#ifndef HAVE_OPENGLES2
   glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
   glPixelStorei(GL_UNPACK_ROW_LENGTH, width);
+#endif
 
   std::vector<uint8_t> data(width*height*3);
 
@@ -114,8 +120,10 @@ Texture::create_random_noise(int width, int height)
     data[i+0] = data[i+1] = data[i+2] = rand() % 255;
   }
 
+#ifndef HAVE_OPENGLES2
   gluBuild2DMipmaps(GL_TEXTURE_2D, GL_RGB, width, height, GL_RGB, GL_UNSIGNED_BYTE, data.data());
   assert_gl("texture0()");
+#endif
 
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
   assert_gl("texture-0()");
@@ -126,8 +134,10 @@ Texture::create_random_noise(int width, int height)
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
   assert_gl("texture1()");
 
+#ifndef HAVE_OPENGLES2
   glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAX_ANISOTROPY_EXT, 8.0f);
   assert_gl("texture2()");
+#endif
 
   return TexturePtr(new Texture(GL_TEXTURE_2D, texture));
 }
@@ -143,8 +153,10 @@ Texture::create_lightspot(int width, int height)
   glBindTexture(GL_TEXTURE_2D, texture);
 
   const int pitch = width * 3;
+#ifndef HAVE_OPENGLES2
   glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
   glPixelStorei(GL_UNPACK_ROW_LENGTH, width);
+#endif
 
   std::vector<uint8_t> data(width*height*3);
   for(int y = 0; y < height; ++y)
@@ -160,15 +172,19 @@ Texture::create_lightspot(int width, int height)
       data[y * pitch + 3*x+2] = static_cast<uint8_t>(std::max(0.0f, std::min(f * 255.0f, 255.0f)));
     }
 
+#ifndef HAVE_OPENGLES2
   gluBuild2DMipmaps(GL_TEXTURE_2D, GL_RGB, width, height, GL_RGB, GL_UNSIGNED_BYTE, data.data());
   assert_gl("texture0()");
+#endif
 
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 
+#ifndef HAVE_OPENGLES2
   glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAX_ANISOTROPY_EXT, 8.0f);
+#endif
 
   return TexturePtr(new Texture(GL_TEXTURE_2D, texture));
 }
@@ -214,8 +230,10 @@ Texture::cubemap_from_file(const std::string& filename)
   flip_rgb(lf);
   flip_rgb(rt);
 
+#ifndef HAVE_OPENGLES2
   glPixelStorei(GL_UNPACK_ALIGNMENT, 4);
   glPixelStorei(GL_UNPACK_ROW_LENGTH, up->pitch / up->format->BytesPerPixel);
+#endif
 
   //glActiveTexture(GL_TEXTURE0);
   //glEnable(GL_TEXTURE_CUBE_MAP);
@@ -229,8 +247,11 @@ Texture::cubemap_from_file(const std::string& filename)
   glTexParameteri(target, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
   glTexParameteri(target, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
   glTexParameteri(target, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+#ifndef HAVE_OPENGLES2
   glTexParameteri(target, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
+#endif
 
+#ifndef HAVE_OPENGLES2
   gluBuild2DMipmaps(GL_TEXTURE_CUBE_MAP_POSITIVE_Y, GL_RGB, up->w, up->h, up->format->BytesPerPixel == 4 ? GL_RGBA : GL_RGB, GL_UNSIGNED_BYTE, up->pixels);
   gluBuild2DMipmaps(GL_TEXTURE_CUBE_MAP_NEGATIVE_Y, GL_RGB, dn->w, dn->h, dn->format->BytesPerPixel == 4 ? GL_RGBA : GL_RGB, GL_UNSIGNED_BYTE, dn->pixels);
 
@@ -239,10 +260,13 @@ Texture::cubemap_from_file(const std::string& filename)
 
   gluBuild2DMipmaps(GL_TEXTURE_CUBE_MAP_NEGATIVE_Z, GL_RGB, ft->w, ft->h, ft->format->BytesPerPixel == 4 ? GL_RGBA : GL_RGB, GL_UNSIGNED_BYTE, ft->pixels);
   gluBuild2DMipmaps(GL_TEXTURE_CUBE_MAP_POSITIVE_Z, GL_RGB, bk->w, bk->h, bk->format->BytesPerPixel == 4 ? GL_RGBA : GL_RGB, GL_UNSIGNED_BYTE, bk->pixels);
+#endif
 
+#ifndef HAVE_OPENGLES2
   glTexParameteri(target, GL_TEXTURE_BASE_LEVEL, 0);
   glTexParameteri(target, GL_TEXTURE_MAX_LEVEL, 10);
   glGenerateMipmap(target);
+#endif
 
   SDL_FreeSurface(up);
   SDL_FreeSurface(dn);
@@ -275,8 +299,10 @@ Texture::from_file(const std::string& filename, bool build_mipmaps)
     glGenTextures(1, &texture);
     glBindTexture(target, texture);
 
+#ifndef HAVE_OPENGLES2
     glPixelStorei(GL_UNPACK_ALIGNMENT, 4);
     glPixelStorei(GL_UNPACK_ROW_LENGTH, surface->pitch / surface->format->BytesPerPixel);
+#endif
 
     glTexParameteri(target, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
     glTexParameteri(target, GL_TEXTURE_MIN_FILTER, build_mipmaps ? GL_LINEAR_MIPMAP_LINEAR : GL_LINEAR);
@@ -284,6 +310,7 @@ Texture::from_file(const std::string& filename, bool build_mipmaps)
     glTexParameteri(target, GL_TEXTURE_WRAP_S, GL_REPEAT);
     glTexParameteri(target, GL_TEXTURE_WRAP_T, GL_REPEAT);
 
+#ifndef HAVE_OPENGLES2
     if (build_mipmaps)
     {
       gluBuild2DMipmaps(target, GL_RGB, surface->w, surface->h,
@@ -291,6 +318,7 @@ Texture::from_file(const std::string& filename, bool build_mipmaps)
                         GL_UNSIGNED_BYTE, surface->pixels);
     }
     else
+#endif
     {
       glTexImage2D(target, 0, GL_RGB, surface->w, surface->h, 0,
                    surface->format->BytesPerPixel == 4 ? GL_RGBA : GL_RGB,
@@ -314,8 +342,10 @@ Texture::from_rgb_data(int width, int height, int pitch, void* data)
   glGenTextures(1, &texture);
   glBindTexture(target, texture);
 
+#ifndef HAVE_OPENGLES2
   glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
   glPixelStorei(GL_UNPACK_ROW_LENGTH, width);
+#endif
 
   glTexParameteri(target, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
   glTexParameteri(target, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
@@ -351,8 +381,10 @@ Texture::upload(int width, int height, int pitch, void* data)
 {
   OpenGLState state;
 
+#ifndef HAVE_OPENGLES2
   glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
   glPixelStorei(GL_UNPACK_ROW_LENGTH, width);
+#endif
 
   glBindTexture(m_target, m_id);
   glTexSubImage2D(m_target, 0, 0, 0, width, height, GL_RGB, GL_UNSIGNED_BYTE, data);

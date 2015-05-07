@@ -83,6 +83,7 @@ void
 UniformGroup::apply_subroutines(ProgramPtr prog, GLenum shadertype,
                                 const std::unordered_map<std::string, std::string>& subroutines)
 {
+#ifndef HAVE_OPENGLES2
   assert_gl("apply_subroutines:enter");
   GLint num_uniform_locations;
   glGetProgramStageiv(prog->get_id(), shadertype, GL_ACTIVE_SUBROUTINE_UNIFORM_LOCATIONS, &num_uniform_locations);
@@ -116,6 +117,7 @@ UniformGroup::apply_subroutines(ProgramPtr prog, GLenum shadertype,
   glUniformSubroutinesuiv(shadertype, subroutine_mappings.size(), subroutine_mappings.data());
 
   assert_gl("apply_subroutines:exit");
+#endif
 }
 
 /* EOF */

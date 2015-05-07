@@ -527,6 +527,7 @@ void keyboard(SDL_KeyboardEvent key, int x, int y)
 
     case SDL_SCANCODE_Z:
       {
+#ifndef HAVE_OPENGLES2
         GLdouble clip_plane[] = { 0.0, 0.0, 1.0, 1.0 };
 
         clip_plane[0] = (rand() / double(RAND_MAX) - 0.5) * 2.0f;
@@ -536,14 +537,17 @@ void keyboard(SDL_KeyboardEvent key, int x, int y)
 
         glEnable(GL_CLIP_PLANE0);
         glClipPlane(GL_CLIP_PLANE0, clip_plane);
+#endif
       }
       break;
 
     case SDL_SCANCODE_G:
       {
+#ifndef HAVE_OPENGLES2
         GLdouble clip_plane[] = { 0.0, 1.0, 1.0, 0.0 };
         glClipPlane(GL_CLIP_PLANE0, clip_plane);
         glEnable(GL_CLIP_PLANE0);
+#endif
       }
       break;
 
@@ -907,6 +911,7 @@ void init()
 
     if (false)
     { // light cone
+#ifndef HAVE_OPENGLES2
       MaterialPtr material(new Material);
       material->blend_func(GL_SRC_ALPHA, GL_ONE);
       material->depth_mask(false);
@@ -957,6 +962,7 @@ void init()
         node->set_orientation(glm::quat());
         node->attach_model(model);
       }
+#endif
     }
   }
 
@@ -1543,7 +1549,9 @@ void init_display(const std::string& title, bool fullscreen, int anti_aliasing)
   g_gl_context = SDL_GL_CreateContext(g_window);
   if (!g_gl_context)
   {
-    throw std::runtime_error("failed to create GLContext");
+    std::ostringstream out;
+    out << "failed to create GLContext: " << SDL_GetError();
+    throw std::runtime_error(out.str());
   }
 }
 

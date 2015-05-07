@@ -294,7 +294,9 @@ Mesh::draw()
 
       if (array.second.type == Array::Integer)
       {
+#ifndef HAVE_OPENGLES2
         glVertexAttribIPointer(loc, array.second.size, GL_INT, 0, nullptr);
+#endif
       }
       else // if (array.second.type == Array::Float)
       {

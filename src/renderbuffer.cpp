@@ -43,6 +43,9 @@ Renderbuffer::Renderbuffer(int width, int height) :
   assert_gl("renderbuffer");
 
   glBindRenderbuffer(GL_RENDERBUFFER, m_color_buffer);
+#ifdef HAVE_OPENGLES2
+  glRenderbufferStorage(GL_RENDERBUFFER, GL_RGBA, m_width, m_height);
+#else
   if (!m_multisample)
   {
     glRenderbufferStorage(GL_RENDERBUFFER, GL_RGB16F, m_width, m_height);
@@ -51,9 +54,13 @@ Renderbuffer::Renderbuffer(int width, int height) :
   {
     glRenderbufferStorageMultisample(GL_RENDERBUFFER, m_multisample, GL_RGB16F, m_width, m_height);
   }
+#endif
   assert_gl("glRenderbufferStorageMultisample");
 
   glBindRenderbuffer(GL_RENDERBUFFER, m_depth_buffer);
+#ifdef HAVE_OPENGLES2
+  glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT, m_width, m_height);
+#else
   if (!m_multisample)
   {
     glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT, m_width, m_height);
@@ -62,6 +69,7 @@ Renderbuffer::Renderbuffer(int width, int height) :
   {
     glRenderbufferStorageMultisample(GL_RENDERBUFFER, m_multisample, GL_DEPTH_COMPONENT, m_width, m_height);
   }
+#endif
   assert_gl("glRenderbufferStorageMultisample2");
 
   glBindRenderbuffer(GL_RENDERBUFFER, 0);
@@ -106,6 +114,7 @@ Renderbuffer::blit(Framebuffer& target_fbo,
   // http://www.opengl.org/registry/specs/EXT/framebuffer_blit.txt
   // http://www.opengl.org/wiki/GLAPI/glBlitFramebuffer
 
+#ifndef HAVE_OPENGLES2
   assert_gl("enter: BlitFramebuffer");
   glBindFramebuffer(GL_DRAW_FRAMEBUFFER, target_fbo.get_id());
   assert_gl("enter: BlitFramebuffer1");
@@ -119,6 +128,7 @@ Renderbuffer::blit(Framebuffer& target_fbo,
 
   glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
   glBindFramebuffer(GL_READ_FRAMEBUFFER, 0);
+#endif
 }
 
 void

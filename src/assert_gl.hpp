@@ -31,10 +31,17 @@ inline void assert_gl_1(const char* file, int line, const std::string& fmt, Arg.
   GLenum error = glGetError();
   if(error != GL_NO_ERROR)
   {
+#ifdef HAVE_OPENGLES2
+    throw std::runtime_error(format("%s:%d: OpenGLError while '%s': %s",
+                                    file, line,
+                                    format(fmt, arg...),
+                                    error));
+#else
     throw std::runtime_error(format("%s:%d: OpenGLError while '%s': %s",
                                     file, line,
                                     format(fmt, arg...),
                                     gluErrorString(error)));
+#endif
   }
 }
 

@@ -110,14 +110,18 @@ class UniformGroup
 {
 private:
   std::vector<std::unique_ptr<UniformBase> > m_uniforms;
+#ifndef HAVE_OPENGLES2
   std::unordered_map<std::string, std::string> m_vertex_subroutine_uniforms;
   std::unordered_map<std::string, std::string> m_fragment_subroutine_uniforms;
+#endif
 
 public:
-  UniformGroup() :
-    m_uniforms(),
-    m_vertex_subroutine_uniforms(),
-    m_fragment_subroutine_uniforms()
+  UniformGroup()
+    : m_uniforms()
+#ifndef HAVE_OPENGLES2
+    , m_vertex_subroutine_uniforms()
+    , m_fragment_subroutine_uniforms()
+#endif
   {}
 
   template<typename T>
@@ -130,6 +134,7 @@ public:
                               const std::string& name,
                               const std::string& subroutine)
   {
+#ifndef HAVE_OPENGLES2
     if (shadertype == GL_FRAGMENT_SHADER)
     {
       m_fragment_subroutine_uniforms[name] = subroutine;
@@ -142,6 +147,7 @@ public:
     {
       assert(!"not implemented");
     }
+#endif
   }
 
   void apply(ProgramPtr prog, const RenderContext& ctx);
