@@ -53,14 +53,16 @@ public:
   gint64 get_duration();
   gint64 get_position();
 
-  bool on_buffer_probe(const Glib::RefPtr<Gst::Pad>& pad, const Glib::RefPtr<Gst::MiniObject>& miniobj);
-  void on_bus_message(const Glib::RefPtr<Gst::Message>& msg);
   bool shutdown();
 
   void update();
   bool is_playing() const;
   TexturePtr get_texture() const { return m_texture; }
   void seek(gint64 seek_pos);
+
+private:
+  bool on_buffer_probe(const Glib::RefPtr<Gst::Pad>& pad, const Glib::RefPtr<Gst::MiniObject>& miniobj);
+  void on_bus_message(const Glib::RefPtr<Gst::Message>& msg);
 };
 
 #endif
