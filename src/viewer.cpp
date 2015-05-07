@@ -14,9 +14,6 @@
 //  You should have received a copy of the GNU General Public License
 //  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-#ifndef HAVE_OPENGLES2
-#  include <GL/glew.h>
-#endif
 #include <SDL.h>
 #include <SDL_image.h>
 #include <cmath>
@@ -34,6 +31,7 @@
 #include <vector>
 #include <thread>
 
+#include "opengl.hpp"
 #include "armature.hpp"
 #include "assert_gl.hpp"
 #include "camera.hpp"

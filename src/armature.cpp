@@ -16,13 +16,13 @@
 
 #include "armature.hpp"
 
-#include <GL/glew.h>
 #include <fstream>
 #include <boost/lexical_cast.hpp>
 #include <boost/tokenizer.hpp>
 #define GLM_FORCE_RADIANS
 #include <glm/ext.hpp>
 
+#include "opengl.hpp"
 #include "log.hpp"
 
 namespace {

@@ -18,7 +18,8 @@
 #define HEADER_SHADER_HPP
 
 #include <memory>
-#include <GL/glew.h>
+
+#include "opengl.hpp"
 
 class Shader;
 

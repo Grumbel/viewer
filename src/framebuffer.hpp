@@ -17,8 +17,7 @@
 #ifndef HEADER_FRAMEBUFFER_HPP
 #define HEADER_FRAMEBUFFER_HPP
 
-#include <GL/glew.h>
-
+#include "opengl.hpp"
 #include "texture.hpp"
 #include "log.hpp"
 

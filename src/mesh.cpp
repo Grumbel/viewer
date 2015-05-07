@@ -18,9 +18,9 @@
 
 #define GLM_FORCE_RADIANS
 #include <glm/ext.hpp>
-#include <GL/glew.h>
 #include <iostream>
 
+#include "opengl.hpp"
 #include "log.hpp"
 #include "opengl_state.hpp"
 

@@ -17,10 +17,10 @@
 #ifndef HEADER_ASSERT_GL_HPP
 #define HEADER_ASSERT_GL_HPP
 
-#include <GL/glew.h>
 #include <sstream>
 #include <stdexcept>
 
+#include "opengl.hpp"
 #include "format.hpp"
 
 #define assert_gl(...) assert_gl_1(__FILE__, __LINE__, __VA_ARGS__)

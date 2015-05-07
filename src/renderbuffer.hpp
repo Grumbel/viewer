@@ -17,8 +17,7 @@
 #ifndef HEADER_RENDERBUFFER_HPP
 #define HEADER_RENDERBUFFER_HPP
 
-#include <GL/glew.h>
-
+#include "opengl.hpp"
 #include "log.hpp"
 
 class Framebuffer;

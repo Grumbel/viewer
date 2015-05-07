@@ -1,14 +1,12 @@
 #include "material_parser.hpp"
 
-#include <GL/glew.h>
-#define GL_GLEXT_PROTOTYPES 1
-#include <GL/glext.h>
 #include <boost/lexical_cast.hpp>
 #include <boost/algorithm/string/predicate.hpp>
 #include <stdexcept>
 #include <fstream>
 #include <iostream>
 
+#include "opengl.hpp"
 #include "tokenize.hpp"
 #include "assert_gl.hpp"
 

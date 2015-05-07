@@ -3,11 +3,11 @@
 
 #include <memory>
 #include <string>
-#include <GL/glew.h>
 #define GLM_FORCE_RADIANS
 #include <glm/glm.hpp>
 #include <glm/ext.hpp>
 
+#include "opengl.hpp"
 #include "assert_gl.hpp"
 #include "log.hpp"
 #include "shader.hpp"
