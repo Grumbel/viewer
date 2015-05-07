@@ -22,8 +22,6 @@
 #include <algorithm>
 #include <assert.h>
 #include <cairomm/cairomm.h>
-#include <glibmm/main.h>
-#include <gstreamermm.h>
 #include <iostream>
 #include <stdexcept>
 #include <vector>
@@ -31,7 +29,7 @@
 #include "log.hpp"
 
 VideoProcessor::VideoProcessor(const std::string& filename) :
-  m_mainloop(Glib::MainLoop::create()),
+  m_mainloop(g_main_loop_new(nullptr, false)),
   m_pipeline(),
   m_playbin(),
   m_fakesink(),
@@ -42,56 +40,72 @@ VideoProcessor::VideoProcessor(const std::string& filename) :
   m_buffer()
 {
   // Setup a second pipeline to get the actual thumbnails
-  m_playbin = Gst::Parse::launch("filesrc name=mysource "
-                                 "  ! decodebin2 name=src "
-                                 "src. "
-                                 "  ! queue "
-                                 "  ! ffmpegcolorspace "
-                                 "  ! videoscale "
-                                 "  ! video/x-raw-rgb,depth=24,bpp=24,width=1024,height=1024 "
-                                 "  ! fakesink name=mysink signal-handoffs=True sync=true "
-                                 "src. "
-                                 "  ! queue "
-                                 "  ! autoaudiosink ");
+  GError* error = nullptr;
+  m_playbin = gst_parse_launch("filesrc name=mysource "
+                               "  ! decodebin2 name=src "
+                               "src. "
+                               "  ! queue "
+                               "  ! ffmpegcolorspace "
+                               "  ! videoscale "
+                               "  ! video/x-raw-rgb,depth=24,bpp=24,width=1024,height=1024 "
+                               "  ! fakesink name=mysink signal-handoffs=True sync=true "
+                               "src. "
+                               "  ! queue "
+                               "  ! autoaudiosink ",
+                               &error);
+  if (error)
+  {
+    std::runtime_error exception(error->message);
+    g_error_free(error);
+    throw exception;
+  }
 
-  m_pipeline = Glib::RefPtr<Gst::Pipeline>::cast_dynamic(m_playbin);
+  m_pipeline = GST_PIPELINE(m_playbin);
 
-  Glib::RefPtr<Gst::Element> source = m_pipeline->get_element("mysource");
+  GstElement* source = gst_bin_get_by_name(GST_BIN(m_pipeline), "mysource");
   log_info("SOURC: %s", source);
-  source->set_property("location", filename);
+  g_object_set(source, "location", filename.c_str(), nullptr);
+  g_object_unref(source);
 
-  m_fakesink = m_pipeline->get_element("mysink");
+  m_fakesink = gst_bin_get_by_name(GST_BIN(m_pipeline), "mysink");
 
-  Glib::RefPtr<Gst::Bus> thumbnail_bus = m_playbin->get_bus();
-  thumbnail_bus->add_signal_watch();
-  thumbnail_bus->signal_message().connect(sigc::mem_fun(this, &VideoProcessor::on_bus_message));
+  GstBus* thumbnail_bus = gst_pipeline_get_bus(GST_PIPELINE(m_playbin));
+  //TODO: thumbnail_bus->add_signal_watch();
+  //TODO: thumbnail_bus->signal_message().connect(sigc::mem_fun(this, &VideoProcessor::on_bus_message));
 
-  m_playbin->set_state(Gst::STATE_PLAYING);
+  gst_element_set_state(GST_ELEMENT(m_playbin), GST_STATE_PLAYING);
 }
 
 VideoProcessor::~VideoProcessor()
 {
-  m_playbin->set_state(Gst::STATE_NULL);
+  gst_element_set_state(GST_ELEMENT(m_playbin), GST_STATE_NULL);
 }
 
 gint64
 VideoProcessor::get_duration()
 {
-  Gst::Format format = Gst::FORMAT_TIME;
-  gint64 duration;
-  if (m_playbin->query_duration(format, duration))
+  GstQuery* query = gst_query_new_duration(GST_FORMAT_TIME);
+  gboolean ret = gst_element_query(GST_ELEMENT(m_pipeline), query);
+  if (ret)
   {
-    if (format == Gst::FORMAT_TIME)
+    GstFormat format;
+    gint64 duration;
+    gst_query_parse_duration(query, &format, &duration);
+
+    if (format == GST_FORMAT_TIME)
     {
+      gst_query_unref(query);
       return duration;
     }
     else
     {
+      gst_query_unref(query);
       throw std::runtime_error("error: could not get format");
     }
   }
   else
   {
+    gst_query_unref(query);
     throw std::runtime_error("error: QUERY FAILURE");
   }
 }
@@ -99,33 +113,38 @@ VideoProcessor::get_duration()
 gint64
 VideoProcessor::get_position()
 {
-  Gst::Format format = Gst::FORMAT_TIME;
-  gint64 position;
-  if (m_playbin->query_position(format, position))
+  GstQuery* query = gst_query_new_position(GST_FORMAT_TIME);
+  gboolean ret = gst_element_query(GST_ELEMENT(m_pipeline), query);
+  if (ret)
   {
-    if (format == Gst::FORMAT_TIME)
+    GstFormat format;
+    gint64 position;
+    gst_query_parse_position(query, &format, &position);
+
+    if (format == GST_FORMAT_TIME)
     {
+      gst_query_unref(query);
       return position;
     }
     else
     {
-      log_error("could not get format");
-      return 0;
+      gst_query_unref(query);
+      throw std::runtime_error("error: could not get format");
     }
   }
   else
   {
-    log_error("QUERY FAILURE");
-    return 0;
+    gst_query_unref(query);
+    throw std::runtime_error("error: QUERY FAILURE");
   }
 }
 
 bool
-VideoProcessor::on_buffer_probe(const Glib::RefPtr<Gst::Pad>& pad, const Glib::RefPtr<Gst::MiniObject>& miniobj)
+VideoProcessor::on_buffer_probe(GstPad* pad, GstMiniObject* miniobj)
 {
   // WARNING: this is called from the gstreamer thread, not the main thread
 
-  Glib::RefPtr<Gst::Buffer> buffer = Glib::RefPtr<Gst::Buffer>::cast_dynamic(miniobj);
+  GstBuffer* buffer = GST_BUFFER(miniobj);
 
   std::lock_guard<std::mutex> lock(m_buffer_mutex);
   m_buffer = buffer;
@@ -135,33 +154,38 @@ VideoProcessor::on_buffer_probe(const Glib::RefPtr<Gst::Pad>& pad, const Glib::R
 }
 
 void
-VideoProcessor::on_bus_message(const Glib::RefPtr<Gst::Message>& msg)
+VideoProcessor::on_bus_message(GstMessage* msg)
 {
-  if (msg->get_message_type() & Gst::MESSAGE_ERROR)
+  if (GST_MESSAGE_TYPE(msg) & GST_MESSAGE_ERROR)
   {
-    Glib::RefPtr<Gst::MessageError> error_msg = Glib::RefPtr<Gst::MessageError>::cast_dynamic(msg);
-    log_error("Error: %s: %s", msg->get_source()->get_name(), error_msg->parse().what());
-    //assert(!"Failure");
-    Glib::signal_idle().connect(sigc::mem_fun(this, &VideoProcessor::shutdown));
+    GError* gerror = nullptr;
+    gchar* debug = nullptr;
+    gst_message_parse_error(msg, &gerror, &debug);
+
+    log_info("Error: %s: %s", GST_MESSAGE_SRC_NAME(msg), gerror->message);
+
+    queue_shutdown();
+
+    g_error_free(gerror);
+    g_free(debug);
   }
-  else if (msg->get_message_type() & Gst::MESSAGE_STATE_CHANGED)
+  else if (GST_MESSAGE_TYPE(msg) & GST_MESSAGE_STATE_CHANGED)
   {
-    Glib::RefPtr<Gst::MessageStateChanged> state_msg = Glib::RefPtr<Gst::MessageStateChanged>::cast_dynamic(msg);
-    Gst::State oldstate;
-    Gst::State newstate;
-    Gst::State pending;
-    state_msg->parse(oldstate, newstate, pending);
+    GstState oldstate;
+    GstState newstate;
+    GstState pending;
+    gst_message_parse_state_changed(msg, &oldstate, &newstate, &pending);
 
-    log_info("message: %s %s %s",  msg->get_source()->get_name(), oldstate, newstate);
+    //TODO: log_info("message: %s %s %s",  msg->get_source()->get_name(), oldstate, newstate);
 
-    if (msg->get_source() == m_fakesink)
+    if (GST_ELEMENT(GST_MESSAGE_SRC(msg)) == m_fakesink)
     {
-      if (newstate == Gst::STATE_PAUSED)
+      if (newstate == GST_STATE_PAUSED)
       {
         log_info("                       --------->>>>>>> PAUSE");
       }
 
-      if (newstate == Gst::STATE_PAUSED)
+      if (newstate == GST_STATE_PAUSED)
       {
         if (!m_running)
         {
@@ -172,77 +196,88 @@ VideoProcessor::on_bus_message(const Glib::RefPtr<Gst::Message>& msg)
           //seek_step();
 
           log_info("---------- send_buffer_probe()");
-          Glib::RefPtr<Gst::Pad> pad = m_fakesink->get_static_pad("sink");
-          pad->add_buffer_probe(sigc::mem_fun(this, &VideoProcessor::on_buffer_probe));
+          //TODO: GstPad* pad = m_fakesink->get_static_pad("sink");
+          //TODO: pad->add_buffer_probe(sigc::mem_fun(this, &VideoProcessor::on_buffer_probe));
         }
       }
     }
   }
-  else if (msg->get_message_type() & Gst::MESSAGE_EOS)
+  else if (GST_MESSAGE_TYPE(msg) & GST_MESSAGE_EOS)
   {
     log_info("end of stream");
-    Glib::signal_idle().connect(sigc::mem_fun(this, &VideoProcessor::shutdown));
+    queue_shutdown();
   }
-  else if (msg->get_message_type() & Gst::MESSAGE_TAG)
+  else if (GST_MESSAGE_TYPE(msg) & GST_MESSAGE_TAG)
   {
     log_info("MESSAGE_TAG");
   }
-  else if (msg->get_message_type() & Gst::MESSAGE_ASYNC_DONE)
+  else if (GST_MESSAGE_TYPE(msg) & GST_MESSAGE_ASYNC_DONE)
   {
     log_info("MESSAGE_ASYNC_DONE");
   }
-  else if (msg->get_message_type() & Gst::MESSAGE_STREAM_STATUS)
+  else if (GST_MESSAGE_TYPE(msg) & GST_MESSAGE_STREAM_STATUS)
   {
     log_info("MESSAGE_STREAM_STATUS");
   }
-  else if (msg->get_message_type() & Gst::MESSAGE_REQUEST_STATE)
+  else if (GST_MESSAGE_TYPE(msg) & GST_MESSAGE_REQUEST_STATE)
   {
     log_info("MESSAGE_REQUEST_STATE");
   }
-  else if (msg->get_message_type() & Gst::MESSAGE_STEP_START)
+  else if (GST_MESSAGE_TYPE(msg) & GST_MESSAGE_STEP_START)
   {
     log_info("MESSAGE_STEP_START");
   }
-  else if (msg->get_message_type() & Gst::MESSAGE_REQUEST_STATE)
+  else if (GST_MESSAGE_TYPE(msg) & GST_MESSAGE_REQUEST_STATE)
   {
     log_info("MESSAGE_REQUEST_STATE");
   }
-  else if (msg->get_message_type() & Gst::MESSAGE_QOS)
+  else if (GST_MESSAGE_TYPE(msg) & GST_MESSAGE_QOS)
   {
     log_info("MESSAGE_QOS");
   }
-  else if (msg->get_message_type() & Gst::MESSAGE_LATENCY)
+  else if (GST_MESSAGE_TYPE(msg) & GST_MESSAGE_LATENCY)
   {
     log_info("MESSAGE_LATENCY");
   }
-  else if (msg->get_message_type() & Gst::MESSAGE_DURATION)
+  else if (GST_MESSAGE_TYPE(msg) & GST_MESSAGE_DURATION)
   {
     log_info("MESSAGE_DURATION");
   }
-  else if (msg->get_message_type() & GST_MESSAGE_NEW_CLOCK)
+  else if (GST_MESSAGE_TYPE(msg) & GST_MESSAGE_NEW_CLOCK)
   {
     log_info("MESSAGE_NEW_CLOCK");
   }
   else
   {
-    log_info("unknown message: %d", msg->get_message_type());
-    Glib::signal_idle().connect(sigc::mem_fun(this, &VideoProcessor::shutdown));
+    log_info("unknown message: %d", GST_MESSAGE_TYPE(msg));
+    queue_shutdown();
   }
+}
+
+void
+VideoProcessor::queue_shutdown()
+{
+  auto callback = [](gpointer user_data) -> gboolean
+    {
+      static_cast<VideoProcessor*>(user_data)->shutdown();
+      return false;
+    };
+  g_idle_add(callback, this);
 }
 
 bool
 VideoProcessor::shutdown()
 {
   log_info("Going to shutdown!!!!!!!!!!!");
-  m_playbin->set_state(Gst::STATE_NULL);
-  m_mainloop->quit();
+  gst_element_set_state(GST_ELEMENT(m_playbin), GST_STATE_NULL);
+  g_main_loop_quit(m_mainloop);
   return false;
 }
 
 void
 VideoProcessor::update()
 {
-  while(m_mainloop->get_context()->iteration(false))
+  while(g_main_context_iteration(g_main_loop_get_context(m_mainloop), false))
   {
     //log_info("looping");
   }
@@ -250,39 +285,41 @@ VideoProcessor::update()
   std::lock_guard<std::mutex> lock(m_buffer_mutex);
   if (m_buffer)
   {
-    Glib::RefPtr<Gst::Caps> caps = m_buffer->get_caps();
-    const Gst::Structure structure = caps->get_structure(0);
+    /* TODO:
+    GstCaps* caps = gst_buffer_get_caps(m_buffer);
+    GstStructure* structure = gst_caps_get_structure(caps, 0);
     int width;
     int height;
 
     if (structure)
     {
-      structure.get_field("width",  width);
-      structure.get_field("height", height);
+      gst_structure_get_int(structure, "width",  &width);
+      gst_structure_get_int(structure, "height", &height);
     }
 
     if (false)
     {
       log_info("%s: on_buffer_probe: %s %s %sx%s",
                std::this_thread::get_id(),
-               m_buffer->get_size(),
-               get_position() / Gst::SECOND,
+               gst_buffer_get_size(m_buffer),
+               get_position() / GST_SECOND,
                width, height);
     }
+    */
 
     if (!m_texture)
     {
-      m_texture = Texture::from_rgb_data(width, height, m_buffer->get_size() / height, m_buffer->get_data());
+      //TODO: m_texture = Texture::from_rgb_data(width, height, gst_buffer_get_size(m_buffer) / height, m_buffer->get_data());
     }
     else
     {
-      m_texture->upload(width, height, m_buffer->get_size() / height, m_buffer->get_data());
+      //TODO: m_texture->upload(width, height, gst_buffer_get_size(m_buffer) / height, m_buffer->get_data());
     }
 
     if (false)
     {
+      /* TODO:
       Cairo::RefPtr<Cairo::ImageSurface> img = Cairo::ImageSurface::create(Cairo::FORMAT_RGB24, width, height);
-
       { // blit and flip color channels
         unsigned char* op = img->get_data();
         unsigned char* ip  = m_buffer->get_data();
@@ -300,6 +337,7 @@ VideoProcessor::update()
       }
 
       img->write_to_png("/tmp/out.png");
+      */
     }
   }
 }
@@ -318,9 +356,10 @@ VideoProcessor::seek(gint64 seek_pos)
     seek_pos = 0;
   }
 
-  if (!m_pipeline->seek(Gst::FORMAT_TIME,
-                        Gst::SEEK_FLAG_FLUSH | Gst::SEEK_FLAG_ACCURATE,
-                        seek_pos))
+  if (!gst_element_seek_simple(GST_ELEMENT(m_pipeline),
+                               GST_FORMAT_TIME,
+                               GstSeekFlags(GST_SEEK_FLAG_FLUSH | GST_SEEK_FLAG_ACCURATE),
+                               seek_pos))
   {
     log_info("seek failure");
   }

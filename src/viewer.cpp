@@ -486,14 +486,14 @@ void keyboard(SDL_KeyboardEvent key, int x, int y)
     case SDL_SCANCODE_9:
       if (g_video_player)
       {
-        g_video_player->seek(g_video_player->get_position() - 10 * Gst::SECOND);
+        g_video_player->seek(g_video_player->get_position() - 10 * GST_SECOND);
       }
       break;
 
     case SDL_SCANCODE_0:
       if (g_video_player)
       {
-        g_video_player->seek(g_video_player->get_position() + 10 * Gst::SECOND);
+        g_video_player->seek(g_video_player->get_position() + 10 * GST_SECOND);
       }
       break;
 
@@ -1653,7 +1653,7 @@ int main(int argc, char** argv)
 
   if (!g_opts.video.empty())
   {
-    Gst::init(argc, argv);
+    gst_init(&argc, &argv);
     std::cout << "Playing video: " << g_opts.video << std::endl;
     g_video_player = std::make_shared<VideoProcessor>(g_opts.video);
   }

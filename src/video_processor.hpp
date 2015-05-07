@@ -24,8 +24,8 @@
 #include <vector>
 #include <iostream>
 #include <stdexcept>
-#include <glibmm/main.h>
-#include <gstreamermm.h>
+#include <glib.h>
+#include <gst/gst.h>
 #include <mutex>
 
 #include "texture.hpp"
@@ -33,18 +33,18 @@
 class VideoProcessor
 {
 private:
-  Glib::RefPtr<Glib::MainLoop> m_mainloop;
+  GMainLoop* m_mainloop;
 
-  Glib::RefPtr<Gst::Pipeline> m_pipeline;
-  Glib::RefPtr<Gst::Element> m_playbin;
-  Glib::RefPtr<Gst::Element> m_fakesink;
+  GstPipeline* m_pipeline;
+  GstElement* m_playbin;
+  GstElement* m_fakesink;
 
   bool m_done;
   bool m_running;
 
   TexturePtr m_texture;
   std::mutex m_buffer_mutex;
-  Glib::RefPtr<Gst::Buffer> m_buffer;
+  GstBuffer* m_buffer;
 
 public:
   VideoProcessor(const std::string& filename);
@@ -53,6 +53,7 @@ public:
   gint64 get_duration();
   gint64 get_position();
 
+  void queue_shutdown();
   bool shutdown();
 
   void update();
@@ -61,8 +62,8 @@ public:
   void seek(gint64 seek_pos);
 
 private:
-  bool on_buffer_probe(const Glib::RefPtr<Gst::Pad>& pad, const Glib::RefPtr<Gst::MiniObject>& miniobj);
-  void on_bus_message(const Glib::RefPtr<Gst::Message>& msg);
+  bool on_buffer_probe(GstPad* pad, GstMiniObject* miniobj);
+  void on_bus_message(GstMessage* msg);
 };
 
 #endif
