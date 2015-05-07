@@ -2,6 +2,7 @@ cmake_minimum_required(VERSION 3.0)
 project(viewer VERSION 0.0.0)
 
 set(WARNINGS 0 CACHE BOOL "Switch on extra warnings")
+set(USE_OPENGLES2 0 CACHE BOOL "Use OpenGLES2 instead of OpenGL")
 
 if(WARNINGS)
   set(WARNINGS_CXX_FLAGS
@@ -10,8 +11,18 @@ if(WARNINGS)
   # -Winline -Wfloat-equal -Wunreachable-code
 endif()
 
-find_package(OpenGL REQUIRED)
-find_package(GLEW REQUIRED)
+include(CheckIncludeFile)
+check_include_file(/opt/vc/include/bcm_host.h HAVE_BCMHOST)
+if(USE_OPENGLES2 OR HAVE_BCMHOST)
+  set(OPENGL_LIBPATH /opt/vc/lib)
+  set(OPENGL_INCLUDE_DIR /opt/vc/include)
+  set(OPENGL_LIBRARIES GLESv2)
+  set(OPENGL_CFLAGS_OTHER -DHAVE_OPENGLES2)
+else()
+  find_package(OpenGL REQUIRED)
+  find_package(GLEW REQUIRED)
+endif()
+
 find_package(Boost COMPONENTS system filesystem signals REQUIRED)
 find_package(Threads REQUIRED)
 

@@ -14,7 +14,9 @@
 //  You should have received a copy of the GNU General Public License
 //  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-#include <GL/glew.h>
+#ifndef HAVE_OPENGLES2
+#  include <GL/glew.h>
+#endif
 #include <SDL.h>
 #include <SDL_image.h>
 #include <cmath>
@@ -1529,9 +1531,16 @@ void init_display(const std::string& title, bool fullscreen, int anti_aliasing)
     throw std::runtime_error("Couldn't create window");
   }
 
-  SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_CORE);
+#ifdef HAVE_OPENGLES2
+  SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_ES);
+  SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 2);
+  SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 0);
+#else
+  //SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_CORE);
+  SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_COMPATIBILITY);
   SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 3);
   SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 3);
+#endif
 
   g_gl_context = SDL_GL_CreateContext(g_window);
   if (!g_gl_context)
@@ -1606,9 +1615,10 @@ int main(int argc, char** argv)
   log_info("SDL_NumJoysticks: %d", SDL_NumJoysticks());
   if (SDL_NumJoysticks() > 0)
   {
-    joystick = SDLCALL SDL_JoystickOpen(0);
+    joystick = SDL_JoystickOpen(0);
   }
 
+#ifndef HAVE_OPENGLES2
   // glew throws 'invalid enum' error in OpenGL3.3Core, thus we eat up the error code
   glewExperimental = true;
   glewInit();
@@ -1618,6 +1628,7 @@ int main(int argc, char** argv)
   GLuint vao;
   glGenVertexArrays(1, &vao);
   glBindVertexArray(vao);
+#endif
 
 #if 0
   if (opts.wiimote)
