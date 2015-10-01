@@ -19,7 +19,6 @@
 #include <SDL_image.h>
 #include <cmath>
 #include <cmath>
-//#include <cwiid.h>
 #include <fstream>
 #define GLM_FORCE_RADIANS
 #include <glm/ext.hpp>
@@ -206,7 +205,6 @@ SceneNode* g_wiimote_gyro_node = 0;
 SceneNode* g_wiimote_node = 0;
 std::vector<SceneNode*> g_nodes;
 
-//cwiid_wiimote_t* g_wiimote = 0;
 std::shared_ptr<WiimoteManager> g_wiimote_manager;
 
 } // namespace
@@ -1437,68 +1435,6 @@ void update_offsets(glm::vec2 p1, glm::vec2 p2)
   //std::cout << "offset: " << boost::format("%4.2f %4.2f %4.2f") % g_roll_offset % g_yaw_offset % g_pitch_offset << std::endl;
 }
 
-#if 0
-void
-wiimote_mesg_callback(cwiid_wiimote_t*, int mesg_count, union cwiid_mesg msg[], timespec*)
-{
-  // WARNING: the mesg_callback() comes from another thread, so
-  // syncronize it with SDL_PushEvent() or only do things that are thread-safe
-  for (int i=0; i < mesg_count; ++i)
-  {
-    switch (msg[i].type)
-    {
-      case CWIID_MESG_STATUS:
-        std::cout << "wiimote mesg status" << std::endl;
-        break;
-
-      case CWIID_MESG_BTN:
-        //g_wiimote->on_button(msg[i].btn_mesg);
-        break;
-
-      case CWIID_MESG_ACC:
-        //s_wiimote->on_acc(msg[i].acc_mesg);
-        break;
-
-      case CWIID_MESG_IR:
-        {
-          cwiid_ir_mesg& ir = msg[i].ir_mesg;
-          //std::cout << "wiimote mesg ir: ";
-          glm::vec2 p[2];
-          int j = 0;
-          for(; j < 2 /*CWIID_IR_SRC_COUNT*/; ++j)
-          {
-            if (ir.src[j].valid)
-            {
-              if (false)
-              {
-                std::cout << j << "[ "
-                          << ir.src[j].pos[0] << "," << ir.src[j].pos[1] << " - "
-                          << static_cast<int>(ir.src[j].size)
-                          << "] ";
-              }
-              p[j].x = ir.src[j].pos[0];
-              p[j].y = ir.src[j].pos[1];
-            }
-          }
-
-          if (j == 2)
-          {
-            update_offsets(p[0], p[1]);
-          }
-        }
-        break;
-
-      case CWIID_MESG_ERROR:
-        std::cout << "wiimote mesg error" << std::endl;
-        break;
-
-      default:
-        log_error("unknown report");
-        break;
-    }
-  }
-}
-#endif
 
 void init_display(const std::string& title, bool fullscreen, int anti_aliasing)
 {
@@ -1619,33 +1555,6 @@ int main(int argc, char** argv)
   glGenVertexArrays(1, &vao);
   glBindVertexArray(vao);
 
-#if 0
-  if (opts.wiimote)
-  {
-    std::cout  << "Put Wiimote in discoverable mode now (press 1+2)..." << std::endl;
-
-    bdaddr_t addr_any = {{0, 0, 0, 0, 0, 0}};
-    g_wiimote = cwiid_open_timeout(&addr_any, CWIID_FLAG_MESG_IFC, -1);
-
-    if (g_wiimote)
-    {
-      std::cout << "Wiimote connected: " << g_wiimote << std::endl;
-      if (cwiid_set_mesg_callback(g_wiimote, &wiimote_mesg_callback))
-      {
-        std::cerr << "Unable to set message callback" << std::endl;
-      }
-
-      if (cwiid_command(g_wiimote, CWIID_CMD_RPT_MODE,
-                        CWIID_RPT_STATUS  |
-                        //CWIID_RPT_ACC   |
-                        CWIID_RPT_IR      |
-                        CWIID_RPT_BTN))
-      {
-        std::cerr << "Wiimote: Error setting report mode" << std::endl;
-      }
-    }
-  }
-#endif
   if (g_opts.wiimote)
   {
     g_wiimote_manager = std::make_shared<WiimoteManager>();
