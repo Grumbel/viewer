@@ -4,8 +4,8 @@
 #include "render_context.hpp"
 
 SceneManager::SceneManager() :
-  m_world(new SceneNode),
-  m_view(new SceneNode),
+  m_world(std::make_unique<SceneNode>()),
+  m_view(std::make_unique<SceneNode>()),
   m_lights(),
   m_override_material()
 {}

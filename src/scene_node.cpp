@@ -103,7 +103,7 @@ SceneNode::attach_child(std::unique_ptr<SceneNode> child)
 SceneNode*
 SceneNode::create_child()
 {
-  std::unique_ptr<SceneNode> child(new SceneNode);
+  std::unique_ptr<SceneNode> child = std::make_unique<SceneNode>();
   SceneNode* ptr = child.get();
   attach_child(std::move(child));
   return ptr;

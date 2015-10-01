@@ -44,7 +44,7 @@ Pose::from_file(const std::string& filename)
 {
   std::ifstream in(filename);
 
-  std::unique_ptr<Pose> pose(new Pose);
+  std::unique_ptr<Pose> pose = std::make_unique<Pose>();
   std::unique_ptr<PoseBone> bone;
 
   std::string line;
@@ -65,7 +65,7 @@ Pose::from_file(const std::string& filename)
           pose->m_bones.push_back(std::move(bone));
         }
 
-        bone.reset(new PoseBone);
+        bone = std::make_unique<PoseBone>();
         bone->name = args[1];
       }
       else if (args[0] == "matrix")

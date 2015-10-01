@@ -41,7 +41,7 @@ target_include_directories(wiicpp SYSTEM PUBLIC
 
 file(GLOB VIEWER_SOURCES src/*.cpp)
 add_executable(viewer ${VIEWER_SOURCES})
-target_compile_options(viewer PRIVATE -std=c++11 ${WARNINGS_CXX_FLAGS})
+target_compile_options(viewer PRIVATE -std=c++1y ${WARNINGS_CXX_FLAGS})
 target_include_directories(viewer SYSTEM PRIVATE
   ${BLUEZ_INCLUDE_DIRS}
   ${GSTREAMERMM_INCLUDE_DIRS}

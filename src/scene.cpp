@@ -37,7 +37,7 @@ Scene::from_istream(std::istream& in)
 
 Scene::Scene() :
   m_directory(),
-  m_node(new SceneNode)
+  m_node(std::make_unique<SceneNode>())
 {
 }
 
@@ -89,7 +89,7 @@ Scene::parse_istream(std::istream& in)
 
         {
           // create Mesh
-          std::unique_ptr<Mesh> mesh(new Mesh(GL_TRIANGLES));
+          std::unique_ptr<Mesh> mesh = std::make_unique<Mesh>(GL_TRIANGLES);
 
           mesh->attach_float_array("position", position);
           mesh->attach_float_array("texcoord", texcoord);
@@ -119,7 +119,7 @@ Scene::parse_istream(std::istream& in)
 
       // create SceneNode
       {
-        std::unique_ptr<SceneNode> node(new SceneNode(name));
+        std::unique_ptr<SceneNode> node = std::make_unique<SceneNode>(name);
         node->set_position(location);
         node->set_orientation(rotation);
         node->set_scale(scale);

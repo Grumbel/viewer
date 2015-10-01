@@ -64,7 +64,7 @@ Armature::from_file(const std::string& filename)
   in.exceptions( std::ifstream::badbit );
   in.open(filename.c_str());
 
-  std::unique_ptr<Armature> armature(new Armature);
+  std::unique_ptr<Armature> armature = std::make_unique<Armature>();
   std::unique_ptr<Bone> bone;
 
   std::string line;
@@ -84,7 +84,7 @@ Armature::from_file(const std::string& filename)
           armature->m_bones.push_back(std::move(bone));
         }
 
-        bone.reset(new Bone);
+        bone = std::make_unique<Bone>();
         bone->name = args[1];
       }
       else if (args[0] == "parent")

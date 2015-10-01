@@ -129,7 +129,7 @@ Texture::create_random_noise(int width, int height)
   glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAX_ANISOTROPY_EXT, 8.0f);
   assert_gl("texture2()");
 
-  return TexturePtr(new Texture(GL_TEXTURE_2D, texture));
+  return std::make_shared<Texture>(GL_TEXTURE_2D, texture);
 }
 
 TexturePtr
@@ -170,7 +170,7 @@ Texture::create_lightspot(int width, int height)
 
   glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAX_ANISOTROPY_EXT, 8.0f);
 
-  return TexturePtr(new Texture(GL_TEXTURE_2D, texture));
+  return std::make_shared<Texture>(GL_TEXTURE_2D, texture);
 }
 
 namespace {
@@ -253,7 +253,7 @@ Texture::cubemap_from_file(const std::string& filename)
 
   assert_gl("cube texture");
 
-  return TexturePtr(new Texture(target, texture));
+  return std::make_shared<Texture>(target, texture);
 }
 
 TexturePtr
@@ -299,7 +299,7 @@ Texture::from_file(const std::string& filename, bool build_mipmaps)
 
     SDL_FreeSurface(surface);
 
-    return TexturePtr(new Texture(target, texture));
+    return std::make_shared<Texture>(target, texture);
   }
 }
 

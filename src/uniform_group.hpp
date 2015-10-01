@@ -123,7 +123,7 @@ public:
   template<typename T>
   void set_uniform(const std::string& name, const T& value)
   {
-    m_uniforms.emplace_back(new Uniform<T>(name, value));
+    m_uniforms.emplace_back(std::make_unique<Uniform<T> >(name, value));
   }
 
   void set_subroutine_uniform(GLenum shadertype,

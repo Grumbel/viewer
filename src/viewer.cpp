@@ -95,11 +95,11 @@ Viewer::reshape(int w, int h)
 
   assert_gl("reshape1");
 
-  g_framebuffer1.reset(new Framebuffer(g_screen_w, g_screen_h));
-  g_framebuffer2.reset(new Framebuffer(g_screen_w, g_screen_h));
+  g_framebuffer1 = std::make_unique<Framebuffer>(g_screen_w, g_screen_h);
+  g_framebuffer2 = std::make_unique<Framebuffer>(g_screen_w, g_screen_h);
 
-  g_renderbuffer1.reset(new Renderbuffer(g_screen_w, g_screen_h));
-  g_renderbuffer2.reset(new Renderbuffer(g_screen_w, g_screen_h));
+  g_renderbuffer1 = std::make_unique<Renderbuffer>(g_screen_w, g_screen_h);
+  g_renderbuffer2 = std::make_unique<Renderbuffer>(g_screen_w, g_screen_h);
 
   g_aspect_ratio = static_cast<GLfloat>(g_screen_w)/static_cast<GLfloat>(g_screen_h);
 
@@ -562,11 +562,11 @@ void
 Viewer::init()
 {
   assert_gl("init()");
-  g_framebuffer1.reset(new Framebuffer(g_screen_w, g_screen_h));
-  g_framebuffer2.reset(new Framebuffer(g_screen_w, g_screen_h));
-  g_renderbuffer1.reset(new Renderbuffer(g_screen_w, g_screen_h));
-  g_renderbuffer2.reset(new Renderbuffer(g_screen_w, g_screen_h));
-  g_shadowmap.reset(new Framebuffer(g_shadowmap_resolution, g_shadowmap_resolution));
+  g_framebuffer1 = std::make_unique<Framebuffer>(g_screen_w, g_screen_h);
+  g_framebuffer2 = std::make_unique<Framebuffer>(g_screen_w, g_screen_h);
+  g_renderbuffer1 = std::make_unique<Renderbuffer>(g_screen_w, g_screen_h);
+  g_renderbuffer2 = std::make_unique<Renderbuffer>(g_screen_w, g_screen_h);
+  g_shadowmap = std::make_unique<Framebuffer>(g_shadowmap_resolution, g_shadowmap_resolution);
   assert_gl("init()");
 
   //g_armature = Armature::from_file("/tmp/blender.bones");
@@ -577,10 +577,10 @@ Viewer::init()
                                        Shader::from_file(GL_VERTEX_SHADER, "src/composite.vert"));
 
   {
-    g_scene_manager.reset(new SceneManager);
+    g_scene_manager = std::make_unique<SceneManager>();
 
     {
-      MaterialPtr material(new Material);
+      MaterialPtr material = std::make_unique<Material>();
       material->cull_face(GL_FRONT);
       material->enable(GL_CULL_FACE);
       material->enable(GL_DEPTH_TEST);
@@ -590,7 +590,7 @@ Viewer::init()
       g_scene_manager->set_override_material(material);
     }
 
-    g_camera.reset(new Camera);
+    g_camera = std::make_unique<Camera>();
     g_camera->perspective(g_fov, g_aspect_ratio, g_near_z, 100000.0f);
 
     if (g_video_player) // streaming video
@@ -771,7 +771,7 @@ Viewer::init()
 
     if (false)
     { // light cone
-      MaterialPtr material(new Material);
+      MaterialPtr material = std::make_shared<Material>();
       material->blend_func(GL_SRC_ALPHA, GL_ONE);
       material->depth_mask(false);
       material->cast_shadow(false);
@@ -786,7 +786,7 @@ Viewer::init()
       material->set_program(Program::create(Shader::from_file(GL_VERTEX_SHADER, "src/lightcone.vert"),
                                             Shader::from_file(GL_FRAGMENT_SHADER, "src/lightcone.frag")));
 
-      auto mesh = std::unique_ptr<Mesh>(new Mesh(GL_POINTS));
+      auto mesh = std::make_unique<Mesh>(GL_POINTS);
       // generate light cone mesh
       {
         std::vector<glm::vec3> position;
@@ -829,7 +829,7 @@ Viewer::init()
 
   g_dot_surface = TextSurface::create("+", TextProperties().set_line_width(3.0f));
 
-  g_menu.reset(new Menu(TextProperties().set_font_size(24.0f).set_line_width(4.0f)));
+  g_menu = std::make_unique<Menu>(TextProperties().set_font_size(24.0f).set_line_width(4.0f));
   //g_menu->add_item("eye.x", &g_eye.x);
   //g_menu->add_item("eye.y", &g_eye.y);
   //g_menu->add_item("eye.z", &g_eye.z);
