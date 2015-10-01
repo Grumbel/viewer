@@ -3,15 +3,17 @@
 
 #include <SDL.h>
 
+#include "gl_context.hpp"
+
 class Window
 {
 private:
   SDL_Window* m_window;
-  SDL_GLContext m_gl_context;
+  GLContext m_gl_context;
 
 public:
   Window(SDL_Window* window, SDL_GLContext gl_context);
-  Window(Window&&) = default;
+  Window(Window&& other);
   ~Window();
 
   void swap();
