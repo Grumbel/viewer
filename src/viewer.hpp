@@ -40,117 +40,117 @@ struct Stick
 class Viewer
 {
 private:
-  Options g_opts;
+  Options m_opts;
 
-  int g_mouse_x = 0;
-  int g_mouse_y = 0;
+  int m_mouse_x = 0;
+  int m_mouse_y = 0;
 
-  TexturePtr g_calibration_left_texture;
-  TexturePtr g_calibration_right_texture;
-  bool g_show_calibration = false;
+  TexturePtr m_calibration_left_texture;
+  TexturePtr m_calibration_right_texture;
+  bool m_show_calibration = false;
 
-  std::unique_ptr<Menu> g_menu;
-  std::unique_ptr<SceneManager> g_scene_manager;
-  std::unique_ptr<Camera> g_camera;
+  std::unique_ptr<Menu> m_menu;
+  std::unique_ptr<SceneManager> m_scene_manager;
+  std::unique_ptr<Camera> m_camera;
 
-  MaterialPtr g_video_material;
-  MaterialPtr g_video_material_flip;
-  std::shared_ptr<VideoProcessor> g_video_player;
+  MaterialPtr m_video_material;
+  MaterialPtr m_video_material_flip;
+  std::shared_ptr<VideoProcessor> m_video_player;
 
-  float g_slow_factor = 0.5f;
+  float m_slow_factor = 0.5f;
 
-  bool g_wiimote_camera_control = false;
+  bool m_wiimote_camera_control = false;
 
-  glm::ivec2 g_viewport_offset = {-41, 16};
-  float g_barrel_power = 0.05f;
-  float g_ipd = 0.0f;
-  int g_screen_w = 640;
-  int g_screen_h = 480;
-  //float g_fov = glm::radians(56.0f);
-  float g_fov = glm::radians(42.0f);
+  glm::ivec2 m_viewport_offset = {-41, 16};
+  float m_barrel_power = 0.05f;
+  float m_ipd = 0.0f;
+  int m_screen_w = 640;
+  int m_screen_h = 480;
+  //float m_fov = glm::radians(56.0f);
+  float m_fov = glm::radians(42.0f);
 
-  float g_near_z = 0.1f;
-  float g_far_z  = 1000.0f;
+  float m_near_z = 0.1f;
+  float m_far_z  = 1000.0f;
 
-  int g_spot_halo_samples = 100;
+  int m_spot_halo_samples = 100;
 
-  bool g_draw_look_at = false;
+  bool m_draw_look_at = false;
 
-  float g_light_angle = 0.0f;
+  float m_light_angle = 0.0f;
 
   enum class StereoMode { None, CrossEye, Cybermaxx, Anaglyph, Depth, End };
-  StereoMode g_stereo_mode = StereoMode::None;
+  StereoMode m_stereo_mode = StereoMode::None;
 
-  bool g_headlights = false;
-  bool g_render_shadowmap = true;
+  bool m_headlights = false;
+  bool m_render_shadowmap = true;
 
-  int g_shadowmap_resolution = 1024;
+  int m_shadowmap_resolution = 1024;
 
-  float g_shadowmap_fov = glm::radians(25.0f);
-  float g_light_diffuse = 1.0f;
-  float g_light_specular = 1.0f;
-  float g_material_shininess = 10.0f;
-  float g_light_up = 0.0f;
+  float m_shadowmap_fov = glm::radians(25.0f);
+  float m_light_diffuse = 1.0f;
+  float m_light_specular = 1.0f;
+  float m_material_shininess = 10.0f;
+  float m_light_up = 0.0f;
 
-  float g_aspect_ratio = static_cast<GLfloat>(g_screen_w)/static_cast<GLfloat>(g_screen_h);
-  float g_spot_cutoff   = 60.0f;
-  float g_spot_exponent = 30.0f;
+  float m_aspect_ratio = static_cast<GLfloat>(m_screen_w)/static_cast<GLfloat>(m_screen_h);
+  float m_spot_cutoff   = 60.0f;
+  float m_spot_exponent = 30.0f;
 
-  bool g_show_menu = true;
-  bool g_show_dots = true;
+  bool m_show_menu = true;
+  bool m_show_dots = true;
 
-  glm::vec3 g_eye = {0.0f, 0.0f, 0.0f};
-  glm::vec3 g_look_at = {0.0f, 0.0f, -1.0f};
-  glm::vec3 g_up = {0.0f, 1.0f, 0.0f};
-  float g_pitch_offset = 0.0f;
-  float g_roll_offset  = 0.0f;
-  float g_distance_offset = 0.0f;
-  float g_distance_scale = 0.000f;
-  float g_yaw_offset   = 0.0f;
-  glm::vec4 g_grid_offset;
-  float g_grid_size = 2.0f;
+  glm::vec3 m_eye = {0.0f, 0.0f, 0.0f};
+  glm::vec3 m_look_at = {0.0f, 0.0f, -1.0f};
+  glm::vec3 m_up = {0.0f, 1.0f, 0.0f};
+  float m_pitch_offset = 0.0f;
+  float m_roll_offset  = 0.0f;
+  float m_distance_offset = 0.0f;
+  float m_distance_scale = 0.000f;
+  float m_yaw_offset   = 0.0f;
+  glm::vec4 m_grid_offset;
+  float m_grid_size = 2.0f;
 
-  std::string g_model_filename;
-  std::unique_ptr<Armature> g_armature;
-  std::unique_ptr<Pose> g_pose;
+  std::string m_model_filename;
+  std::unique_ptr<Armature> m_armature;
+  std::unique_ptr<Pose> m_pose;
 
-  std::unique_ptr<Framebuffer> g_framebuffer1;
-  std::unique_ptr<Framebuffer> g_framebuffer2;
+  std::unique_ptr<Framebuffer> m_framebuffer1;
+  std::unique_ptr<Framebuffer> m_framebuffer2;
 
-  std::unique_ptr<Renderbuffer> g_renderbuffer1;
-  std::unique_ptr<Renderbuffer> g_renderbuffer2;
+  std::unique_ptr<Renderbuffer> m_renderbuffer1;
+  std::unique_ptr<Renderbuffer> m_renderbuffer2;
 
-  float g_scale = 1.0f;
+  float m_scale = 1.0f;
 
-  float g_eye_distance = 0.065f;
-  float g_convergence = 1.0f;
+  float m_eye_distance = 0.065f;
+  float m_convergence = 1.0f;
 
-  bool g_arcball_active = false;
-  glm::ivec2 g_mouse;
-  glm::ivec2 g_last_mouse;
-  glm::mat4 g_object2world;
-  glm::mat4 g_last_object2world;
-  glm::mat4 g_eye_matrix;
+  bool m_arcball_active = false;
+  glm::ivec2 m_mouse;
+  glm::ivec2 m_last_mouse;
+  glm::mat4 m_object2world;
+  glm::mat4 m_last_object2world;
+  glm::mat4 m_eye_matrix;
 
-  TextSurfacePtr g_dot_surface;
-  glm::vec2 g_wiimote_dot1;
-  glm::vec2 g_wiimote_dot2;
+  TextSurfacePtr m_dot_surface;
+  glm::vec2 m_wiimote_dot1;
+  glm::vec2 m_wiimote_dot2;
 
-  //glm::vec2 g_wiimote_scale(0.84f, 0.64f);
-  glm::vec2 g_wiimote_scale = {0.52f, 0.47f};
+  //glm::vec2 m_wiimote_scale(0.84f, 0.64f);
+  glm::vec2 m_wiimote_scale = {0.52f, 0.47f};
 
   ProgramPtr m_composition_prog;
 
-  SceneNode* g_wiimote_accel_node = 0;
-  SceneNode* g_wiimote_gyro_node = 0;
-  SceneNode* g_wiimote_node = 0;
-  std::vector<SceneNode*> g_nodes;
+  SceneNode* m_wiimote_accel_node = 0;
+  SceneNode* m_wiimote_gyro_node = 0;
+  SceneNode* m_wiimote_node = 0;
+  std::vector<SceneNode*> m_nodes;
 
-  std::shared_ptr<WiimoteManager> g_wiimote_manager;
+  std::shared_ptr<WiimoteManager> m_wiimote_manager;
 
-  Stick g_stick;
-  Stick g_old_stick;
-  unsigned int g_hat_autorepeat = 0;
+  Stick m_stick;
+  Stick m_old_stick;
+  unsigned int m_hat_autorepeat = 0;
 
 private:
   void on_keyboard_event(SDL_KeyboardEvent key, int x, int y);
