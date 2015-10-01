@@ -28,22 +28,22 @@ pkg_search_module(SDL2 REQUIRED sdl2)
 pkg_search_module(SDL2_IMAGE REQUIRED SDL2_image)
 pkg_search_module(CAIROMM REQUIRED cairomm-1.0)
 
-file(GLOB WIIC_SOURCES external/wiic-2013-02-12/src/wiic/*.c)
+file(GLOB WIIC_SOURCES external/WiiC/src/wiic/*.c)
 add_library(wiic ${WIIC_SOURCES})
 target_compile_definitions(wiic PUBLIC -DLINUX=1)
 target_include_directories(wiic SYSTEM PUBLIC
-  ${CMAKE_CURRENT_SOURCE_DIR}/external/wiic-2013-02-12/src/log
-  ${CMAKE_CURRENT_SOURCE_DIR}/external/wiic-2013-02-12/src/wiic)
+  ${CMAKE_CURRENT_SOURCE_DIR}/external/WiiC/src/log
+  ${CMAKE_CURRENT_SOURCE_DIR}/external/WiiC/src/wiic)
 
 file(GLOB WIICPP_SOURCES
-  external/wiic-2013-02-12/src/wiicpp/*.cpp
-  external/wiic-2013-02-12/src/log/*.cpp)
+  external/WiiC/src/wiicpp/*.cpp
+  external/WiiC/src/log/*.cpp)
 add_library(wiicpp ${WIICPP_SOURCES})
 target_compile_definitions(wiicpp PUBLIC -DLINUX=1)
 target_include_directories(wiicpp SYSTEM PUBLIC
-  ${CMAKE_CURRENT_SOURCE_DIR}/external/wiic-2013-02-12/src/log
-  ${CMAKE_CURRENT_SOURCE_DIR}/external/wiic-2013-02-12/src/wiic
-  ${CMAKE_CURRENT_SOURCE_DIR}/external/wiic-2013-02-12/src/wiicpp)
+  ${CMAKE_CURRENT_SOURCE_DIR}/external/WiiC/src/log
+  ${CMAKE_CURRENT_SOURCE_DIR}/external/WiiC/src/wiic
+  ${CMAKE_CURRENT_SOURCE_DIR}/external/WiiC/src/wiicpp)
 
 file(GLOB VIEWER_SOURCES src/*.cpp)
 add_executable(viewer ${VIEWER_SOURCES})

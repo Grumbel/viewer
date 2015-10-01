@@ -1,0 +1,3 @@
+[submodule "external/WiiC"]
+	path = external/WiiC
+	url = https://github.com/grandelli/WiiC.git
