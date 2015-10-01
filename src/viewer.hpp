@@ -20,6 +20,8 @@
 #include "wiimote_manager.hpp"
 #include "window.hpp"
 
+class GameController;
+
 struct Options
 {
   bool wiimote = false;
@@ -154,7 +156,7 @@ private:
 
 private:
   void on_keyboard_event(SDL_KeyboardEvent key, int x, int y);
-  void process_events();
+  void process_events(GameController& gamecontroller);
   void process_joystick(float dt);
   glm::vec3 get_arcball_vector(glm::ivec2 mouse);
   void update_arcball();
@@ -170,7 +172,7 @@ private:
   void update_world(float dt);
   void update_offsets(glm::vec2 p1, glm::vec2 p2);
 
-  void main_loop(Window& window);
+  void main_loop(Window& window, GameController& gamecontroller);
   void parse_args(int argc, char** argv, Options& opts);
 
 public:

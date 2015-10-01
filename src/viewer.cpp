@@ -883,7 +883,7 @@ Viewer::get_arcball_vector(glm::ivec2 mouse)
 }
 
 void
-Viewer::process_events()
+Viewer::process_events(GameController& gamecontroller)
 {
   SDL_Event ev;
   while(SDL_PollEvent(&ev))
@@ -922,80 +922,210 @@ Viewer::process_events()
       case SDL_MOUSEBUTTONUP:
         break;
 
-      case SDL_JOYAXISMOTION:
-        //log_debug("joystick axis: %d %d", static_cast<int>(ev.jaxis.axis), ev.jaxis.value);
-        switch(ev.jaxis.axis)
+      case SDL_CONTROLLERAXISMOTION:
+        //log_debug("controller axis: %d %d", static_cast<int>(ev.caxis.axis), ev.caxis.value);
+        switch(ev.caxis.axis)
         {
-          case 0: // x1
-            m_stick.dir.x = -ev.jaxis.value / 32768.0f;
+          case SDL_CONTROLLER_AXIS_LEFTX:
+            m_stick.dir.x = -ev.caxis.value / 32768.0f;
             break;
 
-          case 1: // y1
-            m_stick.dir.z = -ev.jaxis.value / 32768.0f;
+          case SDL_CONTROLLER_AXIS_LEFTY:
+            m_stick.dir.z = -ev.caxis.value / 32768.0f;
             break;
 
-          case 2: // z
-            m_stick.rot.z = ev.jaxis.value / 32768.0f;
+          case SDL_CONTROLLER_AXIS_TRIGGERLEFT:
+          case SDL_CONTROLLER_AXIS_TRIGGERRIGHT:
+            m_stick.rot.z = (SDL_GameControllerGetAxis(gamecontroller.get_handle(), SDL_CONTROLLER_AXIS_TRIGGERRIGHT) -
+                             SDL_GameControllerGetAxis(gamecontroller.get_handle(), SDL_CONTROLLER_AXIS_TRIGGERLEFT)) / 32768.0f;
             break;
 
-          case 3: // x2
-            m_stick.rot.y = -ev.jaxis.value / 32768.0f;
+          case SDL_CONTROLLER_AXIS_RIGHTX:
+            m_stick.rot.y = -ev.caxis.value / 32768.0f;
             break;
 
-          case 4: // y2
-            m_stick.rot.x = -ev.jaxis.value / 32768.0f;
+          case SDL_CONTROLLER_AXIS_RIGHTY:
+            m_stick.rot.x = -ev.caxis.value / 32768.0f;
             break;
         }
         break;
 
-      case SDL_JOYBUTTONDOWN:
-      case SDL_JOYBUTTONUP:
-        //log_debug("joystick button: %d %d", static_cast<int>(ev.jbutton.button), static_cast<int>(ev.jbutton.state));
-        switch(ev.jbutton.button)
+      case SDL_CONTROLLERBUTTONUP:
+      case SDL_CONTROLLERBUTTONDOWN:
+        //log_debug("controller button: %d %d", static_cast<int>(ev.cbutton.button), static_cast<int>(ev.cbutton.state));
+        switch(ev.cbutton.button)
         {
-          case 4:
-            m_stick.dir.y = -ev.jbutton.state;
+          case SDL_CONTROLLER_BUTTON_LEFTSHOULDER:
+            m_stick.dir.y = -ev.cbutton.state;
             break;
 
-          case 5:
-            m_stick.dir.y = +ev.jbutton.state;
+          case SDL_CONTROLLER_BUTTON_RIGHTSHOULDER:
+            m_stick.dir.y = +ev.cbutton.state;
             break;
 
-          case 0:
+          case SDL_CONTROLLER_BUTTON_B:
             if (m_wiimote_manager)
             {
               m_wiimote_manager->reset_gyro_orientation();
             }
             break;
 
-          case 1:
+          case SDL_CONTROLLER_BUTTON_X:
             //g_light_angle += 1.0f;
-            m_stick.light_rotation = ev.jbutton.state;
+            m_stick.light_rotation = ev.cbutton.state;
             break;
 
-          case 2:
-            m_headlights = ev.jbutton.state;
+          case SDL_CONTROLLER_BUTTON_Y:
+            m_headlights = ev.cbutton.state;
             break;
 
-          case 7:
-            if (ev.jbutton.state)
+          case SDL_CONTROLLER_BUTTON_START:
+            if (ev.cbutton.state)
             {
               m_show_menu = !m_show_menu;
             }
             break;
 
-          case 6:
-            if (ev.jbutton.state)
+          case SDL_CONTROLLER_BUTTON_BACK:
+            if (ev.cbutton.state)
             {
               m_show_dots = !m_show_dots;
+            }
+            break;
+
+          case SDL_CONTROLLER_BUTTON_DPAD_UP:
+            if (ev.cbutton.state)
+            {
+              m_stick.hat |= SDL_HAT_UP;
+              m_hat_autorepeat = SDL_GetTicks() + 500;
+            }
+            else
+            {
+              m_stick.hat &= ~SDL_HAT_UP;
+            }
+            break;
+
+          case SDL_CONTROLLER_BUTTON_DPAD_DOWN:
+            if (ev.cbutton.state)
+            {
+              m_stick.hat |= SDL_HAT_DOWN;
+              m_hat_autorepeat = SDL_GetTicks() + 500;
+            }
+            else
+            {
+              m_stick.hat &= ~SDL_HAT_DOWN;
+            }
+            break;
+
+          case SDL_CONTROLLER_BUTTON_DPAD_LEFT:
+            if (ev.cbutton.state)
+            {
+              m_stick.hat |= SDL_HAT_LEFT;
+              m_hat_autorepeat = SDL_GetTicks() + 500;
+            }
+            else
+            {
+              m_stick.hat &= ~SDL_HAT_LEFT;
+            }
+            break;
+
+          case SDL_CONTROLLER_BUTTON_DPAD_RIGHT:
+            if (ev.cbutton.state)
+            {
+              m_stick.hat |= SDL_HAT_RIGHT;
+              m_hat_autorepeat = SDL_GetTicks() + 500;
+            }
+            else
+            {
+              m_stick.hat &= ~SDL_HAT_RIGHT;
             }
             break;
         }
         break;
 
+      case SDL_JOYAXISMOTION:
+        //log_debug("joystick axis: %d %d", static_cast<int>(ev.jaxis.axis), ev.jaxis.value);
+        if ((false))
+        {
+          switch(ev.jaxis.axis)
+          {
+            case 0: // x1
+              m_stick.dir.x = -ev.jaxis.value / 32768.0f;
+              break;
+
+            case 1: // y1
+              m_stick.dir.z = -ev.jaxis.value / 32768.0f;
+              break;
+
+            case 2: // z
+              m_stick.rot.z = ev.jaxis.value / 32768.0f;
+              break;
+
+            case 3: // x2
+              m_stick.rot.y = -ev.jaxis.value / 32768.0f;
+              break;
+
+            case 4: // y2
+              m_stick.rot.x = -ev.jaxis.value / 32768.0f;
+              break;
+          }
+        }
+        break;
+
+      case SDL_JOYBUTTONDOWN:
+      case SDL_JOYBUTTONUP:
+        //log_debug("joystick button: %d %d", static_cast<int>(ev.jbutton.button), static_cast<int>(ev.jbutton.state));
+        if ((false))
+        {
+          switch(ev.jbutton.button)
+          {
+            case 4:
+              m_stick.dir.y = -ev.jbutton.state;
+              break;
+
+            case 5:
+              m_stick.dir.y = +ev.jbutton.state;
+              break;
+
+            case 0:
+              if (m_wiimote_manager)
+              {
+                m_wiimote_manager->reset_gyro_orientation();
+              }
+              break;
+
+            case 1:
+              //g_light_angle += 1.0f;
+              m_stick.light_rotation = ev.jbutton.state;
+              break;
+
+            case 2:
+              m_headlights = ev.jbutton.state;
+              break;
+
+            case 7:
+              if (ev.jbutton.state)
+              {
+                m_show_menu = !m_show_menu;
+              }
+              break;
+
+            case 6:
+              if (ev.jbutton.state)
+              {
+                m_show_dots = !m_show_dots;
+              }
+              break;
+          }
+        }
+        break;
+
       case SDL_JOYHATMOTION:
-        m_stick.hat = ev.jhat.value;
-        m_hat_autorepeat = SDL_GetTicks() + 500;
+        if ((false))
+        {
+          m_stick.hat = ev.jhat.value;
+          m_hat_autorepeat = SDL_GetTicks() + 500;
+        }
         break;
 
       default:
@@ -1167,7 +1297,7 @@ Viewer::update_world(float dt)
 }
 
 void
-Viewer::main_loop(Window& window)
+Viewer::main_loop(Window& window, GameController& gamecontroller)
 {
   int num_frames = 0;
   unsigned int start_ticks = SDL_GetTicks();
@@ -1187,7 +1317,7 @@ Viewer::main_loop(Window& window)
 
     m_grid_offset += glm::vec4(0.0f, 0.0f, 0.001f, 0.0f);
 
-    process_events();
+    process_events(gamecontroller);
     process_joystick(delta / 1000.0f);
 
     if (false && m_wiimote_manager)
@@ -1313,7 +1443,8 @@ Viewer::main(int argc, char** argv)
 
   System system = System::create();
   Window window = system.create_gl_window("OpenGL Viewer", m_screen_w, m_screen_h, false, 0);
-  Joystick joystick = system.create_joystick();
+  //Joystick joystick = system.create_joystick();
+  GameController gamecontroller = system.create_gamecontroller();
 
   // glew throws 'invalid enum' error in OpenGL3.3Core, thus we eat up the error code
   glewExperimental = true;
@@ -1341,7 +1472,7 @@ Viewer::main(int argc, char** argv)
 
   std::cout << "main: " << std::this_thread::get_id() << std::endl;
 
-  main_loop(window);
+  main_loop(window, gamecontroller);
 
   return 0;
 }

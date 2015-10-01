@@ -10,7 +10,7 @@ private:
 
 public:
   Joystick(SDL_Joystick* joystick = nullptr);
-  Joystick(Joystick&&) = default;
+  Joystick(Joystick&& other);
   ~Joystick();
 
   explicit operator bool() const { return m_joystick != nullptr; }

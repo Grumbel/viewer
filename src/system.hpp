@@ -3,6 +3,7 @@
 
 #include <iostream>
 
+#include "game_controller.hpp"
 #include "joystick.hpp"
 #include "window.hpp"
 
@@ -18,6 +19,7 @@ public:
 
   Window create_gl_window(std::string const& title, int width, int height, bool fullscreen, int anti_aliasing);
   Joystick create_joystick();
+  GameController create_gamecontroller();
 
 private:
   System(const System&) = delete;

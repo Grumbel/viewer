@@ -7,7 +7,7 @@
 System
 System::create()
 {
-  if (SDL_Init(SDL_INIT_TIMER | SDL_INIT_VIDEO | SDL_INIT_JOYSTICK) < 0)
+  if (SDL_Init(SDL_INIT_TIMER | SDL_INIT_VIDEO | SDL_INIT_JOYSTICK | SDL_INIT_GAMECONTROLLER) < 0)
   {
     std::ostringstream msg;
     msg << "Couldn't initialize SDL: " << SDL_GetError();
@@ -86,6 +86,30 @@ System::create_joystick()
   {
     return Joystick();
   }
+}
+
+GameController
+System::create_gamecontroller()
+{
+  for (int i = 0; i < SDL_NumJoysticks(); ++i)
+  {
+    if (SDL_IsGameController(i))
+    {
+      SDL_GameController* controller = SDL_GameControllerOpen(i);
+      if (controller)
+      {
+        return GameController(controller);
+      }
+      else
+      {
+        std::ostringstream out;
+        out << "Could not open gamecontroller: " << i << ": " << SDL_GetError();
+        throw std::runtime_error(out.str());
+      }
+    }
+  }
+
+  return {};
 }
 
 /* EOF */

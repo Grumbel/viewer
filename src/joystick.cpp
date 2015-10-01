@@ -5,6 +5,12 @@ Joystick::Joystick(SDL_Joystick* joystick) :
 {
 }
 
+Joystick::Joystick(Joystick&& other) :
+  m_joystick(other.m_joystick)
+{
+  other.m_joystick = nullptr;
+}
+
 Joystick::~Joystick()
 {
   if (m_joystick)
