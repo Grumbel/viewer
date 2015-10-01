@@ -6,8 +6,9 @@ option(WERROR "Turn warnings into errors" OFF)
 
 if(WARNINGS)
   set(WARNINGS_CXX_FLAGS ${WARNINGS_CXX_FLAGS}
-    -pedantic -Wall -Wextra -Wno-c++0x-compat -Wnon-virtual-dtor -Weffc++
-    -Wconversion -Wshadow -Wcast-qual -Winit-self -Wno-unused-parameter)
+    -pedantic -Wall -Wextra -Wno-c++0x-compat -Wnon-virtual-dtor
+     -Wshadow -Wcast-qual -Winit-self -Wno-unused-parameter)
+  # temporarily deactived: -Weffc++ -Wconversion
   # -Winline -Wfloat-equal -Wunreachable-code
 endif()
 
