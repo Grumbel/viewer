@@ -35,7 +35,6 @@
 #include "assert_gl.hpp"
 #include "camera.hpp"
 #include "framebuffer.hpp"
-#include "renderbuffer.hpp"
 #include "log.hpp"
 #include "material_factory.hpp"
 #include "menu.hpp"
@@ -45,12 +44,15 @@
 #include "pose.hpp"
 #include "program.hpp"
 #include "render_context.hpp"
+#include "renderbuffer.hpp"
 #include "scene.hpp"
 #include "scene_manager.hpp"
 #include "shader.hpp"
+#include "system.hpp"
 #include "text_surface.hpp"
 #include "video_processor.hpp"
 #include "wiimote_manager.hpp"
+#include "window.hpp"
 
 std::string to_string(const glm::vec3& v)
 {
@@ -100,9 +102,6 @@ Options g_opts;
 
 int g_mouse_x = 0;
 int g_mouse_y = 0;
-
-SDL_Window* g_window = nullptr;
-SDL_GLContext g_gl_context = nullptr;
 
 TexturePtr g_calibration_left_texture;
 TexturePtr g_calibration_right_texture;
@@ -461,7 +460,6 @@ void display()
     }
   }
 
-  SDL_GL_SwapWindow(g_window);
   assert_gl("display:exit()");
 }
 
@@ -1335,7 +1333,7 @@ void update_world(float dt)
   }
 }
 
-void main_loop()
+void main_loop(Window& window)
 {
   int num_frames = 0;
   unsigned int start_ticks = SDL_GetTicks();
@@ -1349,6 +1347,8 @@ void main_loop()
     update_world(delta / 1000.0f);
 
     display();
+    window.swap();
+
     SDL_Delay(1);
 
     g_grid_offset += glm::vec4(0.0f, 0.0f, 0.001f, 0.0f);
@@ -1435,47 +1435,6 @@ void update_offsets(glm::vec2 p1, glm::vec2 p2)
   //std::cout << "offset: " << boost::format("%4.2f %4.2f %4.2f") % g_roll_offset % g_yaw_offset % g_pitch_offset << std::endl;
 }
 
-
-void init_display(const std::string& title, bool fullscreen, int anti_aliasing)
-{
-  //SDL_GL_SetAttribute(SDL_GL_SWAP_CONTROL, 1); // vsync
-  SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 1);
-
-  SDL_GL_SetAttribute(SDL_GL_RED_SIZE,     8);
-  SDL_GL_SetAttribute(SDL_GL_GREEN_SIZE,   8);
-  SDL_GL_SetAttribute(SDL_GL_BLUE_SIZE,    8);
-  SDL_GL_SetAttribute(SDL_GL_BUFFER_SIZE, 32);
-
-  SDL_GL_SetAttribute(SDL_GL_STENCIL_SIZE, 8);
-
-  if (anti_aliasing)
-  {
-    SDL_GL_SetAttribute( SDL_GL_MULTISAMPLEBUFFERS, 1 ); // boolean value, either it's enabled or not
-    SDL_GL_SetAttribute( SDL_GL_MULTISAMPLESAMPLES, anti_aliasing ); // 0, 2, or 4 for number of samples
-  }
-
-  //SDL_WM_SetIcon(IMG_Load(Pathname("icon.png").get_sys_path().c_str()), NULL);
-  g_window = SDL_CreateWindow(title.c_str(),
-                              SDL_WINDOWPOS_UNDEFINED,
-                              SDL_WINDOWPOS_UNDEFINED,
-                              g_screen_w, g_screen_h,
-                              SDL_WINDOW_OPENGL | SDL_WINDOW_RESIZABLE | (fullscreen ? SDL_WINDOW_FULLSCREEN : 0));
-  if (!g_window)
-  {
-    throw std::runtime_error("Couldn't create window");
-  }
-
-  SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_CORE);
-  SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 3);
-  SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 3);
-
-  g_gl_context = SDL_GL_CreateContext(g_window);
-  if (!g_gl_context)
-  {
-    throw std::runtime_error("failed to create GLContext");
-  }
-}
-
 void parse_args(int argc, char** argv, Options& opts)
 {
   for(int i = 1; i < argc; ++i)
@@ -1525,25 +1484,9 @@ int main(int argc, char** argv)
 {
   parse_args(argc, argv, g_opts);
 
-  if (SDL_Init(SDL_INIT_TIMER | SDL_INIT_VIDEO | SDL_INIT_JOYSTICK) < 0)
-  {
-    std::ostringstream msg;
-    msg << "Couldn't initialize SDL: " << SDL_GetError();
-    throw std::runtime_error(msg.str());
-  }
-  else
-  {
-    atexit(SDL_Quit);
-  }
-
-  init_display("OpenGL Viewer", false, 0);
-
-  SDL_Joystick* joystick = nullptr;
-  log_info("SDL_NumJoysticks: %d", SDL_NumJoysticks());
-  if (SDL_NumJoysticks() > 0)
-  {
-    joystick = SDLCALL SDL_JoystickOpen(0);
-  }
+  System system = System::create();
+  Window window = system.create_gl_window("OpenGL Viewer", g_screen_w, g_screen_h, false, 0);
+  Joystick joystick = system.create_joystick();
 
   // glew throws 'invalid enum' error in OpenGL3.3Core, thus we eat up the error code
   glewExperimental = true;
@@ -1571,12 +1514,7 @@ int main(int argc, char** argv)
 
   std::cout << "main: " << std::this_thread::get_id() << std::endl;
 
-  main_loop();
-
-  if (joystick)
-  {
-    SDL_JoystickClose(joystick);
-  }
+  main_loop(window);
 
   return 0;
 }
