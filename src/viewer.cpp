@@ -14,15 +14,14 @@
 //  You should have received a copy of the GNU General Public License
 //  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+#include "viewer.hpp"
+
 #include <GL/glew.h>
 #include <SDL.h>
 #include <SDL_image.h>
 #include <cmath>
 #include <cmath>
 #include <fstream>
-#define GLM_FORCE_RADIANS
-#include <glm/ext.hpp>
-#include <glm/glm.hpp>
 #include <iostream>
 #include <memory>
 #include <sstream>
@@ -31,28 +30,23 @@
 #include <vector>
 #include <thread>
 
-#include "armature.hpp"
 #include "assert_gl.hpp"
 #include "camera.hpp"
-#include "framebuffer.hpp"
 #include "log.hpp"
 #include "material_factory.hpp"
 #include "menu.hpp"
 #include "mesh.hpp"
 #include "model.hpp"
 #include "opengl_state.hpp"
-#include "pose.hpp"
 #include "program.hpp"
 #include "render_context.hpp"
-#include "renderbuffer.hpp"
 #include "scene.hpp"
 #include "scene_manager.hpp"
 #include "shader.hpp"
 #include "system.hpp"
 #include "text_surface.hpp"
-#include "video_processor.hpp"
-#include "wiimote_manager.hpp"
-#include "window.hpp"
+
+namespace {
 
 std::string to_string(const glm::vec3& v)
 {
@@ -87,144 +81,13 @@ void print_scene_graph(SceneNode* node, int depth = 0)
   }
 }
 
-struct Options
-{
-  bool wiimote = false;
-  std::string video = std::string();
-  bool video3d = false;
-  std::string model = std::string();
-};
-
-// global variables
-namespace {
-
-Options g_opts;
-
-int g_mouse_x = 0;
-int g_mouse_y = 0;
-
-TexturePtr g_calibration_left_texture;
-TexturePtr g_calibration_right_texture;
-bool g_show_calibration = false;
-
-std::unique_ptr<Menu> g_menu;
-std::unique_ptr<SceneManager> g_scene_manager;
-std::unique_ptr<Camera> g_camera;
-
-MaterialPtr g_video_material;
-MaterialPtr g_video_material_flip;
-std::shared_ptr<VideoProcessor> g_video_player;
-
-float g_slow_factor = 0.5f;
-
-bool g_wiimote_camera_control = false;
-
-glm::ivec2 g_viewport_offset(-41, 16);
-float g_barrel_power = 0.05f;
-float g_ipd = 0.0f;
-int g_screen_w = 640;
-int g_screen_h = 480;
-//float g_fov = glm::radians(56.0f);
-float g_fov = glm::radians(42.0f);
-
-float g_near_z = 0.1f;
-float g_far_z  = 1000.0f;
-
-int g_spot_halo_samples = 100;
-
-bool g_draw_look_at = false;
-
-float g_light_angle = 0.0f;
-
-enum class StereoMode { None, CrossEye, Cybermaxx, Anaglyph, Depth, End };
-StereoMode g_stereo_mode = StereoMode::None;
-
-bool g_headlights = false;
-bool g_render_shadowmap = true;
-
-int g_shadowmap_resolution = 1024;
-
-float g_shadowmap_fov = glm::radians(25.0f);
-float g_light_diffuse = 1.0f;
-float g_light_specular = 1.0f;
-float g_material_shininess = 10.0f;
-float g_light_up = 0.0f;
-
-float g_aspect_ratio = static_cast<GLfloat>(g_screen_w)/static_cast<GLfloat>(g_screen_h);
-float g_spot_cutoff   = 60.0f;
-float g_spot_exponent = 30.0f;
-
-bool g_show_menu = true;
-bool g_show_dots = true;
-
-glm::vec3 g_eye(0.0f, 0.0f, 0.0f);
-glm::vec3 g_look_at(0.0f, 0.0f, -1.0f);
-glm::vec3 g_up(0.0f, 1.0f, 0.0f);
-float g_pitch_offset = 0.0f;
-float g_roll_offset  = 0.0f;
-float g_distance_offset = 0.0f;
-float g_distance_scale = 0.000f;
-float g_yaw_offset   = 0.0f;
-glm::vec4 g_grid_offset;
-float g_grid_size = 2.0f;
-
-std::string g_model_filename;
-std::unique_ptr<Armature> g_armature;
-std::unique_ptr<Pose> g_pose;
-
-std::unique_ptr<Framebuffer> g_framebuffer1;
-std::unique_ptr<Framebuffer> g_framebuffer2;
-
-std::unique_ptr<Renderbuffer> g_renderbuffer1;
-std::unique_ptr<Renderbuffer> g_renderbuffer2;
-
-float g_scale = 1.0f;
-
-float g_eye_distance = 0.065f;
-float g_convergence = 1.0f;
-
-bool g_arcball_active = false;
-glm::ivec2 g_mouse;
-glm::ivec2 g_last_mouse;
-glm::mat4 g_object2world;
-glm::mat4 g_last_object2world;
-glm::mat4 g_eye_matrix;
-
-TextSurfacePtr g_dot_surface;
-glm::vec2 g_wiimote_dot1;
-glm::vec2 g_wiimote_dot2;
-
-//glm::vec2 g_wiimote_scale(0.84f, 0.64f);
-glm::vec2 g_wiimote_scale(0.52f, 0.47f);
-
-ProgramPtr m_composition_prog;
-
-SceneNode* g_wiimote_accel_node = 0;
-SceneNode* g_wiimote_gyro_node = 0;
-SceneNode* g_wiimote_node = 0;
-std::vector<SceneNode*> g_nodes;
-
-std::shared_ptr<WiimoteManager> g_wiimote_manager;
-
 } // namespace
 
 std::unique_ptr<Framebuffer> g_shadowmap;
 glm::mat4 g_shadowmap_matrix;
 
-struct Stick
-{
-  Stick() : dir(), rot(), light_rotation(), hat() {}
-  glm::vec3 dir;
-  glm::vec3 rot;
-  bool light_rotation;
-  unsigned int hat;
-};
-
-Stick g_stick;
-Stick g_old_stick;
-unsigned int g_hat_autorepeat = 0;
-
-void reshape(int w, int h)
+void
+Viewer::reshape(int w, int h)
 {
   log_info("reshape(%d, %d)", w, h);
   g_screen_w = w;
@@ -243,7 +106,8 @@ void reshape(int w, int h)
   assert_gl("reshape");
 }
 
-void draw_scene(Stereo stereo)
+void
+Viewer::draw_scene(Stereo stereo)
 {
   OpenGLState state;
 
@@ -296,7 +160,8 @@ void draw_scene(Stereo stereo)
   g_scene_manager->render(*g_camera, false, stereo);
 }
 
-void draw_shadowmap()
+void
+Viewer::draw_shadowmap()
 {
   OpenGLState state;
 
@@ -325,7 +190,8 @@ void draw_shadowmap()
   g_scene_manager->render(camera, true);
 }
 
-void display()
+void
+Viewer::display()
 {
   glViewport(g_viewport_offset.x, g_viewport_offset.y, g_screen_w, g_screen_h);
 
@@ -463,7 +329,8 @@ void display()
   assert_gl("display:exit()");
 }
 
-void keyboard(SDL_KeyboardEvent key, int x, int y)
+void
+Viewer::keyboard(SDL_KeyboardEvent key, int x, int y)
 {
   switch (key.keysym.scancode)
   {
@@ -691,7 +558,8 @@ void keyboard(SDL_KeyboardEvent key, int x, int y)
   }
 }
 
-void init()
+void
+Viewer::init()
 {
   assert_gl("init()");
   g_framebuffer1.reset(new Framebuffer(g_screen_w, g_screen_h));
@@ -1012,7 +880,8 @@ void init()
   assert_gl("init()");
 }
 
-void mouse(int button, int button_pressed, int x, int y)
+void
+Viewer::mouse(int button, int button_pressed, int x, int y)
 {
   //log_info("mouse: %d %d - %d %d", x, y, button, button_pressed);
 
@@ -1032,7 +901,8 @@ void mouse(int button, int button_pressed, int x, int y)
   }
 }
 
-glm::vec3 get_arcball_vector(glm::ivec2 mouse)
+glm::vec3
+Viewer::get_arcball_vector(glm::ivec2 mouse)
 {
   float radius = std::min(g_screen_w, g_screen_h) / 2.0f;
   glm::vec3 P = glm::vec3(static_cast<float>(mouse.x - g_screen_w/2) / radius,
@@ -1053,7 +923,8 @@ glm::vec3 get_arcball_vector(glm::ivec2 mouse)
   return P;
 }
 
-void process_events()
+void
+Viewer::process_events()
 {
   SDL_Event ev;
   while(SDL_PollEvent(&ev))
@@ -1174,7 +1045,8 @@ void process_events()
   }
 }
 
-void process_joystick(float dt)
+void
+Viewer::process_joystick(float dt)
 {
   auto current_time = SDL_GetTicks();
   if (g_stick.hat != g_old_stick.hat || (g_stick.hat && g_hat_autorepeat < current_time))
@@ -1303,7 +1175,8 @@ void process_joystick(float dt)
   g_old_stick = g_stick;
 }
 
-void update_arcball()
+void
+Viewer::update_arcball()
 {
   if (g_arcball_active && g_mouse != g_last_mouse)
   {
@@ -1322,7 +1195,8 @@ void update_arcball()
   }
 }
 
-void update_world(float dt)
+void
+Viewer::update_world(float dt)
 {
   int i = 1;
   for(auto& node : g_nodes)
@@ -1333,7 +1207,8 @@ void update_world(float dt)
   }
 }
 
-void main_loop(Window& window)
+void
+Viewer::main_loop(Window& window)
 {
   int num_frames = 0;
   unsigned int start_ticks = SDL_GetTicks();
@@ -1397,7 +1272,8 @@ void main_loop(Window& window)
   }
 }
 
-void mouse_motion(int x, int y)
+void
+Viewer::mouse_motion(int x, int y)
 {
   if (g_arcball_active)
   {
@@ -1407,7 +1283,8 @@ void mouse_motion(int x, int y)
   }
 }
 
-void update_offsets(glm::vec2 p1, glm::vec2 p2)
+void
+Viewer::update_offsets(glm::vec2 p1, glm::vec2 p2)
 {
   if (p1.x > p2.x)
   {
@@ -1435,7 +1312,8 @@ void update_offsets(glm::vec2 p1, glm::vec2 p2)
   //std::cout << "offset: " << boost::format("%4.2f %4.2f %4.2f") % g_roll_offset % g_yaw_offset % g_pitch_offset << std::endl;
 }
 
-void parse_args(int argc, char** argv, Options& opts)
+void
+Viewer::parse_args(int argc, char** argv, Options& opts)
 {
   for(int i = 1; i < argc; ++i)
   {
@@ -1480,7 +1358,8 @@ void parse_args(int argc, char** argv, Options& opts)
   }
 }
 
-int main(int argc, char** argv)
+int
+Viewer::main(int argc, char** argv)
 {
   parse_args(argc, argv, g_opts);
 
@@ -1519,5 +1398,11 @@ int main(int argc, char** argv)
   return 0;
 }
 
+int
+main(int argc, char** argv)
+{
+  Viewer viewer;
+  return viewer.main(argc, argv);
+}
 
 // EOF //
