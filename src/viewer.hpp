@@ -152,25 +152,30 @@ private:
   Stick g_old_stick;
   unsigned int g_hat_autorepeat = 0;
 
-public:
-  Viewer() {}
+private:
+  void on_keyboard_event(SDL_KeyboardEvent key, int x, int y);
+  void process_events();
+  void process_joystick(float dt);
+  glm::vec3 get_arcball_vector(glm::ivec2 mouse);
+  void update_arcball();
+
+  void init();
 
   void draw_scene(Stereo stereo);
   void draw_shadowmap();
   void display();
-  void keyboard(SDL_KeyboardEvent key, int x, int y);
+
   void reshape(int w, int h);
-  void init();
-  void mouse(int button, int button_state, int x, int y);
-  glm::vec3 get_arcball_vector(glm::ivec2 mouse);
-  void process_events();
-  void process_joystick(float dt);
-  void update_arcball();
+
   void update_world(float dt);
-  void main_loop(Window& window);
-  void mouse_motion(int x, int y);
   void update_offsets(glm::vec2 p1, glm::vec2 p2);
+
+  void main_loop(Window& window);
   void parse_args(int argc, char** argv, Options& opts);
+
+public:
+  Viewer() {}
+
   int main(int argc, char** argv);
 
 private:

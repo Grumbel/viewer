@@ -330,7 +330,7 @@ Viewer::display()
 }
 
 void
-Viewer::keyboard(SDL_KeyboardEvent key, int x, int y)
+Viewer::on_keyboard_event(SDL_KeyboardEvent key, int x, int y)
 {
   switch (key.keysym.scancode)
   {
@@ -880,27 +880,6 @@ Viewer::init()
   assert_gl("init()");
 }
 
-void
-Viewer::mouse(int button, int button_pressed, int x, int y)
-{
-  //log_info("mouse: %d %d - %d %d", x, y, button, button_pressed);
-
-  if (button == 0)
-  {
-    if (!button_pressed)
-    {
-      //log_info("mouse: arcball: %d %d", x, y);
-      g_arcball_active = true;
-      g_mouse = g_last_mouse = glm::ivec2(x, y);
-      g_last_object2world = g_object2world;
-    }
-    else
-    {
-      g_arcball_active = false;
-    }
-  }
-}
-
 glm::vec3
 Viewer::get_arcball_vector(glm::ivec2 mouse)
 {
@@ -951,7 +930,7 @@ Viewer::process_events()
         break;
 
       case SDL_KEYDOWN:
-        keyboard(ev.key, g_mouse_x, g_mouse_y);
+        on_keyboard_event(ev.key, g_mouse_x, g_mouse_y);
         break;
 
       case SDL_MOUSEMOTION:
@@ -1269,17 +1248,6 @@ Viewer::main_loop(Window& window)
         if (g_video_material_flip) g_video_material_flip->set_texture(0, texture);
       }
     }
-  }
-}
-
-void
-Viewer::mouse_motion(int x, int y)
-{
-  if (g_arcball_active)
-  {
-    //log_info("mouse motion: arcball: %d %d", x, y);
-    g_mouse.x = x;
-    g_mouse.y = y;
   }
 }
 
