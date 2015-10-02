@@ -21,6 +21,7 @@
 #include "window.hpp"
 
 class GameController;
+class Compositor;
 
 struct Options
 {
@@ -41,7 +42,7 @@ struct Stick
 
 class Viewer
 {
-private:
+public:
   Options m_opts;
 
   int m_mouse_x = 0;
@@ -63,9 +64,6 @@ private:
 
   bool m_wiimote_camera_control = false;
 
-  glm::ivec2 m_viewport_offset = {-41, 16};
-  float m_barrel_power = 0.05f;
-  float m_ipd = 0.0f;
   int m_screen_w = 640;
   int m_screen_h = 480;
   //float m_fov = glm::radians(56.0f);
@@ -80,13 +78,7 @@ private:
 
   float m_light_angle = 0.0f;
 
-  enum class StereoMode { None, CrossEye, Cybermaxx, Anaglyph, Depth, End };
-  StereoMode m_stereo_mode = StereoMode::None;
-
   bool m_headlights = false;
-  bool m_render_shadowmap = true;
-
-  int m_shadowmap_resolution = 1024;
 
   float m_shadowmap_fov = glm::radians(25.0f);
   float m_light_diffuse = 1.0f;
@@ -112,15 +104,8 @@ private:
   glm::vec4 m_grid_offset;
   float m_grid_size = 2.0f;
 
-  std::string m_model_filename;
   std::unique_ptr<Armature> m_armature;
   std::unique_ptr<Pose> m_pose;
-
-  std::unique_ptr<Framebuffer> m_framebuffer1;
-  std::unique_ptr<Framebuffer> m_framebuffer2;
-
-  std::unique_ptr<Renderbuffer> m_renderbuffer1;
-  std::unique_ptr<Renderbuffer> m_renderbuffer2;
 
   float m_scale = 1.0f;
 
@@ -154,6 +139,8 @@ private:
   Stick m_old_stick;
   unsigned int m_hat_autorepeat = 0;
 
+  std::unique_ptr<Compositor> m_compositor;
+
 private:
   void on_keyboard_event(SDL_KeyboardEvent key, int x, int y);
   void process_events(GameController& gamecontroller);
@@ -163,11 +150,7 @@ private:
 
   void init();
 
-  void draw_scene(Stereo stereo);
-  void draw_shadowmap();
   void display();
-
-  void reshape(int w, int h);
 
   void update_world(float dt);
   void update_offsets(glm::vec2 p1, glm::vec2 p2);

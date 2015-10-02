@@ -33,6 +33,7 @@
 
 #include "assert_gl.hpp"
 #include "camera.hpp"
+#include "compositor.hpp"
 #include "log.hpp"
 #include "material_factory.hpp"
 #include "menu.hpp"
@@ -65,249 +66,6 @@ void print_scene_graph(SceneNode* node, int depth = 0)
 
 std::unique_ptr<Framebuffer> g_shadowmap;
 glm::mat4 g_shadowmap_matrix;
-
-void
-Viewer::reshape(int w, int h)
-{
-  log_info("reshape(%d, %d)", w, h);
-  m_screen_w = w;
-  m_screen_h = h;
-
-  assert_gl("reshape1");
-
-  m_framebuffer1 = std::make_unique<Framebuffer>(m_screen_w, m_screen_h);
-  m_framebuffer2 = std::make_unique<Framebuffer>(m_screen_w, m_screen_h);
-
-  m_renderbuffer1 = std::make_unique<Renderbuffer>(m_screen_w, m_screen_h);
-  m_renderbuffer2 = std::make_unique<Renderbuffer>(m_screen_w, m_screen_h);
-
-  m_aspect_ratio = static_cast<GLfloat>(m_screen_w)/static_cast<GLfloat>(m_screen_h);
-
-  assert_gl("reshape");
-}
-
-void
-Viewer::draw_scene(Stereo stereo)
-{
-  OpenGLState state;
-
-  glViewport(0, 0, m_screen_w, m_screen_h);
-
-  // clear the screen
-  glClearColor(0.0, 0.0, 0.0, 1.0);
-  glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
-
-  m_camera->perspective(m_fov, m_aspect_ratio, m_near_z, m_far_z);
-
-  glm::vec3 look_at = m_look_at;
-  glm::vec3 up = m_up;
-
-  glm::vec3 sideways_ = glm::normalize(glm::cross(look_at, up));
-  glm::vec3 eye = m_eye + glm::normalize(look_at) * m_distance_offset;
-
-  if (m_wiimote_camera_control && m_wiimote_manager)
-  {
-    glm::quat q = glm::inverse(glm::quat(glm::mat3(glm::lookAt(glm::vec3(), look_at, up))));
-
-    glm::quat orientation = m_wiimote_manager->get_gyro_orientation();
-    look_at = (q * orientation) * glm::vec3(0,0,-1);
-    up = (q * orientation) * glm::vec3(0,1,0);
-  }
-  else
-  {
-    look_at = glm::rotate(look_at, m_yaw_offset, up);
-    look_at = glm::rotate(look_at, -m_pitch_offset, sideways_);
-    up = glm::rotate(up, -m_roll_offset, look_at);
-  }
-
-  glm::vec3 sideways = glm::normalize(glm::cross(look_at, up)) * m_eye_distance * 0.5f;
-  switch(stereo)
-  {
-    case Stereo::Left:
-      sideways = sideways;
-      break;
-
-    case Stereo::Right:
-      sideways = -sideways;
-      break;
-
-    case Stereo::Center:
-      sideways = glm::vec3(0);
-      break;
-  }
-  m_camera->look_at(eye + sideways, eye + look_at * m_convergence, up);
-
-  m_scene_manager->render(*m_camera, false, stereo);
-}
-
-void
-Viewer::draw_shadowmap()
-{
-  OpenGLState state;
-
-  glViewport(0, 0, g_shadowmap->get_width(), g_shadowmap->get_height());
-
-  glClearColor(1.0, 0.0, 1.0, 1.0);
-  glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
-
-  glm::vec3 light_pos = glm::rotate(glm::vec3(10.0f, 10.0f, 10.0f), m_light_angle, glm::vec3(0.0f, 1.0f, 0.0f));
-  glm::vec3 up = glm::rotate(glm::vec3(0.0f, 1.0f, 0.0f), m_light_up, glm::vec3(0.0f, 0.0f, 1.0f));
-  glm::vec3 look_at(0.0f, 0.0f, 0.0f);
-
-  Camera camera;
-  camera.perspective(m_shadowmap_fov, 1.0f, m_near_z, m_far_z);
-  //camera.ortho(-25.0f, 25.0f, -25.0f, 25.0f, m_near_z, m_far_z);
-
-  camera.look_at(light_pos, look_at, up);
-
-  g_shadowmap_matrix = glm::mat4(0.5, 0.0, 0.0, 0.0,
-                                  0.0, 0.5, 0.0, 0.0,
-                                  0.0, 0.0, 0.5, 0.0,
-                                  0.5, 0.5, 0.5, 1.0);
-
-  g_shadowmap_matrix = g_shadowmap_matrix * camera.get_matrix();
-
-  m_scene_manager->render(camera, true);
-}
-
-void
-Viewer::display()
-{
-  glViewport(m_viewport_offset.x, m_viewport_offset.y, m_screen_w, m_screen_h);
-
-  // render the world, twice if stereo is enabled
-  if (true)
-  {
-    OpenGLState state;
-
-    if (m_render_shadowmap)
-    {
-      g_shadowmap->bind();
-      draw_shadowmap();
-      g_shadowmap->unbind();
-    }
-
-    if (m_stereo_mode == StereoMode::None)
-    {
-      m_renderbuffer1->bind();
-      if (m_video_material && m_opts.video3d) m_video_material->set_uniform("offset", 0.0f);
-      draw_scene(Stereo::Center);
-      m_renderbuffer1->unbind();
-
-      m_renderbuffer1->blit(*m_framebuffer1);
-    }
-    else
-    {
-      m_renderbuffer1->bind();
-      if (m_video_material && m_opts.video3d) m_video_material->set_uniform("offset", 0.0f);
-      draw_scene(Stereo::Left);
-      m_renderbuffer1->unbind();
-
-      m_renderbuffer2->bind();
-      if (m_video_material && m_opts.video3d) m_video_material->set_uniform("offset", 0.5f);
-      draw_scene(Stereo::Right);
-      m_renderbuffer2->unbind();
-
-      m_renderbuffer1->blit(*m_framebuffer1);
-      m_renderbuffer2->blit(*m_framebuffer2);
-    }
-  }
-
-  // composit the final image
-  if (true)
-  {
-    OpenGLState state;
-
-    MaterialPtr material = std::make_shared<Material>();
-    { // setup material
-      material->set_program(m_composition_prog);
-
-      material->set_uniform("MVP", UniformSymbol::ModelViewProjectionMatrix);
-
-      material->set_uniform("barrel_power", m_barrel_power);
-      material->set_uniform("left_eye",  0);
-      material->set_uniform("right_eye", 1);
-
-      if (!m_show_calibration)
-      {
-        material->set_texture(0, m_framebuffer1->get_color_texture());
-        material->set_texture(1, m_framebuffer2->get_color_texture());
-      }
-      else
-      {
-        material->set_texture(0, m_calibration_left_texture);
-        material->set_texture(1, m_calibration_right_texture);
-      }
-
-      switch(m_stereo_mode)
-      {
-        case StereoMode::Cybermaxx:
-          material->set_subroutine_uniform(GL_FRAGMENT_SHADER, "fragment_color", "interlaced");
-          break;
-
-        case StereoMode::CrossEye:
-          material->set_subroutine_uniform(GL_FRAGMENT_SHADER, "fragment_color", "crosseye");
-          break;
-
-        case StereoMode::Anaglyph:
-          material->set_subroutine_uniform(GL_FRAGMENT_SHADER, "fragment_color", "anaglyph");
-          break;
-
-        case StereoMode::Depth:
-          material->set_texture(0, m_framebuffer1->get_depth_texture());
-          material->set_subroutine_uniform(GL_FRAGMENT_SHADER, "fragment_color", "depth");
-          break;
-
-        default:
-          material->set_subroutine_uniform(GL_FRAGMENT_SHADER, "fragment_color", "mono");
-          break;
-      }
-    } // setup material
-
-    ModelPtr model = std::make_shared<Model>();
-    model->add_mesh(Mesh::create_rect(0.0f, 0.0f, m_screen_w, m_screen_h, -20.0f));
-    model->set_material(material);
-
-    Camera camera;
-    camera.ortho(0, m_screen_w, m_screen_h, 0.0f, 0.1f, 10000.0f);
-
-    SceneManager mgr;
-    mgr.get_world()->attach_model(model);
-
-    glViewport(m_viewport_offset.x, m_viewport_offset.y, m_screen_w, m_screen_h);
-
-    glClearColor(0.0, 0.0, 0.0, 1.0);
-    glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
-    mgr.render(camera);
-
-    // render menu overlay
-    if (true)
-    {
-      glClear(GL_DEPTH_BUFFER_BIT);
-      RenderContext ctx(camera, mgr.get_world());
-
-      if (false && m_show_menu)
-      {
-        glDisable(GL_BLEND);
-        //g_shadowmap->draw_depth(m_screen_w - 266, 10, 256, 256, -20.0f);
-        g_shadowmap->draw(m_screen_w - 266 - 276, 10, 256, 256, -20.0f);
-      }
-
-      if (m_show_menu)
-      {
-        m_menu->draw(ctx, 120.0f, 64.0f);
-      }
-
-      if (m_show_dots)
-      {
-        m_dot_surface->draw(ctx, m_wiimote_dot1.x * m_screen_w, m_wiimote_dot1.y * m_screen_h);
-        m_dot_surface->draw(ctx, m_wiimote_dot2.x * m_screen_w, m_wiimote_dot2.y * m_screen_h);
-      }
-    }
-  }
-
-  assert_gl("display:exit()");
-}
 
 void
 Viewer::on_keyboard_event(SDL_KeyboardEvent key, int x, int y)
@@ -353,11 +111,11 @@ Viewer::on_keyboard_event(SDL_KeyboardEvent key, int x, int y)
       break;
 
     case SDL_SCANCODE_C:
-      m_ipd += 1;
+      m_compositor->m_ipd += 1;
       break;
 
     case SDL_SCANCODE_R:
-      m_ipd -= 1;
+      m_compositor->m_ipd -= 1;
       break;
 
     case SDL_SCANCODE_KP_PLUS:
@@ -392,6 +150,7 @@ Viewer::on_keyboard_event(SDL_KeyboardEvent key, int x, int y)
 
     case SDL_SCANCODE_D:
       {
+#if 0
         int stereo_mode = static_cast<int>(m_stereo_mode) + 1;
         if (stereo_mode >= static_cast<int>(StereoMode::End))
         {
@@ -401,6 +160,7 @@ Viewer::on_keyboard_event(SDL_KeyboardEvent key, int x, int y)
         {
           m_stereo_mode = static_cast<StereoMode>(stereo_mode);
         }
+#endif
       }
       break;
 
@@ -542,11 +302,9 @@ void
 Viewer::init()
 {
   assert_gl("init()");
-  m_framebuffer1 = std::make_unique<Framebuffer>(m_screen_w, m_screen_h);
-  m_framebuffer2 = std::make_unique<Framebuffer>(m_screen_w, m_screen_h);
-  m_renderbuffer1 = std::make_unique<Renderbuffer>(m_screen_w, m_screen_h);
-  m_renderbuffer2 = std::make_unique<Renderbuffer>(m_screen_w, m_screen_h);
-  g_shadowmap = std::make_unique<Framebuffer>(m_shadowmap_resolution, m_shadowmap_resolution);
+
+  m_compositor = std::make_unique<Compositor>(m_screen_w, m_screen_h);
+
   assert_gl("init()");
 
   //g_armature = Armature::from_file("/tmp/blender.bones");
@@ -707,9 +465,9 @@ Viewer::init()
       print_scene_graph(root_parent);
     }
 
-    if (!m_model_filename.empty())
+    if (!m_opts.model.empty())
     { // load a mesh from file
-      auto node = Scene::from_file(m_model_filename);
+      auto node = Scene::from_file(m_opts.model);
 
       std::cout << "SceneGraph:\n";
       print_scene_graph(node.get());
@@ -814,6 +572,7 @@ Viewer::init()
   //g_menu->add_item("eye.y", &g_eye.y);
   //g_menu->add_item("eye.z", &g_eye.z);
 
+#if 0
   m_menu->add_item("wiimote.camera_control", &m_wiimote_camera_control);
 
   m_menu->add_item("slowfactor", &m_slow_factor, 0.01f, 0.0f);
@@ -857,6 +616,7 @@ Viewer::init()
   //g_menu->add_item("shadow map", &m_render_shadowmap);
   //g_menu->add_item("grid.size", &m_grid_size, 0.5f);
 
+#endif
   assert_gl("init()");
 }
 
@@ -894,7 +654,7 @@ Viewer::process_events(GameController& gamecontroller)
         switch (ev.window.event)
         {
           case SDL_WINDOWEVENT_RESIZED:
-            reshape(ev.window.data1, ev.window.data2);
+            m_compositor->reshape(*this, ev.window.data1, ev.window.data2);
             break;
 
           default:
@@ -1310,7 +1070,7 @@ Viewer::main_loop(Window& window, GameController& gamecontroller)
     ticks = next;
     update_world(delta / 1000.0f);
 
-    display();
+    m_compositor->render(*this);
     window.swap();
 
     SDL_Delay(1);
@@ -1431,7 +1191,6 @@ Viewer::parse_args(int argc, char** argv, Options& opts)
     else
     {
       opts.model = argv[i];
-      m_model_filename = opts.model;
     }
   }
 }
