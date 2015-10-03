@@ -284,6 +284,10 @@ Texture::from_file(const std::string& filename, bool build_mipmaps)
     glTexParameteri(target, GL_TEXTURE_WRAP_S, GL_REPEAT);
     glTexParameteri(target, GL_TEXTURE_WRAP_T, GL_REPEAT);
 
+    float max_anisotrophy = 0.0f;
+    glGetFloatv(GL_MAX_TEXTURE_MAX_ANISOTROPY_EXT, &max_anisotrophy);
+    glTexParameteri(target, GL_TEXTURE_MAX_ANISOTROPY_EXT, max_anisotrophy);
+
     if (build_mipmaps)
     {
       gluBuild2DMipmaps(target, GL_RGB, surface->w, surface->h,
