@@ -41,18 +41,26 @@ VideoProcessor::VideoProcessor(const std::string& filename) :
   m_buffer_mutex(),
   m_buffer()
 {
-  // Setup a second pipeline to get the actual thumbnails
-  m_playbin = Gst::Parse::launch("filesrc name=mysource "
-                                 "  ! decodebin2 name=src "
-                                 "src. "
-                                 "  ! queue "
-                                 "  ! ffmpegcolorspace "
-                                 "  ! videoscale "
-                                 "  ! video/x-raw-rgb,depth=24,bpp=24,width=1024,height=1024 "
-                                 "  ! fakesink name=mysink signal-handoffs=True sync=true "
-                                 "src. "
-                                 "  ! queue "
-                                 "  ! autoaudiosink ");
+  try
+  {
+    // Setup a second pipeline to get the actual thumbnails
+    m_playbin = Gst::Parse::launch("filesrc name=mysource "
+                                   "  ! decodebin name=src "
+                                   "src. "
+                                   "  ! queue "
+                                   "  ! videoconvert "
+                                   "  ! videoscale "
+                                   "  ! video/x-raw,format=RGB,width=1024,height=1024 "
+                                   "  ! fakesink name=mysink signal-handoffs=True sync=true "
+                                   "src. "
+                                   "  ! queue "
+                                   "  ! autoaudiosink ");
+  }
+  catch(Gst::ParseError const& err)
+  {
+    std::cout << "Gst::ParseError: " << err.what() << std::endl;
+    throw;
+  }
 
   m_pipeline = Glib::RefPtr<Gst::Pipeline>::cast_dynamic(m_playbin);
 
@@ -120,113 +128,112 @@ VideoProcessor::get_position()
   }
 }
 
-bool
-VideoProcessor::on_buffer_probe(const Glib::RefPtr<Gst::Pad>& pad, const Glib::RefPtr<Gst::MiniObject>& miniobj)
+Gst::PadProbeReturn
+VideoProcessor::on_buffer_probe(Glib::RefPtr<Gst::Pad> const& pad, Gst::PadProbeInfo const& padinfo)
 {
   // WARNING: this is called from the gstreamer thread, not the main thread
-
-  Glib::RefPtr<Gst::Buffer> buffer = Glib::RefPtr<Gst::Buffer>::cast_dynamic(miniobj);
+  Glib::RefPtr<Gst::Caps> caps = pad->get_current_caps();
+  Glib::RefPtr<Gst::Buffer> buffer = padinfo.get_buffer();
 
   std::lock_guard<std::mutex> lock(m_buffer_mutex);
   m_buffer = buffer;
+  m_caps = caps;
 
   // true: keep data in the pipeline, false: drop it
-  return true;
+  return Gst::PAD_PROBE_OK;
 }
 
 void
-VideoProcessor::on_bus_message(const Glib::RefPtr<Gst::Message>& msg)
+VideoProcessor::on_bus_message(Glib::RefPtr<Gst::Message> const& msg)
 {
-  if (msg->get_message_type() & Gst::MESSAGE_ERROR)
+  switch(msg->get_message_type())
   {
-    Glib::RefPtr<Gst::MessageError> error_msg = Glib::RefPtr<Gst::MessageError>::cast_dynamic(msg);
-    log_error("Error: %s: %s", msg->get_source()->get_name(), error_msg->parse().what());
-    //assert(!"Failure");
-    Glib::signal_idle().connect(sigc::mem_fun(this, &VideoProcessor::shutdown));
-  }
-  else if (msg->get_message_type() & Gst::MESSAGE_STATE_CHANGED)
-  {
-    Glib::RefPtr<Gst::MessageStateChanged> state_msg = Glib::RefPtr<Gst::MessageStateChanged>::cast_dynamic(msg);
-    Gst::State oldstate;
-    Gst::State newstate;
-    Gst::State pending;
-    state_msg->parse(oldstate, newstate, pending);
-
-    log_info("message: %s %s %s",  msg->get_source()->get_name(), oldstate, newstate);
-
-    if (msg->get_source() == m_fakesink)
-    {
-      if (newstate == Gst::STATE_PAUSED)
+    case Gst::MESSAGE_ERROR:
       {
-        log_info("                       --------->>>>>>> PAUSE");
+        auto error_msg = Glib::RefPtr<Gst::MessageError>::cast_static(msg);
+        log_error("Error: %s: %s", msg->get_source()->get_name(), error_msg->parse().what());
+        //assert(!"Failure");
+        Glib::signal_idle().connect(sigc::mem_fun(this, &VideoProcessor::shutdown));
       }
+      break;
 
-      if (newstate == Gst::STATE_PAUSED)
+    case Gst::MESSAGE_STATE_CHANGED:
       {
-        if (!m_running)
-        {
-          log_info("##################################### ONLY ONCE: ################");
-          //m_thumbnailer_pos = m_thumbnailer.get_thumbnail_pos(get_duration());
-          //std::reverse(m_thumbnailer_pos.begin(), m_thumbnailer_pos.end());
-          m_running = true;
-          //seek_step();
+        Glib::RefPtr<Gst::MessageStateChanged> state_msg = Glib::RefPtr<Gst::MessageStateChanged>::cast_static(msg);
+        Gst::State oldstate;
+        Gst::State newstate;
+        Gst::State pending;
+        state_msg->parse(oldstate, newstate, pending);
 
-          log_info("---------- send_buffer_probe()");
-          Glib::RefPtr<Gst::Pad> pad = m_fakesink->get_static_pad("sink");
-          pad->add_buffer_probe(sigc::mem_fun(this, &VideoProcessor::on_buffer_probe));
+        log_info("message: %s %s %s",  msg->get_source()->get_name(), oldstate, newstate);
+
+        if (msg->get_source() == m_fakesink)
+        {
+          if (newstate == Gst::STATE_PAUSED)
+          {
+            log_info("                       --------->>>>>>> PAUSE");
+          }
+
+          if (newstate == Gst::STATE_PAUSED)
+          {
+            if (!m_running)
+            {
+              log_info("##################################### ONLY ONCE: ################");
+              //m_thumbnailer_pos = m_thumbnailer.get_thumbnail_pos(get_duration());
+              //std::reverse(m_thumbnailer_pos.begin(), m_thumbnailer_pos.end());
+              m_running = true;
+              //seek_step();
+
+              log_info("---------- send_buffer_probe()");
+              Glib::RefPtr<Gst::Pad> pad = m_fakesink->get_static_pad("sink");
+              pad->add_probe(Gst::PAD_PROBE_TYPE_BUFFER, sigc::mem_fun(this, &VideoProcessor::on_buffer_probe));
+            }
+          }
         }
       }
-    }
-  }
-  else if (msg->get_message_type() & Gst::MESSAGE_EOS)
-  {
-    log_info("end of stream");
-    Glib::signal_idle().connect(sigc::mem_fun(this, &VideoProcessor::shutdown));
-  }
-  else if (msg->get_message_type() & Gst::MESSAGE_TAG)
-  {
-    log_info("MESSAGE_TAG");
-  }
-  else if (msg->get_message_type() & Gst::MESSAGE_ASYNC_DONE)
-  {
-    log_info("MESSAGE_ASYNC_DONE");
-  }
-  else if (msg->get_message_type() & Gst::MESSAGE_STREAM_STATUS)
-  {
-    log_info("MESSAGE_STREAM_STATUS");
-  }
-  else if (msg->get_message_type() & Gst::MESSAGE_REQUEST_STATE)
-  {
-    log_info("MESSAGE_REQUEST_STATE");
-  }
-  else if (msg->get_message_type() & Gst::MESSAGE_STEP_START)
-  {
-    log_info("MESSAGE_STEP_START");
-  }
-  else if (msg->get_message_type() & Gst::MESSAGE_REQUEST_STATE)
-  {
-    log_info("MESSAGE_REQUEST_STATE");
-  }
-  else if (msg->get_message_type() & Gst::MESSAGE_QOS)
-  {
-    log_info("MESSAGE_QOS");
-  }
-  else if (msg->get_message_type() & Gst::MESSAGE_LATENCY)
-  {
-    log_info("MESSAGE_LATENCY");
-  }
-  else if (msg->get_message_type() & Gst::MESSAGE_DURATION)
-  {
-    log_info("MESSAGE_DURATION");
-  }
-  else if (msg->get_message_type() & GST_MESSAGE_NEW_CLOCK)
-  {
-    log_info("MESSAGE_NEW_CLOCK");
-  }
-  else
-  {
-    log_info("unknown message: %d", msg->get_message_type());
-    Glib::signal_idle().connect(sigc::mem_fun(this, &VideoProcessor::shutdown));
+      break;
+
+    case Gst::MESSAGE_EOS:
+      log_info("end of stream");
+      Glib::signal_idle().connect(sigc::mem_fun(this, &VideoProcessor::shutdown));
+      break;
+
+    case Gst::MESSAGE_TAG:
+      log_info("MESSAGE_TAG");
+      break;
+
+    case Gst::MESSAGE_ASYNC_DONE:
+      log_info("MESSAGE_ASYNC_DONE");
+      break;
+
+    case Gst::MESSAGE_STREAM_STATUS:
+      log_info("MESSAGE_STREAM_STATUS");
+      break;
+
+    case Gst::MESSAGE_REQUEST_STATE:
+      log_info("MESSAGE_REQUEST_STATE");
+      break;
+
+    case Gst::MESSAGE_STEP_START:
+      log_info("MESSAGE_STEP_START");
+      break;
+
+    case Gst::MESSAGE_QOS:
+      log_info("MESSAGE_QOS");
+      break;
+
+    case Gst::MESSAGE_LATENCY:
+      log_info("MESSAGE_LATENCY");
+      break;
+
+    case GST_MESSAGE_NEW_CLOCK:
+      log_info("MESSAGE_NEW_CLOCK");
+      break;
+
+    default:
+      log_info("unknown message: %d", msg->get_message_type());
+      //Glib::signal_idle().connect(sigc::mem_fun(this, &VideoProcessor::shutdown));
+      break;
   }
 }
 
@@ -248,9 +255,9 @@ VideoProcessor::update()
   }
 
   std::lock_guard<std::mutex> lock(m_buffer_mutex);
-  if (m_buffer)
+  if (m_buffer && m_caps)
   {
-    Glib::RefPtr<Gst::Caps> caps = m_buffer->get_caps();
+    Glib::RefPtr<Gst::Caps> caps = m_caps;
     const Gst::Structure structure = caps->get_structure(0);
     int width;
     int height;
@@ -270,13 +277,18 @@ VideoProcessor::update()
                width, height);
     }
 
-    if (!m_texture)
     {
-      m_texture = Texture::from_rgb_data(width, height, m_buffer->get_size() / height, m_buffer->get_data());
-    }
-    else
-    {
-      m_texture->upload(width, height, m_buffer->get_size() / height, m_buffer->get_data());
+      Glib::RefPtr<Gst::MapInfo> mapinfo(new Gst::MapInfo);
+      m_buffer->map(mapinfo, Gst::MAP_READ);
+      if (!m_texture)
+      {
+        m_texture = Texture::from_rgb_data(width, height, m_buffer->get_size() / height, mapinfo->get_data());
+      }
+      else
+      {
+        m_texture->upload(width, height, m_buffer->get_size() / height, mapinfo->get_data());
+      }
+      m_buffer->unmap(mapinfo);
     }
 
     if (false)
@@ -285,7 +297,9 @@ VideoProcessor::update()
 
       { // blit and flip color channels
         unsigned char* op = img->get_data();
-        unsigned char* ip  = m_buffer->get_data();
+        Glib::RefPtr<Gst::MapInfo> mapinfo(new Gst::MapInfo);
+        m_buffer->map(mapinfo, Gst::MAP_READ);
+        unsigned char* ip  = mapinfo->get_data();
         int ostride = img->get_stride();
         int istride = m_buffer->get_size() / height;
         for(int y = 0; y < height; ++y)
@@ -297,6 +311,7 @@ VideoProcessor::update()
             op[y*ostride + 4*x+2] = ip[y*istride + 4*x+0];
           }
         }
+        m_buffer->unmap(mapinfo);
       }
 
       img->write_to_png("/tmp/out.png");

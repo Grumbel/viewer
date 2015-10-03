@@ -24,7 +24,7 @@ find_package(Threads REQUIRED)
 
 find_package(PkgConfig REQUIRED)
 pkg_search_module(BLUEZ REQUIRED bluez)
-pkg_search_module(GSTREAMERMM REQUIRED gstreamermm-0.10)
+pkg_search_module(GSTREAMERMM REQUIRED gstreamermm-1.0)
 pkg_search_module(SDL2 REQUIRED sdl2)
 pkg_search_module(SDL2_IMAGE REQUIRED SDL2_image)
 pkg_search_module(CAIROMM REQUIRED cairomm-1.0)

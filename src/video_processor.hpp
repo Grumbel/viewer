@@ -45,6 +45,7 @@ private:
   TexturePtr m_texture;
   std::mutex m_buffer_mutex;
   Glib::RefPtr<Gst::Buffer> m_buffer;
+  Glib::RefPtr<Gst::Caps> m_caps;
 
 public:
   VideoProcessor(const std::string& filename);
@@ -53,7 +54,7 @@ public:
   gint64 get_duration();
   gint64 get_position();
 
-  bool on_buffer_probe(const Glib::RefPtr<Gst::Pad>& pad, const Glib::RefPtr<Gst::MiniObject>& miniobj);
+  Gst::PadProbeReturn on_buffer_probe(const Glib::RefPtr<Gst::Pad>& pad, Gst::PadProbeInfo const& padinfo);
   void on_bus_message(const Glib::RefPtr<Gst::Message>& msg);
   bool shutdown();
 
