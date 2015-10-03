@@ -333,137 +333,10 @@ Viewer::init()
 
     if (m_video_player) // streaming video
     {
-      if (!m_opts.video3d)
-      {
-        m_video_material = MaterialFactory::get().create("video");
-        m_video_material_flip = m_video_material;
-      }
-      else
-      {
-        m_video_material = MaterialFactory::get().create("video3d");
-        m_video_material_flip = MaterialFactory::get().create("video3d-flip");
-      }
-
-      if (false)
-      {
-        auto node = m_scene_manager->get_world()->create_child();
-        ModelPtr model = std::make_shared<Model>();
-
-        model->add_mesh(Mesh::create_plane(5.0f));
-        node->set_position(glm::vec3(0.0f, 0.0f, -10.0f));
-        node->set_orientation(glm::quat(glm::vec3(glm::half_pi<float>(), 0.0f, 0.0f)));
-        node->set_scale(glm::vec3(4.0f, 1.0f, 2.25f));
-
-        model->set_material(m_video_material);
-        node->attach_model(model);
-      }
-      else
-      {
-        auto node = m_scene_manager->get_world()->create_child();
-
-        int rings = 32;
-        int segments = 32;
-
-        float hfov = glm::radians(360.0f);
-        float vfov = glm::radians(180.0f);
-
-        //float hfov = glm::radians(90.0f);
-        //float vfov = glm::radians(64.0f);
-
-        //float hfov = glm::radians(125.0f);
-        //float vfov = glm::radians(70.3f);
-
-        //float hfov = glm::radians(90.0f);
-        //float vfov = glm::radians(50.0f);
-
-        ModelPtr model = std::make_shared<Model>();
-        model->set_material(m_video_material);
-        model->add_mesh(Mesh::create_curved_screen(15.0f, hfov, vfov, rings, segments));
-        node->attach_model(model);
-
-        if (false)
-        {
-          model->add_mesh(Mesh::create_curved_screen(15.0f, hfov, vfov, rings, segments, 0, 16, false, true));
-          model->add_mesh(Mesh::create_curved_screen(15.0f, hfov, vfov, rings, segments, 0, -16, false, true));
-
-          ModelPtr model_flip = std::make_shared<Model>();
-
-          model_flip->add_mesh(Mesh::create_curved_screen(15.0f, hfov, vfov, rings, segments, 16, 0, true, false));
-          model_flip->add_mesh(Mesh::create_curved_screen(15.0f, hfov, vfov, rings, segments, -16, 0, true, false));
-
-          model_flip->add_mesh(Mesh::create_curved_screen(15.0f, hfov, vfov, rings, segments, 16, 16, true, true));
-          model_flip->add_mesh(Mesh::create_curved_screen(15.0f, hfov, vfov, rings, segments, -16, 16, true, true));
-
-          model_flip->add_mesh(Mesh::create_curved_screen(15.0f, hfov, vfov, rings, segments, 16, -16, true, true));
-          model_flip->add_mesh(Mesh::create_curved_screen(15.0f, hfov, vfov, rings, segments, -16, -16, true, true));
-
-          model_flip->set_material(m_video_material_flip);
-          node->attach_model(model_flip);
-        }
-      }
+      init_video_player();
     }
 
     MaterialPtr phong_material = MaterialFactory::get().create("phong");
-    if (false)
-    {
-      // little animated planetary system thing
-      if (false)
-      {
-        auto node = m_scene_manager->get_world()->create_child();
-        node->set_position(glm::vec3(0, 0, 0));
-        auto mesh = Mesh::create_plane(75.0f);
-        ModelPtr model = std::make_shared<Model>();
-        model->add_mesh(std::move(mesh));
-        model->set_material(phong_material);
-        node->attach_model(model);
-      }
-
-      auto mesh = Mesh::create_sphere(0.2, 8, 16);
-      ModelPtr model = std::make_shared<Model>();
-      model->add_mesh(std::move(mesh));
-      model->set_material(phong_material);
-
-      auto origin = m_scene_manager->get_world()->create_child();
-      origin->set_position(glm::vec3(5, 5, 5));
-
-      auto sun = origin->create_child();
-      sun->set_scale(glm::vec3(3.0f, 3.0f, 3.0f));
-      sun->attach_model(model);
-      m_nodes.push_back(sun);
-
-      auto earth = sun->create_child();
-      earth->set_scale(glm::vec3(0.5f, 0.5f, 0.5f));
-      earth->set_position(glm::vec3(2.0f, 0, 0));
-      earth->attach_model(model);
-      m_nodes.push_back(earth);
-
-      auto moon = earth->create_child();
-      moon->set_scale(glm::vec3(0.5f, 0.5f, 0.5f));
-      moon->set_position(glm::vec3(2, 0, 0));
-      moon->attach_model(model);
-      //g_nodes.push_back(moon);
-    }
-
-    if (false)
-    {
-      // some spheres in a line
-      auto root_parent = m_scene_manager->get_world()->create_child();
-      auto parent = root_parent;
-      parent->set_position(glm::vec3(10.0f, 0.0f, 0.0f));
-      for(int i = 0; i < 5; ++i)
-      {
-        auto child = parent->create_child();
-        child->set_position(glm::vec3(1.0f, 0.0f, -3.0f));
-        ModelPtr model = std::make_shared<Model>();
-        model->add_mesh(Mesh::create_sphere(0.5f, 16, 8));
-        model->set_material(phong_material);
-        child->attach_model(model);
-
-        parent = child;
-      }
-
-      print_scene_graph(root_parent);
-    }
 
     if (!m_opts.model.empty())
     { // load a mesh from file
@@ -473,27 +346,6 @@ Viewer::init()
       print_scene_graph(node.get());
 
       m_scene_manager->get_world()->attach_child(std::move(node));
-    }
-
-    if (false)
-    {
-      {
-        auto node = Scene::from_file("data/wiimote.mod");
-        m_wiimote_gyro_node = node.get();
-        m_scene_manager->get_world()->attach_child(std::move(node));
-      }
-
-      {
-        auto node = Scene::from_file("data/wiimote.mod");
-        m_wiimote_node = node.get();
-        m_scene_manager->get_world()->attach_child(std::move(node));
-      }
-
-      {
-        auto node = Scene::from_file("data/wiimote.mod");
-        m_wiimote_accel_node = node.get();
-        m_scene_manager->get_world()->attach_child(std::move(node));
-      }
     }
 
     if (true)
@@ -507,66 +359,93 @@ Viewer::init()
       node->attach_model(model);
     }
 
-    if (false)
-    { // light cone
-      MaterialPtr material = std::make_shared<Material>();
-      material->blend_func(GL_SRC_ALPHA, GL_ONE);
-      material->depth_mask(false);
-      material->cast_shadow(false);
-      material->enable(GL_BLEND);
-      material->enable(GL_DEPTH_TEST);
-      material->enable(GL_POINT_SPRITE);
-      material->enable(GL_PROGRAM_POINT_SIZE);
-      material->set_texture(0, Texture::create_lightspot(256, 256));
-      material->set_uniform("diffuse_texture", 0);
-      material->set_uniform("ModelViewMatrix", UniformSymbol::ModelViewMatrix);
-      material->set_uniform("MVP", UniformSymbol::ModelViewProjectionMatrix);
-      material->set_program(Program::create(Shader::from_file(GL_VERTEX_SHADER, "src/glsl/lightcone.vert"),
-                                            Shader::from_file(GL_FRAGMENT_SHADER, "src/glsl/lightcone.frag")));
+    m_calibration_left_texture  = Texture::from_file("data/calibration_left.png", false);
+    m_calibration_right_texture = Texture::from_file("data/calibration_right.png", false);
 
-      auto mesh = std::make_unique<Mesh>(GL_POINTS);
-      // generate light cone mesh
-      {
-        std::vector<glm::vec3> position;
-        std::vector<float> point_size;
-        std::vector<float> alpha;
-        int steps = 30;
-        float length = 3.0f;
-        float size   = 1000.0f;
-        int start = 10; // skip the first few sprites to avoid a spiky look
-        for(int i = start; i < steps; ++i)
-        {
-          float progress = static_cast<float>(i) / static_cast<float>(steps-1);
-          progress = progress * progress;
+    m_dot_surface = TextSurface::create("+", TextProperties().set_line_width(3.0f));
 
-          point_size.push_back(size * progress);
-          position.emplace_back(length * progress, 0.0f, 0.0f);
-          alpha.push_back(0.25 * (1.0f - progress));
-        }
-        mesh->attach_float_array("position", position);
-        mesh->attach_float_array("point_size", point_size);
-        mesh->attach_float_array("alpha", alpha);
-      }
+    init_menu();
 
-      ModelPtr model = std::make_shared<Model>();
-      model->add_mesh(std::move(mesh));
-      model->set_material(material);
+    assert_gl("init()");
+  }
+}
 
-      for(int i = 0; i < 10; ++i)
-      {
-        auto node = m_scene_manager->get_world()->create_child();
-        node->set_position(glm::vec3(1.0f, i * 5.0f, -1.0f));
-        node->set_orientation(glm::quat());
-        node->attach_model(model);
-      }
-    }
+void
+Viewer::init_video_player()
+{
+  if (!m_opts.video3d)
+  {
+    m_video_material = MaterialFactory::get().create("video");
+    m_video_material_flip = m_video_material;
+  }
+  else
+  {
+    m_video_material = MaterialFactory::get().create("video3d");
+    m_video_material_flip = MaterialFactory::get().create("video3d-flip");
   }
 
-  m_calibration_left_texture  = Texture::from_file("data/calibration_left.png", false);
-  m_calibration_right_texture = Texture::from_file("data/calibration_right.png", false);
+  if (false)
+  {
+    auto node = m_scene_manager->get_world()->create_child();
+    ModelPtr model = std::make_shared<Model>();
 
-  m_dot_surface = TextSurface::create("+", TextProperties().set_line_width(3.0f));
+    model->add_mesh(Mesh::create_plane(5.0f));
+    node->set_position(glm::vec3(0.0f, 0.0f, -10.0f));
+    node->set_orientation(glm::quat(glm::vec3(glm::half_pi<float>(), 0.0f, 0.0f)));
+    node->set_scale(glm::vec3(4.0f, 1.0f, 2.25f));
 
+    model->set_material(m_video_material);
+    node->attach_model(model);
+  }
+  else
+  {
+    auto node = m_scene_manager->get_world()->create_child();
+
+    int rings = 32;
+    int segments = 32;
+
+    float hfov = glm::radians(360.0f);
+    float vfov = glm::radians(180.0f);
+
+    //float hfov = glm::radians(90.0f);
+    //float vfov = glm::radians(64.0f);
+
+    //float hfov = glm::radians(125.0f);
+    //float vfov = glm::radians(70.3f);
+
+    //float hfov = glm::radians(90.0f);
+    //float vfov = glm::radians(50.0f);
+
+    ModelPtr model = std::make_shared<Model>();
+    model->set_material(m_video_material);
+    model->add_mesh(Mesh::create_curved_screen(15.0f, hfov, vfov, rings, segments));
+    node->attach_model(model);
+
+    if (false)
+    {
+      model->add_mesh(Mesh::create_curved_screen(15.0f, hfov, vfov, rings, segments, 0, 16, false, true));
+      model->add_mesh(Mesh::create_curved_screen(15.0f, hfov, vfov, rings, segments, 0, -16, false, true));
+
+      ModelPtr model_flip = std::make_shared<Model>();
+
+      model_flip->add_mesh(Mesh::create_curved_screen(15.0f, hfov, vfov, rings, segments, 16, 0, true, false));
+      model_flip->add_mesh(Mesh::create_curved_screen(15.0f, hfov, vfov, rings, segments, -16, 0, true, false));
+
+      model_flip->add_mesh(Mesh::create_curved_screen(15.0f, hfov, vfov, rings, segments, 16, 16, true, true));
+      model_flip->add_mesh(Mesh::create_curved_screen(15.0f, hfov, vfov, rings, segments, -16, 16, true, true));
+
+      model_flip->add_mesh(Mesh::create_curved_screen(15.0f, hfov, vfov, rings, segments, 16, -16, true, true));
+      model_flip->add_mesh(Mesh::create_curved_screen(15.0f, hfov, vfov, rings, segments, -16, -16, true, true));
+
+      model_flip->set_material(m_video_material_flip);
+      node->attach_model(model_flip);
+    }
+  }
+}
+
+void
+Viewer::init_menu()
+{
   m_menu = std::make_unique<Menu>(TextProperties().set_font_size(24.0f).set_line_width(4.0f));
   //g_menu->add_item("eye.x", &g_eye.x);
   //g_menu->add_item("eye.y", &g_eye.y);
@@ -615,31 +494,7 @@ Viewer::init()
   //g_menu->add_item("draw depth", &m_draw_depth);
   //g_menu->add_item("shadow map", &m_render_shadowmap);
   //g_menu->add_item("grid.size", &m_grid_size, 0.5f);
-
 #endif
-  assert_gl("init()");
-}
-
-glm::vec3
-Viewer::get_arcball_vector(glm::ivec2 mouse)
-{
-  float radius = std::min(m_screen_w, m_screen_h) / 2.0f;
-  glm::vec3 P = glm::vec3(static_cast<float>(mouse.x - m_screen_w/2) / radius,
-                          static_cast<float>(mouse.y - m_screen_h/2) / radius,
-                          0);
-
-  //log_info("arcball: %f %f", P.x, P.y);
-  P.y = -P.y;
-  float OP_squared = P.x * P.x + P.y * P.y;
-  if (glm::length(P) <= 1)
-  {
-    P.z = sqrt(1*1 - OP_squared);  // Pythagore
-  }
-  else
-  {
-    P = glm::normalize(P);  // nearest point
-  }
-  return P;
 }
 
 void
@@ -893,7 +748,7 @@ Viewer::process_events(GameController& gamecontroller)
 }
 
 void
-Viewer::process_joystick(float dt)
+Viewer::update_menu()
 {
   auto current_time = SDL_GetTicks();
   if (m_stick.hat != m_old_stick.hat || (m_stick.hat && m_hat_autorepeat < current_time))
@@ -923,15 +778,102 @@ Viewer::process_joystick(float dt)
       m_menu->right();
     }
   }
+}
 
-  float deadzone = 0.2f;
-  if (fabs(m_stick.dir.x) < deadzone) m_stick.dir.x = 0.0f;
-  if (fabs(m_stick.dir.y) < deadzone) m_stick.dir.y = 0.0f;
-  if (fabs(m_stick.dir.z) < deadzone) m_stick.dir.z = 0.0f;
+void
+Viewer::update_freeflight_mode(float dt)
+{
+  float delta = dt * 5.0f * m_slow_factor;
 
-  if (fabs(m_stick.rot.x) < deadzone) m_stick.rot.x = 0.0f;
-  if (fabs(m_stick.rot.y) < deadzone) m_stick.rot.y = 0.0f;
-  if (fabs(m_stick.rot.z) < deadzone) m_stick.rot.z = 0.0f;
+  {
+    // forward/backward
+    m_eye += glm::normalize(m_look_at) * m_stick.dir.z * delta;
+
+    // up/down
+    m_eye += glm::normalize(m_up) * m_stick.dir.y * delta;
+
+    // left/right
+    glm::vec3 dir = glm::normalize(m_look_at);
+    dir = glm::rotate(dir, 90.0f, m_up);
+    m_eye += glm::normalize(dir) * m_stick.dir.x * delta;
+  }
+
+  { // handle rotation
+    float angle_d = 20.0f;
+
+    // yaw
+    m_look_at = glm::rotate(m_look_at, angle_d * m_stick.rot.y * delta, m_up);
+
+    // roll
+    m_up = glm::rotate(m_up, angle_d * m_stick.rot.z * delta, m_look_at);
+
+    // pitch
+    glm::vec3 cross = glm::cross(m_look_at, m_up);
+    m_up = glm::rotate(m_up, angle_d * m_stick.rot.x * delta, cross);
+    m_look_at = glm::rotate(m_look_at, angle_d * m_stick.rot.x * delta, cross);
+  }
+}
+
+void
+Viewer::update_fps_mode(float dt)
+{
+  float focus_distance = glm::length(m_look_at);
+  auto tmp = m_look_at;
+  auto xz_dist = glm::sqrt(tmp.x * tmp.x + tmp.z * tmp.z);
+  float pitch = glm::atan(tmp.y, xz_dist);
+  float yaw   = glm::atan(tmp.z, tmp.x);
+
+  yaw   += -m_stick.rot.y * 2.0f * dt;
+  pitch += m_stick.rot.x * 2.0f * dt;
+
+  pitch = glm::clamp(pitch, -glm::half_pi<float>() + 0.001f, glm::half_pi<float>() - 0.001f);
+
+  if (false && m_wiimote_camera_control)
+  {
+    pitch = 0.0f;
+  }
+
+  glm::vec3 forward(glm::cos(yaw), 0.0f, glm::sin(yaw));
+
+  //log_debug("focus distance: %f", focus_distance);
+  //log_debug("yaw: %f pitch: %f", yaw, pitch);
+
+  // forward/backward
+  m_eye += 10.0f * forward * m_stick.dir.z * dt * m_slow_factor;
+
+  // strafe
+  m_eye += 10.0f * glm::vec3(forward.z, 0.0f, -forward.x) * m_stick.dir.x * dt * m_slow_factor;
+
+  // up/down
+  m_eye.y += 10.0f * m_stick.dir.y * dt * m_slow_factor;
+
+  m_look_at = focus_distance * glm::vec3(glm::cos(pitch) * glm::cos(yaw),
+                                         glm::sin(pitch),
+                                         glm::cos(pitch) * glm::sin(yaw));
+
+  float f = sqrt(m_look_at.x * m_look_at.x + m_look_at.z * m_look_at.z);
+  m_up.x = -m_look_at.x/f * m_look_at.y;
+  m_up.y = f;
+  m_up.z = -m_look_at.z/f * m_look_at.y;
+  m_up = glm::normalize(m_up);
+}
+
+void
+Viewer::process_joystick(float dt)
+{
+  { // apply deadzone
+    float deadzone = 0.2f;
+    if (fabs(m_stick.dir.x) < deadzone) m_stick.dir.x = 0.0f;
+    if (fabs(m_stick.dir.y) < deadzone) m_stick.dir.y = 0.0f;
+    if (fabs(m_stick.dir.z) < deadzone) m_stick.dir.z = 0.0f;
+
+    if (fabs(m_stick.rot.x) < deadzone) m_stick.rot.x = 0.0f;
+    if (fabs(m_stick.rot.y) < deadzone) m_stick.rot.y = 0.0f;
+    if (fabs(m_stick.rot.z) < deadzone) m_stick.rot.z = 0.0f;
+  }
+
+  update_menu();
+
 
   if (false)
     log_debug("stick: %2.2f %2.2f %2.2f  -  %2.2f %2.2f %2.2f",
@@ -946,100 +888,10 @@ Viewer::process_joystick(float dt)
     m_light_angle += delta * 30.0f;
   }
 
-  if (false)
-  { // free flight mode
-    {
-      // forward/backward
-      m_eye += glm::normalize(m_look_at) * m_stick.dir.z * delta;
-
-      // up/down
-      m_eye += glm::normalize(m_up) * m_stick.dir.y * delta;
-
-      // left/right
-      glm::vec3 dir = glm::normalize(m_look_at);
-      dir = glm::rotate(dir, 90.0f, m_up);
-      m_eye += glm::normalize(dir) * m_stick.dir.x * delta;
-    }
-
-    { // handle rotation
-      float angle_d = 20.0f;
-
-      // yaw
-      m_look_at = glm::rotate(m_look_at, angle_d * m_stick.rot.y * delta, m_up);
-
-      // roll
-      m_up = glm::rotate(m_up, angle_d * m_stick.rot.z * delta, m_look_at);
-
-      // pitch
-      glm::vec3 cross = glm::cross(m_look_at, m_up);
-      m_up = glm::rotate(m_up, angle_d * m_stick.rot.x * delta, cross);
-      m_look_at = glm::rotate(m_look_at, angle_d * m_stick.rot.x * delta, cross);
-    }
-  }
-  else
-  { // fps mode
-    float focus_distance = glm::length(m_look_at);
-    auto tmp = m_look_at;
-    auto xz_dist = glm::sqrt(tmp.x * tmp.x + tmp.z * tmp.z);
-    float pitch = glm::atan(tmp.y, xz_dist);
-    float yaw   = glm::atan(tmp.z, tmp.x);
-
-    yaw   += -m_stick.rot.y * 2.0f * dt;
-    pitch += m_stick.rot.x * 2.0f * dt;
-
-    pitch = glm::clamp(pitch, -glm::half_pi<float>() + 0.001f, glm::half_pi<float>() - 0.001f);
-
-    if (false && m_wiimote_camera_control)
-    {
-      pitch = 0.0f;
-    }
-
-    glm::vec3 forward(glm::cos(yaw), 0.0f, glm::sin(yaw));
-
-    //log_debug("focus distance: %f", focus_distance);
-    //log_debug("yaw: %f pitch: %f", yaw, pitch);
-
-    // forward/backward
-    m_eye += 10.0f * forward * m_stick.dir.z * dt * m_slow_factor;
-
-    // strafe
-    m_eye += 10.0f * glm::vec3(forward.z, 0.0f, -forward.x) * m_stick.dir.x * dt * m_slow_factor;
-
-    // up/down
-    m_eye.y += 10.0f * m_stick.dir.y * dt * m_slow_factor;
-
-    m_look_at = focus_distance * glm::vec3(glm::cos(pitch) * glm::cos(yaw),
-                                           glm::sin(pitch),
-                                           glm::cos(pitch) * glm::sin(yaw));
-
-    float f = sqrt(m_look_at.x * m_look_at.x + m_look_at.z * m_look_at.z);
-    m_up.x = -m_look_at.x/f * m_look_at.y;
-    m_up.y = f;
-    m_up.z = -m_look_at.z/f * m_look_at.y;
-    m_up = glm::normalize(m_up);
-  }
+  // update_freeflight_mode(dt);
+  update_fps_mode(dt);
 
   m_old_stick = m_stick;
-}
-
-void
-Viewer::update_arcball()
-{
-  if (m_arcball_active && m_mouse != m_last_mouse)
-  {
-    glm::mat4 camera_matrix;// = m_object2world;
-
-    //glGetFloatv(GL_MODELVIEW_MATRIX, glm::value_ptr(camera_matrix));
-
-    glm::vec3 va = get_arcball_vector(m_last_mouse);
-    glm::vec3 vb = get_arcball_vector(m_mouse);
-    float angle = acos(std::min(1.0f, glm::dot(va, vb)));
-    glm::vec3 axis_in_camera_coord = glm::cross(va, vb);
-    glm::mat3 camera2object = glm::inverse(glm::mat3(camera_matrix) * glm::mat3(m_last_object2world));
-    glm::vec3 axis_in_object_coord = camera2object * axis_in_camera_coord;
-    m_object2world = glm::rotate(m_last_object2world, angle, axis_in_object_coord);
-    //g_last_mouse = m_mouse;
-  }
 }
 
 void
@@ -1215,14 +1067,14 @@ Viewer::main(int argc, char** argv)
 
   if (m_opts.wiimote)
   {
-    m_wiimote_manager = std::make_shared<WiimoteManager>();
+    m_wiimote_manager = std::make_unique<WiimoteManager>();
   }
 
   if (!m_opts.video.empty())
   {
     Gst::init(argc, argv);
     std::cout << "Playing video: " << m_opts.video << std::endl;
-    m_video_player = std::make_shared<VideoProcessor>(m_opts.video);
+    m_video_player = std::make_unique<VideoProcessor>(m_opts.video);
   }
 
   init();

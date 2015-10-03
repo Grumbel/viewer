@@ -47,15 +47,19 @@ public:
 
   TexturePtr m_calibration_left_texture;
   TexturePtr m_calibration_right_texture;
+
+  MaterialPtr m_video_material;
+  MaterialPtr m_video_material_flip;
+
+  TextSurfacePtr m_dot_surface;
+
   bool m_show_calibration = false;
 
   std::unique_ptr<Menu> m_menu;
   std::unique_ptr<SceneManager> m_scene_manager;
   std::unique_ptr<Camera> m_camera;
-
-  MaterialPtr m_video_material;
-  MaterialPtr m_video_material_flip;
-  std::shared_ptr<VideoProcessor> m_video_player;
+  std::unique_ptr<VideoProcessor> m_video_player;
+  std::unique_ptr<WiimoteManager> m_wiimote_manager;
 
   float m_slow_factor = 0.5f;
 
@@ -109,14 +113,12 @@ public:
   float m_eye_distance = 0.065f;
   float m_convergence = 1.0f;
 
-  bool m_arcball_active = false;
   glm::ivec2 m_mouse;
   glm::ivec2 m_last_mouse;
   glm::mat4 m_object2world;
   glm::mat4 m_last_object2world;
   glm::mat4 m_eye_matrix;
 
-  TextSurfacePtr m_dot_surface;
   glm::vec2 m_wiimote_dot1;
   glm::vec2 m_wiimote_dot2;
 
@@ -130,8 +132,6 @@ public:
   SceneNode* m_wiimote_node = 0;
   std::vector<SceneNode*> m_nodes;
 
-  std::shared_ptr<WiimoteManager> m_wiimote_manager;
-
   Stick m_stick;
   Stick m_old_stick;
   unsigned int m_hat_autorepeat = 0;
@@ -142,10 +142,13 @@ private:
   void on_keyboard_event(SDL_KeyboardEvent key);
   void process_events(GameController& gamecontroller);
   void process_joystick(float dt);
-  glm::vec3 get_arcball_vector(glm::ivec2 mouse);
-  void update_arcball();
+  void update_menu();
+  void update_freeflight_mode(float dt);
+  void update_fps_mode(float dt);
 
   void init();
+  void init_menu();
+  void init_video_player();
 
   void update_world(float dt);
   void update_offsets(glm::vec2 p1, glm::vec2 p2);
