@@ -5,6 +5,7 @@
 #include <glm/glm.hpp>
 
 #include "stereo.hpp"
+#include "program.hpp"
 
 class Framebuffer;
 class Renderbuffer;
@@ -30,6 +31,8 @@ public:
 
   StereoMode m_stereo_mode = StereoMode::None;
   bool m_render_shadowmap = true;
+
+  ProgramPtr m_composition_prog;
 
 public:
   Compositor(int, int);

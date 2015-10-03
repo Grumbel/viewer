@@ -305,69 +305,59 @@ Viewer::init()
 
   m_compositor = std::make_unique<Compositor>(m_screen_w, m_screen_h);
 
-  assert_gl("init()");
+  m_scene_manager = std::make_unique<SceneManager>();
 
-  //g_armature = Armature::from_file("/tmp/blender.bones");
-  //g_pose = Pose::from_file("/tmp/blender.pose");
-
-  //m_composition_prog = Program::create(Shader::from_file(GL_FRAGMENT_SHADER, "src/glsl/newsprint.frag"));
-  m_composition_prog = Program::create(Shader::from_file(GL_FRAGMENT_SHADER, "src/glsl/composite.frag"),
-                                       Shader::from_file(GL_VERTEX_SHADER, "src/glsl/composite.vert"));
-
-  {
-    m_scene_manager = std::make_unique<SceneManager>();
-
-    {
-      MaterialPtr material = std::make_unique<Material>();
-      material->cull_face(GL_FRONT);
-      material->enable(GL_CULL_FACE);
-      material->enable(GL_DEPTH_TEST);
-      material->set_uniform("MVP", UniformSymbol::ModelViewProjectionMatrix);
-      material->set_program(Program::create(Shader::from_file(GL_VERTEX_SHADER, "src/glsl/shadowmap.vert"),
-                                            Shader::from_file(GL_FRAGMENT_SHADER, "src/glsl/shadowmap.frag")));
-      m_scene_manager->set_override_material(material);
-    }
-
-    m_camera = std::make_unique<Camera>();
-    m_camera->perspective(m_fov, m_aspect_ratio, m_near_z, 100000.0f);
-
-    if (m_video_player) // streaming video
-    {
-      init_video_player();
-    }
-
-    MaterialPtr phong_material = MaterialFactory::get().create("phong");
-
-    if (!m_opts.model.empty())
-    { // load a mesh from file
-      auto node = Scene::from_file(m_opts.model);
-
-      std::cout << "SceneGraph:\n";
-      print_scene_graph(node.get());
-
-      m_scene_manager->get_world()->attach_child(std::move(node));
-    }
-
-    if (true)
-    { // create a skybox
-      auto mesh = Mesh::create_skybox(500.0f);
-      ModelPtr model = std::make_shared<Model>();
-      model->add_mesh(std::move(mesh));
-      model->set_material(MaterialFactory::get().create("skybox"));
-
-      auto node = m_scene_manager->get_world()->create_child();
-      node->attach_model(model);
-    }
-
-    m_calibration_left_texture  = Texture::from_file("data/calibration_left.png", false);
-    m_calibration_right_texture = Texture::from_file("data/calibration_right.png", false);
-
-    m_dot_surface = TextSurface::create("+", TextProperties().set_line_width(3.0f));
-
-    init_menu();
-
-    assert_gl("init()");
+  { // setup the material that is used by the SceneManager for the
+    // shadowmap rendering pass
+    MaterialPtr material = std::make_unique<Material>();
+    material->cull_face(GL_FRONT);
+    material->enable(GL_CULL_FACE);
+    material->enable(GL_DEPTH_TEST);
+    material->set_uniform("MVP", UniformSymbol::ModelViewProjectionMatrix);
+    material->set_program(Program::create(Shader::from_file(GL_VERTEX_SHADER, "src/glsl/shadowmap.vert"),
+                                          Shader::from_file(GL_FRAGMENT_SHADER, "src/glsl/shadowmap.frag")));
+    m_scene_manager->set_override_material(material);
   }
+
+  m_camera = std::make_unique<Camera>();
+  m_camera->perspective(m_fov, m_aspect_ratio, m_near_z, 100000.0f);
+
+  if (m_video_player) // streaming video
+  {
+    init_video_player();
+  }
+
+  MaterialPtr phong_material = MaterialFactory::get().create("phong");
+
+  if (!m_opts.model.empty())
+  { // load a mesh from file
+    auto node = Scene::from_file(m_opts.model);
+
+    std::cout << "SceneGraph:\n";
+    print_scene_graph(node.get());
+
+    m_scene_manager->get_world()->attach_child(std::move(node));
+  }
+
+  if (true)
+  { // create a skybox
+    auto mesh = Mesh::create_skybox(500.0f);
+    ModelPtr model = std::make_shared<Model>();
+    model->add_mesh(std::move(mesh));
+    model->set_material(MaterialFactory::get().create("skybox"));
+
+    auto node = m_scene_manager->get_world()->create_child();
+    node->attach_model(model);
+  }
+
+  m_calibration_left_texture  = Texture::from_file("data/calibration_left.png", false);
+  m_calibration_right_texture = Texture::from_file("data/calibration_right.png", false);
+
+  m_dot_surface = TextSurface::create("+", TextProperties().set_line_width(3.0f));
+
+  init_menu();
+
+  assert_gl("init()");
 }
 
 void
@@ -482,7 +472,6 @@ Viewer::init_menu()
   //g_menu->add_item("light.angle",  &m_light_angle, 1.0f);
   //g_menu->add_item("light.diffuse",  &m_light_diffuse, 0.1f, 0.0f);
   //g_menu->add_item("light.specular", &m_light_specular, 0.1f, 0.0f);
-  //g_menu->add_item("material.shininess", &m_material_shininess, 0.1f, 0.0f);
 
   m_menu->add_item("wiimote.distance_scale",  &m_distance_scale, 0.01f);
   m_menu->add_item("wiimote.scale_x", &m_wiimote_scale.x, 0.01f);
@@ -658,87 +647,14 @@ Viewer::process_events(GameController& gamecontroller)
 
       case SDL_JOYAXISMOTION:
         //log_debug("joystick axis: %d %d", static_cast<int>(ev.jaxis.axis), ev.jaxis.value);
-        if ((false))
-        {
-          switch(ev.jaxis.axis)
-          {
-            case 0: // x1
-              m_stick.dir.x = -ev.jaxis.value / 32768.0f;
-              break;
-
-            case 1: // y1
-              m_stick.dir.z = -ev.jaxis.value / 32768.0f;
-              break;
-
-            case 2: // z
-              m_stick.rot.z = ev.jaxis.value / 32768.0f;
-              break;
-
-            case 3: // x2
-              m_stick.rot.y = -ev.jaxis.value / 32768.0f;
-              break;
-
-            case 4: // y2
-              m_stick.rot.x = -ev.jaxis.value / 32768.0f;
-              break;
-          }
-        }
         break;
 
       case SDL_JOYBUTTONDOWN:
       case SDL_JOYBUTTONUP:
         //log_debug("joystick button: %d %d", static_cast<int>(ev.jbutton.button), static_cast<int>(ev.jbutton.state));
-        if ((false))
-        {
-          switch(ev.jbutton.button)
-          {
-            case 4:
-              m_stick.dir.y = -ev.jbutton.state;
-              break;
-
-            case 5:
-              m_stick.dir.y = +ev.jbutton.state;
-              break;
-
-            case 0:
-              if (m_wiimote_manager)
-              {
-                m_wiimote_manager->reset_gyro_orientation();
-              }
-              break;
-
-            case 1:
-              //g_light_angle += 1.0f;
-              m_stick.light_rotation = ev.jbutton.state;
-              break;
-
-            case 2:
-              m_headlights = ev.jbutton.state;
-              break;
-
-            case 7:
-              if (ev.jbutton.state)
-              {
-                m_show_menu = !m_show_menu;
-              }
-              break;
-
-            case 6:
-              if (ev.jbutton.state)
-              {
-                m_show_dots = !m_show_dots;
-              }
-              break;
-          }
-        }
         break;
 
       case SDL_JOYHATMOTION:
-        if ((false))
-        {
-          m_stick.hat = ev.jhat.value;
-          m_hat_autorepeat = SDL_GetTicks() + 500;
-        }
         break;
 
       default:
@@ -876,9 +792,11 @@ Viewer::process_joystick(float dt)
 
 
   if (false)
+  {
     log_debug("stick: %2.2f %2.2f %2.2f  -  %2.2f %2.2f %2.2f",
               m_stick.dir.x, m_stick.dir.y, m_stick.dir.z,
               m_stick.rot.x, m_stick.rot.y, m_stick.rot.z);
+  }
 
   float delta = dt * 5.0f * m_slow_factor;
 
@@ -1060,7 +978,7 @@ Viewer::main(int argc, char** argv)
   glewInit();
   glGetError();
 
-  // In OpenGL3.3Core VAO are mandatory, this hack might work
+  // In OpenGL3.3Core VAO are mandatory, this hack creates one
   GLuint vao;
   glGenVertexArrays(1, &vao);
   glBindVertexArray(vao);

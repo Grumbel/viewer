@@ -21,6 +21,10 @@ Compositor::Compositor(int screen_w, int screen_h) :
   g_shadowmap = std::make_unique<Framebuffer>(m_shadowmap_resolution, m_shadowmap_resolution);
 
 
+  //m_composition_prog = Program::create(Shader::from_file(GL_FRAGMENT_SHADER, "src/glsl/newsprint.frag"));
+  m_composition_prog = Program::create(Shader::from_file(GL_FRAGMENT_SHADER, "src/glsl/composite.frag"),
+                                       Shader::from_file(GL_VERTEX_SHADER, "src/glsl/composite.vert"));
+
 }
 
 void
@@ -73,7 +77,7 @@ Compositor::render(Viewer& viewer)
 
     MaterialPtr material = std::make_shared<Material>();
     { // setup material
-      material->set_program(viewer.m_composition_prog);
+      material->set_program(m_composition_prog);
 
       material->set_uniform("MVP", UniformSymbol::ModelViewProjectionMatrix);
 

@@ -45,6 +45,7 @@ class Viewer
 public:
   Options m_opts;
 
+  // resources
   TexturePtr m_calibration_left_texture;
   TexturePtr m_calibration_right_texture;
 
@@ -55,6 +56,7 @@ public:
 
   bool m_show_calibration = false;
 
+  // systems
   std::unique_ptr<Menu> m_menu;
   std::unique_ptr<SceneManager> m_scene_manager;
   std::unique_ptr<Camera> m_camera;
@@ -84,7 +86,6 @@ public:
   float m_shadowmap_fov = glm::radians(25.0f);
   float m_light_diffuse = 1.0f;
   float m_light_specular = 1.0f;
-  float m_material_shininess = 10.0f;
   float m_light_up = 0.0f;
 
   float m_aspect_ratio = static_cast<GLfloat>(m_screen_w)/static_cast<GLfloat>(m_screen_h);
@@ -124,8 +125,6 @@ public:
 
   //glm::vec2 m_wiimote_scale(0.84f, 0.64f);
   glm::vec2 m_wiimote_scale = {0.52f, 0.47f};
-
-  ProgramPtr m_composition_prog;
 
   SceneNode* m_wiimote_accel_node = 0;
   SceneNode* m_wiimote_gyro_node = 0;

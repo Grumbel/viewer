@@ -1,6 +1,12 @@
 #if 0
 #include "examples.hpp"
 
+void make_pose()
+{
+  g_armature = Armature::from_file("/tmp/blender.bones");
+  g_pose = Pose::from_file("/tmp/blender.pose");
+}
+
 void make_planetary_system()
 {
   // little animated planetary system thing

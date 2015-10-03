@@ -16,7 +16,7 @@ private:
   Stereo m_stero;
 
 public:
-  RenderContext(const Camera& camera,
+  RenderContext(Camera const& camera,
                 SceneNode* node) :
     m_camera(camera),
     m_node(node),
