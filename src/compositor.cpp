@@ -21,10 +21,19 @@ Compositor::Compositor(int screen_w, int screen_h) :
   g_shadowmap = std::make_unique<Framebuffer>(m_shadowmap_resolution, m_shadowmap_resolution);
 
 
-  //m_composition_prog = Program::create(Shader::from_file(GL_FRAGMENT_SHADER, "src/glsl/newsprint.frag"));
-  m_composition_prog = Program::create(Shader::from_file(GL_FRAGMENT_SHADER, "src/glsl/composite.frag"),
-                                       Shader::from_file(GL_VERTEX_SHADER, "src/glsl/composite.vert"));
+  if (false)
+  {
+    m_composition_prog = Program::create(Shader::from_file(GL_FRAGMENT_SHADER, "src/glsl/newsprint.frag"),
+                                         Shader::from_file(GL_VERTEX_SHADER, "src/glsl/composite.vert"));
+  }
+  else
+  {
+    m_composition_prog = Program::create(Shader::from_file(GL_FRAGMENT_SHADER, "src/glsl/composite.frag"),
+                                         Shader::from_file(GL_VERTEX_SHADER, "src/glsl/composite.vert"));
+  }
 
+  m_calibration_left_texture = Texture::from_file("data/calibration_left.png", false);
+  m_calibration_right_texture = Texture::from_file("data/calibration_right.png", false);
 }
 
 void
