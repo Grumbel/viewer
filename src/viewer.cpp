@@ -323,11 +323,12 @@ Viewer::init()
     init_video_player();
   }
 
-  if (!m_opts.model.empty())
-  { // load a mesh from file
-    auto node = Scene::from_file(m_opts.model);
+  // build a scene
+  for(auto const& model_filename : m_opts.models)
+  {
+    auto node = Scene::from_file(model_filename);
 
-    std::cout << "SceneGraph:\n";
+    std::cout << "SceneGraph(" << model_filename << "):\n";
     print_scene_graph(node.get());
 
     m_scene_manager->get_world()->attach_child(std::move(node));
@@ -955,7 +956,7 @@ Viewer::parse_args(int argc, char** argv, Options& opts)
     }
     else
     {
-      opts.model = argv[i];
+      opts.models.emplace_back(argv[i]);
     }
   }
 }

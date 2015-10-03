@@ -26,9 +26,9 @@ class Compositor;
 struct Options
 {
   bool wiimote = false;
-  std::string video = std::string();
+  std::string video = {};
   bool video3d = false;
-  std::string model = std::string();
+  std::vector<std::string> models = {};
 };
 
 struct Stick
