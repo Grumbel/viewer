@@ -46,9 +46,6 @@ public:
   Options m_opts;
 
   // resources
-  TexturePtr m_calibration_left_texture;
-  TexturePtr m_calibration_right_texture;
-
   MaterialPtr m_video_material;
   MaterialPtr m_video_material_flip;
 

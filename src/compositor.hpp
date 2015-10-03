@@ -4,8 +4,9 @@
 #include <memory>
 #include <glm/glm.hpp>
 
-#include "stereo.hpp"
 #include "program.hpp"
+#include "stereo.hpp"
+#include "texture.hpp"
 
 class Framebuffer;
 class Renderbuffer;
@@ -33,6 +34,9 @@ public:
   bool m_render_shadowmap = true;
 
   ProgramPtr m_composition_prog;
+
+  TexturePtr m_calibration_left_texture;
+  TexturePtr m_calibration_right_texture;
 
 public:
   Compositor(int, int);

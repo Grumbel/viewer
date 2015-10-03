@@ -345,9 +345,6 @@ Viewer::init()
     node->attach_model(model);
   }
 
-  m_calibration_left_texture  = Texture::from_file("data/calibration_left.png", false);
-  m_calibration_right_texture = Texture::from_file("data/calibration_right.png", false);
-
   m_dot_surface = TextSurface::create("+", TextProperties().set_line_width(3.0f));
 
   init_menu();

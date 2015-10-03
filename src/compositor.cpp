@@ -101,8 +101,8 @@ Compositor::render(Viewer& viewer)
       }
       else
       {
-        material->set_texture(0, viewer.m_calibration_left_texture);
-        material->set_texture(1, viewer.m_calibration_right_texture);
+        material->set_texture(0, m_calibration_left_texture);
+        material->set_texture(1, m_calibration_right_texture);
       }
 
       switch(m_stereo_mode)
