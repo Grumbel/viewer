@@ -9,6 +9,8 @@ void make_pose()
 
 void make_planetary_system()
 {
+  MaterialPtr phong_material = MaterialFactory::get().create("phong");
+
   // little animated planetary system thing
   if (false)
   {
@@ -49,6 +51,8 @@ void make_planetary_system()
 
 void make_spheres_in_a_line()
 {
+  MaterialPtr phong_material = MaterialFactory::get().create("phong");
+
   // some spheres in a line
   auto root_parent = m_scene_manager->get_world()->create_child();
   auto parent = root_parent;

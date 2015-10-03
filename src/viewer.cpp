@@ -323,8 +323,6 @@ Viewer::init()
     init_video_player();
   }
 
-  MaterialPtr phong_material = MaterialFactory::get().create("phong");
-
   if (!m_opts.model.empty())
   { // load a mesh from file
     auto node = Scene::from_file(m_opts.model);
@@ -371,7 +369,7 @@ Viewer::init_video_player()
   }
 
   if (false)
-  {
+  { // flat canvas
     auto node = m_scene_manager->get_world()->create_child();
     ModelPtr model = std::make_shared<Model>();
 
@@ -384,7 +382,7 @@ Viewer::init_video_player()
     node->attach_model(model);
   }
   else
-  {
+  { // 360 canvas
     auto node = m_scene_manager->get_world()->create_child();
 
     int rings = 32;
@@ -879,7 +877,10 @@ Viewer::main_loop(Window& window, GameController& gamecontroller)
       if (texture)
       {
         m_video_material->set_texture(0, texture);
-        if (m_video_material_flip) m_video_material_flip->set_texture(0, texture);
+        if (m_video_material_flip)
+        {
+          m_video_material_flip->set_texture(0, texture);
+        }
       }
     }
   }

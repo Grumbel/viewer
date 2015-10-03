@@ -207,9 +207,6 @@ Compositor::draw_scene(Viewer& viewer, Stereo stereo)
   glClearColor(0.0, 0.0, 0.0, 1.0);
   glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
 
-  Camera camera;
-  camera.perspective(viewer.m_fov, viewer.m_aspect_ratio, viewer.m_near_z, viewer.m_far_z);
-
   glm::vec3 look_at = viewer.m_look_at;
   glm::vec3 up = viewer.m_up;
 
@@ -246,6 +243,9 @@ Compositor::draw_scene(Viewer& viewer, Stereo stereo)
       sideways = glm::vec3(0);
       break;
   }
+
+  Camera camera;
+  camera.perspective(viewer.m_fov, viewer.m_aspect_ratio, viewer.m_near_z, viewer.m_far_z);
   camera.look_at(eye + sideways, eye + look_at * viewer.m_convergence, up);
 
   viewer.m_scene_manager->render(camera, false, stereo);

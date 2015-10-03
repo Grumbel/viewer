@@ -44,17 +44,19 @@ VideoProcessor::VideoProcessor(const std::string& filename) :
   try
   {
     // Setup a second pipeline to get the actual thumbnails
-    m_playbin = Gst::Parse::launch("filesrc name=mysource "
-                                   "  ! decodebin name=src "
-                                   "src. "
-                                   "  ! queue "
-                                   "  ! videoconvert "
-                                   "  ! videoscale "
-                                   "  ! video/x-raw,format=RGB,width=1024,height=1024 "
-                                   "  ! fakesink name=mysink signal-handoffs=True sync=true "
-                                   "src. "
-                                   "  ! queue "
-                                   "  ! autoaudiosink ");
+    m_playbin = Gst::Parse::launch(
+      "filesrc name=mysource "
+      "  ! decodebin name=src "
+      "src. "
+      "  ! queue "
+      "  ! videoconvert "
+      "  ! videoscale "
+      "  ! video/x-raw,format=RGB,width=1024,height=1024 "
+      "  ! fakesink name=mysink signal-handoffs=True sync=true "
+      //"src. "
+      //"  ! queue "
+      //"  ! autoaudiosink "
+      );
   }
   catch(Gst::ParseError const& err)
   {
