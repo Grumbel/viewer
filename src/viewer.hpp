@@ -150,8 +150,6 @@ private:
 
   void init();
 
-  void display();
-
   void update_world(float dt);
   void update_offsets(glm::vec2 p1, glm::vec2 p2);
 

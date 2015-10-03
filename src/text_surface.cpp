@@ -37,8 +37,8 @@ TextSurface::create(const std::string& text, const TextProperties& text_props)
 
   MaterialPtr material = std::make_shared<Material>();
 
-  material->set_program(Program::create(Shader::from_file(GL_VERTEX_SHADER,   "src/basic_texture.vert"),
-                                        Shader::from_file(GL_FRAGMENT_SHADER, "src/basic_texture.frag")));
+  material->set_program(Program::create(Shader::from_file(GL_VERTEX_SHADER,   "src/glsl/basic_texture.vert"),
+                                        Shader::from_file(GL_FRAGMENT_SHADER, "src/glsl/basic_texture.frag")));
 
   material->enable(GL_BLEND);
   material->blend_func(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);

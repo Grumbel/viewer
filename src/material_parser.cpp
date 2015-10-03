@@ -94,8 +94,8 @@ MaterialParser::parse(std::istream& in)
   bool has_diffuse_texture  = false;
   bool has_specular_texture = false;
   int current_texture_unit = 0;
-  std::string program_vertex   = "src/default.vert";
-  std::string program_fragment = "src/default.frag";
+  std::string program_vertex   = "src/glsl/default.vert";
+  std::string program_fragment = "src/glsl/default.frag";
 
   m_material->enable(GL_CULL_FACE);
   m_material->enable(GL_DEPTH_TEST);

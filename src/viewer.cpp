@@ -310,9 +310,9 @@ Viewer::init()
   //g_armature = Armature::from_file("/tmp/blender.bones");
   //g_pose = Pose::from_file("/tmp/blender.pose");
 
-  //m_composition_prog = Program::create(Shader::from_file(GL_FRAGMENT_SHADER, "src/newsprint.frag"));
-  m_composition_prog = Program::create(Shader::from_file(GL_FRAGMENT_SHADER, "src/composite.frag"),
-                                       Shader::from_file(GL_VERTEX_SHADER, "src/composite.vert"));
+  //m_composition_prog = Program::create(Shader::from_file(GL_FRAGMENT_SHADER, "src/glsl/newsprint.frag"));
+  m_composition_prog = Program::create(Shader::from_file(GL_FRAGMENT_SHADER, "src/glsl/composite.frag"),
+                                       Shader::from_file(GL_VERTEX_SHADER, "src/glsl/composite.vert"));
 
   {
     m_scene_manager = std::make_unique<SceneManager>();
@@ -323,8 +323,8 @@ Viewer::init()
       material->enable(GL_CULL_FACE);
       material->enable(GL_DEPTH_TEST);
       material->set_uniform("MVP", UniformSymbol::ModelViewProjectionMatrix);
-      material->set_program(Program::create(Shader::from_file(GL_VERTEX_SHADER, "src/shadowmap.vert"),
-                                            Shader::from_file(GL_FRAGMENT_SHADER, "src/shadowmap.frag")));
+      material->set_program(Program::create(Shader::from_file(GL_VERTEX_SHADER, "src/glsl/shadowmap.vert"),
+                                            Shader::from_file(GL_FRAGMENT_SHADER, "src/glsl/shadowmap.frag")));
       m_scene_manager->set_override_material(material);
     }
 
@@ -521,8 +521,8 @@ Viewer::init()
       material->set_uniform("diffuse_texture", 0);
       material->set_uniform("ModelViewMatrix", UniformSymbol::ModelViewMatrix);
       material->set_uniform("MVP", UniformSymbol::ModelViewProjectionMatrix);
-      material->set_program(Program::create(Shader::from_file(GL_VERTEX_SHADER, "src/lightcone.vert"),
-                                            Shader::from_file(GL_FRAGMENT_SHADER, "src/lightcone.frag")));
+      material->set_program(Program::create(Shader::from_file(GL_VERTEX_SHADER, "src/glsl/lightcone.vert"),
+                                            Shader::from_file(GL_FRAGMENT_SHADER, "src/glsl/lightcone.frag")));
 
       auto mesh = std::make_unique<Mesh>(GL_POINTS);
       // generate light cone mesh
