@@ -32,7 +32,6 @@
 #include <glm/gtx/io.hpp>
 
 #include "assert_gl.hpp"
-#include "camera.hpp"
 #include "compositor.hpp"
 #include "log.hpp"
 #include "material_factory.hpp"
@@ -319,9 +318,6 @@ Viewer::init()
     m_scene_manager->set_override_material(material);
   }
 
-  m_camera = std::make_unique<Camera>();
-  m_camera->perspective(m_fov, m_aspect_ratio, m_near_z, 100000.0f);
-
   if (m_video_player) // streaming video
   {
     init_video_player();
@@ -441,7 +437,6 @@ Viewer::init_menu()
   //g_menu->add_item("eye.y", &g_eye.y);
   //g_menu->add_item("eye.z", &g_eye.z);
 
-#if 0
   m_menu->add_item("wiimote.camera_control", &m_wiimote_camera_control);
 
   m_menu->add_item("slowfactor", &m_slow_factor, 0.01f, 0.0f);
@@ -459,7 +454,9 @@ Viewer::init_menu()
   //g_menu->add_item("spot_halo_samples",  &g_spot_halo_samples, 1, 0);
 
   m_menu->add_item("FOV", &m_fov);
+#if 0
   m_menu->add_item("Barrel Power", &m_barrel_power, 0.01f);
+#endif
   //g_menu->add_item("AspectRatio", &m_aspect_ratio, 0.05f, 0.5f, 4.0f);
 
   //g_menu->add_item("scale", &m_scale, 0.5f, 0.0f);
@@ -483,7 +480,6 @@ Viewer::init_menu()
   //g_menu->add_item("draw depth", &m_draw_depth);
   //g_menu->add_item("shadow map", &m_render_shadowmap);
   //g_menu->add_item("grid.size", &m_grid_size, 0.5f);
-#endif
 }
 
 void

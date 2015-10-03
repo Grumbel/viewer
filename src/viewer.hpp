@@ -59,7 +59,6 @@ public:
   // systems
   std::unique_ptr<Menu> m_menu;
   std::unique_ptr<SceneManager> m_scene_manager;
-  std::unique_ptr<Camera> m_camera;
   std::unique_ptr<VideoProcessor> m_video_player;
   std::unique_ptr<WiimoteManager> m_wiimote_manager;
 
