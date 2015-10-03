@@ -45,9 +45,6 @@ class Viewer
 public:
   Options m_opts;
 
-  int m_mouse_x = 0;
-  int m_mouse_y = 0;
-
   TexturePtr m_calibration_left_texture;
   TexturePtr m_calibration_right_texture;
   bool m_show_calibration = false;
@@ -142,7 +139,7 @@ public:
   std::unique_ptr<Compositor> m_compositor;
 
 private:
-  void on_keyboard_event(SDL_KeyboardEvent key, int x, int y);
+  void on_keyboard_event(SDL_KeyboardEvent key);
   void process_events(GameController& gamecontroller);
   void process_joystick(float dt);
   glm::vec3 get_arcball_vector(glm::ivec2 mouse);

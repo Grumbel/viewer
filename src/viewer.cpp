@@ -68,7 +68,7 @@ std::unique_ptr<Framebuffer> g_shadowmap;
 glm::mat4 g_shadowmap_matrix;
 
 void
-Viewer::on_keyboard_event(SDL_KeyboardEvent key, int x, int y)
+Viewer::on_keyboard_event(SDL_KeyboardEvent key)
 {
   switch (key.keysym.scancode)
   {
@@ -670,12 +670,10 @@ Viewer::process_events(GameController& gamecontroller)
         break;
 
       case SDL_KEYDOWN:
-        on_keyboard_event(ev.key, m_mouse_x, m_mouse_y);
+        on_keyboard_event(ev.key);
         break;
 
       case SDL_MOUSEMOTION:
-        m_mouse_x = ev.motion.x;
-        m_mouse_y = ev.motion.y;
         break;
 
       case SDL_MOUSEBUTTONDOWN:
