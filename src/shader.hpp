@@ -17,8 +17,10 @@
 #ifndef HEADER_SHADER_HPP
 #define HEADER_SHADER_HPP
 
-#include <memory>
 #include <GL/glew.h>
+#include <memory>
+#include <tuple>
+#include <vector>
 
 class Shader;
 
@@ -30,7 +32,8 @@ private:
   GLuint m_shader;
 
 public:
-  static ShaderPtr from_file(GLenum type, const std::string& filename);
+  static ShaderPtr from_file(GLenum type, std::string const& filename,
+                             std::vector<std::tuple<std::string, std::string> > const& defines = {});
 
 public:
   Shader(GLenum type);

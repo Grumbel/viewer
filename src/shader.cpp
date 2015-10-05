@@ -1,12 +1,15 @@
 #include "shader.hpp"
 
+#include <boost/algorithm/string/predicate.hpp>
 #include <boost/format.hpp>
+#include <sstream>
 #include <fstream>
 
 #include "log.hpp"
 
 ShaderPtr
-Shader::from_file(GLenum type, const std::string& filename)
+Shader::from_file(GLenum type, std::string const& filename,
+                  std::vector<std::tuple<std::string, std::string> > const& defines)
 {
   std::ifstream in(filename);
   if (!in)
@@ -15,13 +18,28 @@ Shader::from_file(GLenum type, const std::string& filename)
   }
   else
   {
-    std::string source{std::istreambuf_iterator<char>(in), std::istreambuf_iterator<char>()};
+    int line_count = 0;
+    std::ostringstream source;
+    std::string line;
+    while(std::getline(in, line))
+    {
+      source << line << '\n';
+      line_count += 1;
 
-    //log_debug("shader source:\n %s\n", source);
+      // #version must be the first in the source, so insert #define's right after it
+      if (boost::algorithm::starts_with(line, "#version"))
+      {
+        for(auto const& def : defines)
+        {
+          source << "#define " << std::get<0>(def) << ' ' << std::get<1>(def) << '\n';
+        }
+        source << "#line " << line_count << '\n';
+      }
+    }
 
     ShaderPtr shader = std::make_shared<Shader>(type);
 
-    shader->source(source);
+    shader->source(source.str());
     shader->compile();
 
     if (!shader->get_compile_status())
