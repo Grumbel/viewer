@@ -6,6 +6,7 @@
 #include "opengl_state.hpp"
 #include "viewer.hpp"
 #include "render_context.hpp"
+#include "log.hpp"
 
 extern std::unique_ptr<Framebuffer> g_shadowmap;
 extern glm::mat4 g_shadowmap_matrix;
@@ -278,6 +279,22 @@ Compositor::reshape(Viewer& viewer, int w, int h)
   viewer.m_aspect_ratio = static_cast<GLfloat>(m_screen_w)/static_cast<GLfloat>(m_screen_h);
 
   assert_gl("reshape");
+}
+
+void
+Compositor::toggle_stereo_mode()
+{
+  int stereo_mode = static_cast<int>(m_stereo_mode) + 1;
+  if (stereo_mode >= static_cast<int>(StereoMode::End))
+  {
+    m_stereo_mode = StereoMode::None;
+  }
+  else
+  {
+    m_stereo_mode = static_cast<StereoMode>(stereo_mode);
+  }
+
+  log_info("Stereo Mode changed to %d", static_cast<int>(m_stereo_mode));
 }
 
 /* EOF */

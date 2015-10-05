@@ -148,19 +148,7 @@ Viewer::on_keyboard_event(SDL_KeyboardEvent key)
       break;
 
     case SDL_SCANCODE_D:
-      {
-#if 0
-        int stereo_mode = static_cast<int>(m_stereo_mode) + 1;
-        if (stereo_mode >= static_cast<int>(StereoMode::End))
-        {
-          m_stereo_mode = StereoMode::None;
-        }
-        else
-        {
-          m_stereo_mode = static_cast<StereoMode>(stereo_mode);
-        }
-#endif
-      }
+      m_compositor->toggle_stereo_mode();
       break;
 
     case SDL_SCANCODE_KP_8: // up

@@ -45,6 +45,7 @@ public:
   void draw_shadowmap(Viewer& viewer);
   void render(Viewer& viewer);
   void reshape(Viewer& viewer, int w, int h);
+  void toggle_stereo_mode();
 
 private:
   Compositor(const Compositor&) = delete;
