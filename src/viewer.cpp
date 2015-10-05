@@ -793,18 +793,6 @@ Viewer::process_joystick(float dt)
 }
 
 void
-Viewer::update_world(float dt)
-{
-  int i = 1;
-  for(auto& node : m_nodes)
-  {
-    float f = SDL_GetTicks()/1000.0f;
-    node->set_orientation(glm::quat(glm::vec3(0.0f, f*1.3*static_cast<float>(i), 0.0f)));
-    i += 3;
-  }
-}
-
-void
 Viewer::main_loop(Window& window, GameController& gamecontroller)
 {
   int num_frames = 0;
@@ -816,7 +804,6 @@ Viewer::main_loop(Window& window, GameController& gamecontroller)
     int next = SDL_GetTicks();
     int delta = next - ticks;
     ticks = next;
-    update_world(delta / 1000.0f);
 
     m_compositor->render(*this);
     window.swap();

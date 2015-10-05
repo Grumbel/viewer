@@ -19,6 +19,7 @@
 #include "renderbuffer.hpp"
 #include "wiimote_manager.hpp"
 #include "window.hpp"
+#include "entity.hpp"
 
 class GameController;
 class Compositor;
@@ -125,13 +126,13 @@ public:
   SceneNode* m_wiimote_accel_node = 0;
   SceneNode* m_wiimote_gyro_node = 0;
   SceneNode* m_wiimote_node = 0;
-  std::vector<SceneNode*> m_nodes;
 
   Stick m_stick;
   Stick m_old_stick;
   unsigned int m_hat_autorepeat = 0;
 
   std::unique_ptr<Compositor> m_compositor;
+  std::vector<std::unique_ptr<Entity> > m_entities;
 
 private:
   void on_keyboard_event(SDL_KeyboardEvent key);

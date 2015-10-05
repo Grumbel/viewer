@@ -47,6 +47,16 @@ void make_planetary_system()
   moon->set_position(glm::vec3(2, 0, 0));
   moon->attach_model(model);
   //g_nodes.push_back(moon);
+
+  /* update() code to handle rotation
+  int i = 1;
+  for(auto& node : m_nodes)
+  {
+    float f = SDL_GetTicks()/1000.0f;
+    node->set_orientation(glm::quat(glm::vec3(0.0f, f*1.3*static_cast<float>(i), 0.0f)));
+    i += 3;
+  }
+  */
 }
 
 void make_spheres_in_a_line()
