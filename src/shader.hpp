@@ -22,6 +22,8 @@
 #include <tuple>
 #include <vector>
 
+#include "opengl.hpp"
+
 class Shader;
 
 typedef std::shared_ptr<Shader> ShaderPtr;

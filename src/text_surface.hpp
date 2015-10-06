@@ -24,11 +24,11 @@
 #include <iostream>
 #include <memory>
 #include <SDL.h>
-#include <GL/glew.h>
 #include <cairommconfig.h>
 #include <cairomm/context.h>
 #include <cairomm/surface.h>
 
+#include "opengl.hpp"
 #include "texture.hpp"
 #include "material.hpp"
 

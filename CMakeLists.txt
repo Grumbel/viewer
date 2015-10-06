@@ -3,6 +3,7 @@ project(viewer VERSION 0.0.0)
 
 option(WARNINGS "Switch on extra warnings" OFF)
 option(WERROR "Turn warnings into errors" OFF)
+option(USE_OPENGLES2 "Use OpenGLES2 instead of OpenGL" OFF)
 
 if(WARNINGS)
   set(WARNINGS_CXX_FLAGS ${WARNINGS_CXX_FLAGS}
@@ -17,8 +18,27 @@ if(WERROR)
     -Werror)
 endif()
 
-find_package(OpenGL REQUIRED)
-find_package(GLEW REQUIRED)
+if(EXISTS /opt/vc/include/bcm_host.h)
+  set(HAVE_BCMHOST TRUE)
+  message(STATUS "Looking for /opt/vc/include/bcm_host.h - found")
+else()
+  message(STATUS "Looking for /opt/vc/include/bcm_host.h - not found")
+endif()
+
+if(USE_OPENGLES2 OR HAVE_BCMHOST)
+  message(STATUS "Using OpenGLES2")
+  set(OPENGL_LIBPATH /opt/vc/lib)
+  set(OPENGL_INCLUDE_DIR /opt/vc/include)
+  set(OPENGL_LIBRARIES GLESv2)
+  set(OPENGL_CFLAGS_OTHER -DHAVE_OPENGLES2)
+
+  find_library(OPENGL_LIBRARIES GLESv2 ${OPENGL_LIBPATH})
+else()
+  message(STATUS "Using OpenGL3.3")
+  find_package(OpenGL REQUIRED)
+  find_package(GLEW REQUIRED)
+endif()
+
 find_package(Boost COMPONENTS system filesystem signals REQUIRED)
 find_package(Threads REQUIRED)
 
@@ -49,6 +69,7 @@ target_include_directories(wiicpp SYSTEM PUBLIC
 file(GLOB VIEWER_SOURCES src/*.cpp)
 add_executable(viewer ${VIEWER_SOURCES})
 target_compile_options(viewer PRIVATE -std=c++1y ${WARNINGS_CXX_FLAGS})
+target_compile_definitions(viewer PRIVATE ${OPENGL_CFLAGS_OTHER})
 target_include_directories(viewer SYSTEM PRIVATE
   ${BLUEZ_INCLUDE_DIRS}
   ${GSTREAMERMM_INCLUDE_DIRS}
@@ -70,7 +91,7 @@ target_link_libraries(viewer
   ${SDL2_IMAGE_LIBRARIES}
   ${CAIROMM_LIBRARIES}
   ${GLEW_LIBRARIES}
-  ${OPENGL_LIBRARY}
+  ${OPENGL_LIBRARIES}
   ${CMAKE_THREAD_LIBS_INIT})
 
 if(BUILD_TESTS)

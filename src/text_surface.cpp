@@ -133,8 +133,10 @@ TextSurface::create_opengl_texture(Cairo::RefPtr<Cairo::ImageSurface> surface)
 
   TexturePtr texture = Texture::create_handle(GL_TEXTURE_2D);
 
+#ifndef HAVE_OPENGLES2
   glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
   glPixelStorei(GL_UNPACK_ROW_LENGTH, surface->get_width());
+#endif
 
   glActiveTexture(GL_TEXTURE0);
   glBindTexture(GL_TEXTURE_2D, texture->get_id());
@@ -175,7 +177,9 @@ TextSurface::create_opengl_texture(Cairo::RefPtr<Cairo::ImageSurface> surface)
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+#ifndef HAVE_OPENGLES2
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
+#endif
 
   return texture;
 }
