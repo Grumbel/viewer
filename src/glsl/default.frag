@@ -50,14 +50,6 @@ varying vec3 frag_normal;
 varying vec3 frag_position;
 varying vec2 frag_uv;
 
-//subroutine float shadow_value_t();
-//subroutine vec3  diffuse_color_t();
-//subroutine vec3  specular_color_t();
-
-//subroutine uniform shadow_value_t   shadow_value;
-//subroutine uniform diffuse_color_t  diffuse_color;
-//subroutine uniform specular_color_t specular_color;
-
 // ---------------------------------------------------------------------------
 // shadow map
 uniform sampler2DShadow ShadowMap;
@@ -77,14 +69,16 @@ float offset_lookup(sampler2DShadow map,
                                loc.q));
 }
 
-//subroutine( shadow_value_t )
-float shadow_value_1()
+#if defined(SHADOW_VALUE_1)
+
+float shadow_value()
 {
   return textureProj(ShadowMap, shadow_position);
 }
 
-//subroutine( shadow_value_t )
-float shadow_value_16()
+#elif defined(SHADOW_VALUE_16)
+
+float shadow_value()
 {
   float shadowCoeff = 1.0f;
   if (shadow_position.w > 0.0)
@@ -101,8 +95,9 @@ float shadow_value_16()
   return shadowCoeff;
 }
 
-//subroutine( shadow_value_t )
-float shadow_value_4()
+#else // defined(SHADOW_VALUE_4)
+
+float shadow_value()
 {
   vec2 offset = vec2(greaterThan(fract(gl_FragCoord.xy * 0.5),
                                  vec2(0.25, 0.25)));
@@ -121,6 +116,8 @@ float shadow_value_4()
     ) * 0.25;
 }
 
+#endif
+
 // ---------------------------------------------------------------------------
 vec3 phong_model(vec3 position, vec3 normal, vec3 diff, vec3 spec)
 {
@@ -132,7 +129,7 @@ vec3 phong_model(vec3 position, vec3 normal, vec3 diff, vec3 spec)
   float lambertTerm = dot(N, L);
   if(lambertTerm > 0.0)
   {
-    float shadow = shadow_value_4();
+    float shadow = shadow_value();
 
     // in light
     intensity += light.diffuse * lambertTerm * diff * shadow;
@@ -154,35 +151,41 @@ vec3 phong_model(vec3 position, vec3 normal, vec3 diff, vec3 spec)
 
 // ---------------------------------------------------------------------------
 
-//subroutine( diffuse_color_t )
-vec3 diffuse_color_from_texture()
-{
-  return material.diffuse * texture2D(material.diffuse_texture, frag_uv).rgb;
-}
+#if defined(DIFFUSE_COLOR_FROM_MATERIAL)
 
-//subroutine( diffuse_color_t )
-vec3 diffuse_color_from_material()
+vec3 diffuse_color()
 {
   return material.diffuse;
 }
 
-//subroutine( specular_color_t )
-vec3 specular_color_from_texture()
+#else //defined(DIFFUSE_COLOR_FROM_TEXTURE)
+vec3 diffuse_color()
+{
+  return material.diffuse * texture2D(material.diffuse_texture, frag_uv).rgb;
+}
+
+#endif
+
+#if defined(SPECULAR_COLOR_FROM_TEXTURE)
+
+vec3 specular_color()
 {
   return material.specular * texture2D(material.specular_texture, frag_uv).rgb;
 }
 
-//subroutine( specular_color_t )
-vec3 specular_color_from_material()
+#else //defined(SPECULAR_COLOR_FROM_MATERIAL)
+vec3 specular_color()
 {
   return material.specular;
 }
 
+#endif
+
 void main(void)
 {
   //float light = texture(LightMap, world_normal, 3);
-  vec3 diff = diffuse_color_from_texture();
-  vec3 spec = specular_color_from_material();
+  vec3 diff = diffuse_color();
+  vec3 spec = specular_color();
   vec3 intensity = phong_model(frag_position, frag_normal, diff, spec);
 
   gl_FragColor = vec4(intensity, 1.0);
