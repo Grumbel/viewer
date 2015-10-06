@@ -1,5 +1,3 @@
-#version 330 core
-
 uniform sampler2D diffuse_texture;
 
 varying float frag_alpha;

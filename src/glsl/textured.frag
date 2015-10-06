@@ -14,8 +14,6 @@
 //  You should have received a copy of the GNU General Public License
 //  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-#version 330 core
-
 struct LightInfo
 {
   vec3  diffuse;

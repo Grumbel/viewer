@@ -1,5 +1,3 @@
-#version 330 core
-
 uniform sampler2D diffuse_texture;
 uniform vec4 diffuse;
 

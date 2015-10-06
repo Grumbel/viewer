@@ -1,5 +1,3 @@
-#version 330 core
-
 attribute vec3 position;
 
 uniform mat4 MVP;

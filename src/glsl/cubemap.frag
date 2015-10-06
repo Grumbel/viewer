@@ -1,5 +1,3 @@
-#version 330 core
-
 uniform samplerCube diffuse_texture;
 uniform vec4 diffuse;
 

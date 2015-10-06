@@ -1,4 +1,3 @@
-#version 330 core
 // ---------------------------------------------------------------------------
 attribute vec3 position;
 attribute vec3 normal;

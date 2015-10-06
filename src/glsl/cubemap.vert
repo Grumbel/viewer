@@ -1,5 +1,3 @@
-#version 330 core
-
 attribute vec3 texcoord;
 attribute vec3 normal;
 attribute vec3 position;

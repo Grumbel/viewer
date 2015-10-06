@@ -1,5 +1,3 @@
-#version 330 core
-
 varying vec2 frag_uv;
 
 uniform sampler2D left_eye;
