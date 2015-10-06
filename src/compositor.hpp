@@ -12,7 +12,7 @@ class Framebuffer;
 class Renderbuffer;
 class Viewer;
 
-enum class StereoMode { None, CrossEye, Cybermaxx, Anaglyph, Depth, End };
+enum class StereoMode { None, CrossEye, Cybermaxx, Anaglyph, Depth, Newsprint, End };
 
 class Compositor
 {
@@ -34,6 +34,13 @@ public:
   bool m_render_shadowmap = true;
 
   ProgramPtr m_composition_prog;
+
+  ProgramPtr m_cybermaxx_prog;
+  ProgramPtr m_crosseye_prog;
+  ProgramPtr m_anaglyph_prog;
+  ProgramPtr m_depth_prog;
+  ProgramPtr m_newsprint_prog;
+  ProgramPtr m_mono_prog;
 
   TexturePtr m_calibration_left_texture;
   TexturePtr m_calibration_right_texture;

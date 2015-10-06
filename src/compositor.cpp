@@ -21,17 +21,35 @@ Compositor::Compositor(int screen_w, int screen_h) :
   m_renderbuffer2 = std::make_unique<Renderbuffer>(m_screen_w, m_screen_h);
   g_shadowmap = std::make_unique<Framebuffer>(m_shadowmap_resolution, m_shadowmap_resolution);
 
+  m_cybermaxx_prog = Program::create(
+    Shader::from_file(GL_VERTEX_SHADER, "src/glsl/composite.vert"),
+    Shader::from_file(GL_FRAGMENT_SHADER, "src/glsl/composite.frag",
+                      {"INTERLACED_COMPOSITION"}));
 
-  if (false)
-  {
-    m_composition_prog = Program::create(Shader::from_file(GL_FRAGMENT_SHADER, "src/glsl/newsprint.frag"),
-                                         Shader::from_file(GL_VERTEX_SHADER, "src/glsl/composite.vert"));
-  }
-  else
-  {
-    m_composition_prog = Program::create(Shader::from_file(GL_FRAGMENT_SHADER, "src/glsl/composite.frag"),
-                                         Shader::from_file(GL_VERTEX_SHADER, "src/glsl/composite.vert"));
-  }
+  m_crosseye_prog = Program::create(
+    Shader::from_file(GL_VERTEX_SHADER, "src/glsl/composite.vert"),
+    Shader::from_file(GL_FRAGMENT_SHADER, "src/glsl/composite.frag",
+                      {"CROSSEYE_COMPOSITION"}));
+
+  m_anaglyph_prog = Program::create(
+    Shader::from_file(GL_VERTEX_SHADER, "src/glsl/composite.vert"),
+    Shader::from_file(GL_FRAGMENT_SHADER, "src/glsl/composite.frag",
+                      {"ANAGLYPH_COMPOSITION"}));
+
+  m_depth_prog = Program::create(
+    Shader::from_file(GL_VERTEX_SHADER, "src/glsl/composite.vert"),
+    Shader::from_file(GL_FRAGMENT_SHADER, "src/glsl/composite.frag",
+                      {"DEPTH_COMPOSITION"}));
+
+  m_newsprint_prog = Program::create(
+    Shader::from_file(GL_VERTEX_SHADER, "src/glsl/composite.vert"),
+    Shader::from_file(GL_FRAGMENT_SHADER, "src/glsl/newsprint.frag"));
+
+  m_mono_prog = Program::create(
+    Shader::from_file(GL_VERTEX_SHADER, "src/glsl/composite.vert"),
+    Shader::from_file(GL_FRAGMENT_SHADER, "src/glsl/composite.frag"));
+
+  m_composition_prog = m_mono_prog;
 
   m_calibration_left_texture = Texture::from_file("data/calibration_left.png", false);
   m_calibration_right_texture = Texture::from_file("data/calibration_right.png", false);
@@ -109,34 +127,28 @@ Compositor::render(Viewer& viewer)
       switch(m_stereo_mode)
       {
         case StereoMode::Cybermaxx:
-#if 0
-          material->set_subroutine_uniform(GL_FRAGMENT_SHADER, "fragment_color", "interlaced");
-#endif
+          m_composition_prog = m_cybermaxx_prog;
           break;
 
         case StereoMode::CrossEye:
-#if 0
-          material->set_subroutine_uniform(GL_FRAGMENT_SHADER, "fragment_color", "crosseye");
-#endif
+          m_composition_prog = m_crosseye_prog;
           break;
 
         case StereoMode::Anaglyph:
-#if 0
-          material->set_subroutine_uniform(GL_FRAGMENT_SHADER, "fragment_color", "anaglyph");
-#endif
+          m_composition_prog = m_anaglyph_prog;
           break;
 
         case StereoMode::Depth:
           material->set_texture(0, m_framebuffer1->get_depth_texture());
-#if 0
-          material->set_subroutine_uniform(GL_FRAGMENT_SHADER, "fragment_color", "depth");
-#endif
+          m_composition_prog = m_depth_prog;
+          break;
+
+        case StereoMode::Newsprint:
+          m_composition_prog = m_newsprint_prog;
           break;
 
         default:
-#if 0
-          material->set_subroutine_uniform(GL_FRAGMENT_SHADER, "fragment_color", "mono");
-#endif
+          m_composition_prog = m_mono_prog;
           break;
       }
     } // setup material
