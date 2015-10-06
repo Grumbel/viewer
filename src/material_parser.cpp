@@ -96,6 +96,8 @@ MaterialParser::parse(std::istream& in)
   int current_texture_unit = 0;
   std::string program_vertex   = "src/glsl/default.vert";
   std::string program_fragment = "src/glsl/default.frag";
+  std::vector<std::string> program_vertex_defines;
+  std::vector<std::string> program_fragment_defines;
 
   m_material->enable(GL_CULL_FACE);
   m_material->enable(GL_DEPTH_TEST);
@@ -170,11 +172,21 @@ MaterialParser::parse(std::istream& in)
         else if (args[0] == "program.vertex")
         {
           program_vertex = args[1];
+          if (args.size() > 2)
+          {
+            program_vertex_defines.insert(program_vertex_defines.end(),
+                                          args.begin() + 2, args.end());
+          }
           default_program = false;
         }
         else if (args[0] == "program.fragment")
         {
           program_fragment = args[1];
+          if (args.size() > 2)
+          {
+            program_fragment_defines.insert(program_fragment_defines.end(),
+                                            args.begin() + 2, args.end());
+          }
           default_program = false;
         }
         else if (args[0] == "material.disable")
@@ -219,8 +231,8 @@ MaterialParser::parse(std::istream& in)
     }
   }
 
-  ProgramPtr program = Program::create(Shader::from_file(GL_VERTEX_SHADER,   program_vertex),
-                                       Shader::from_file(GL_FRAGMENT_SHADER, program_fragment));
+  ProgramPtr program = Program::create(Shader::from_file(GL_VERTEX_SHADER, program_vertex, program_vertex_defines),
+                                       Shader::from_file(GL_FRAGMENT_SHADER, program_fragment, program_fragment_defines));
   m_material->set_program(program);
 
   if (default_program)
