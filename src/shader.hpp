@@ -33,7 +33,7 @@ private:
 
 public:
   static ShaderPtr from_file(GLenum type, std::string const& filename,
-                             std::vector<std::tuple<std::string, std::string> > const& defines = {});
+                             std::vector<std::string> const& defines = {});
 
 public:
   Shader(GLenum type);

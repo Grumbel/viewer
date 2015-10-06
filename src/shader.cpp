@@ -9,7 +9,7 @@
 
 ShaderPtr
 Shader::from_file(GLenum type, std::string const& filename,
-                  std::vector<std::tuple<std::string, std::string> > const& defines)
+                  std::vector<std::string> const& defines)
 {
   std::ifstream in(filename);
   if (!in)
@@ -31,7 +31,15 @@ Shader::from_file(GLenum type, std::string const& filename,
       {
         for(auto const& def : defines)
         {
-          source << "#define " << std::get<0>(def) << ' ' << std::get<1>(def) << '\n';
+          auto equal_pos = def.find('=');
+          if (equal_pos == std::string::npos)
+          {
+            source << "#define " << def << '\n';
+          }
+          else
+          {
+            source << "#define " << def.substr(0, equal_pos) << ' ' << def.substr(equal_pos+1) << '\n';
+          }
         }
         source << "#line " << line_count << '\n';
       }
