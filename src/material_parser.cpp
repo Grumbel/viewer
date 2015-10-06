@@ -93,6 +93,7 @@ MaterialParser::parse(std::istream& in)
   bool default_program = true;
   bool has_diffuse_texture  = false;
   bool has_specular_texture = false;
+  bool has_reflection_texture = false;
   int current_texture_unit = 0;
   std::string program_vertex   = "src/glsl/default.vert";
   std::string program_fragment = "src/glsl/default.frag";
@@ -158,6 +159,13 @@ MaterialParser::parse(std::istream& in)
         {
           m_material->set_uniform("material.shininess",
                                   to_float(args.begin()+1, args.end()));
+        }
+        else if (args[0] == "material.reflection_texture")
+        {
+          has_reflection_texture = true;
+          m_material->set_texture(current_texture_unit, Texture::cubemap_from_file(to_string(args.begin()+1, args.end())));
+          m_material->set_uniform("material.reflection_texture", current_texture_unit);
+          current_texture_unit += 1;
         }
         else if (args[0] == "material.ambient")
         {
@@ -231,32 +239,37 @@ MaterialParser::parse(std::istream& in)
     }
   }
 
-  ProgramPtr program = Program::create(Shader::from_file(GL_VERTEX_SHADER, program_vertex, program_vertex_defines),
-                                       Shader::from_file(GL_FRAGMENT_SHADER, program_fragment, program_fragment_defines));
-  m_material->set_program(program);
-
   if (default_program)
   {
     if (has_diffuse_texture)
     {
-      m_material->set_subroutine_uniform(GL_FRAGMENT_SHADER, "diffuse_color", "diffuse_color_from_texture");
+      program_fragment_defines.emplace_back("DIFFUSE_COLOR_FROM_TEXTURE");
     }
     else
     {
-      m_material->set_subroutine_uniform(GL_FRAGMENT_SHADER, "diffuse_color", "diffuse_color_from_material");
+      program_fragment_defines.emplace_back("DIFFUSE_COLOR_FROM_MATERIAL");
     }
 
     if (has_specular_texture)
     {
-      m_material->set_subroutine_uniform(GL_FRAGMENT_SHADER, "specular_color", "specular_color_from_texture");
+      program_fragment_defines.emplace_back("SPECULAR_COLOR_FROM_TEXTURE");
     }
     else
     {
-      m_material->set_subroutine_uniform(GL_FRAGMENT_SHADER, "specular_color", "specular_color_from_material");
+      program_fragment_defines.emplace_back("SPECULAR_COLOR_FROM_MATERIAL");
     }
 
-    m_material->set_subroutine_uniform(GL_FRAGMENT_SHADER, "shadow_value", "shadow_value_4");
+    if (has_reflection_texture)
+    {
+      program_fragment_defines.emplace_back("REFLECTION_TEXTURE");
+    }
+
+    program_fragment_defines.emplace_back("SHADOW_VALUE_4");
   }
+
+  ProgramPtr program = Program::create(Shader::from_file(GL_VERTEX_SHADER, program_vertex, program_vertex_defines),
+                                       Shader::from_file(GL_FRAGMENT_SHADER, program_fragment, program_fragment_defines));
+  m_material->set_program(program);
 }
 
 /* EOF */

@@ -35,6 +35,10 @@ struct MaterialInfo
 
   sampler2D diffuse_texture;
   sampler2D specular_texture;
+
+#ifdef REFLECTION_TEXTURE
+  samplerCube reflection_texture;
+#endif
 };
 
 uniform LightInfo light;
@@ -187,6 +191,13 @@ void main(void)
   vec3 diff = diffuse_color();
   vec3 spec = specular_color();
   vec3 intensity = phong_model(frag_position, frag_normal, diff, spec);
+
+#if defined(REFLECTION_TEXTURE)
+  vec3 o = reflect(frag_position, normalize(frag_normal));
+  vec4 col = textureCube(material.reflection_texture, normalize(o));
+  intensity = mix(intensity, col.rgb,
+                  0.25 + 0.5 * (1.0 - dot(vec3(0, 0, 1), normalize(frag_normal))));
+#endif
 
   gl_FragColor = vec4(intensity, 1.0);
 }
