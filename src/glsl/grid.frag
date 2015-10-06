@@ -18,10 +18,20 @@
 
 varying vec3 frag_position;
 varying vec3 frag_world_position;
+varying vec3 frag_normal;
 
 uniform vec3  grid_offset;
 uniform float grid_line_width;
 uniform float grid_size;
+
+uniform mat3 NormalMatrix;
+
+struct MaterialInfo
+{
+  samplerCube reflection_texture;
+};
+
+uniform MaterialInfo material;
 
 float grid_value()
 {
@@ -31,35 +41,33 @@ float grid_value()
 
   float attenuation = 1.0; //max(0.0, (1.0f - pow(length(position)/25.0, 1)));
   float p = pow(grid_dist, 12.0) * attenuation + 0.2 * (1.0 - attenuation);
-  //if (p < 0.6)
-  //  discard;
+
+#if defined(TRANSPARENT_GRID)
+  if (p < 0.6)
+  {
+    discard;
+  }
+#endif
+
   return p;
 }
 
-#if 0
 vec4 reflection()
 {
-  vec3 o = reflect(frag_world_position - world_eye_pos, normalize(world_normal));
+  vec3 o = reflect(frag_position, normalize(frag_normal));
 
-  vec4 col = textureCubeLod(cubemap, normalize(o), 3);// * textureCube(cubemap, world_normal);
-  vec4 specular = vec4(pow(col.rgb, vec3(20,20,20)), 1.0);
+  vec4 col = textureCube(material.reflection_texture, normalize(o));
+  vec4 specular = vec4(pow(col.rgb, vec3(20,20,20)) * 5, 1.0);
 
-  vec4 diffuse = textureCubeLod(cubemap, normalize(world_normal), 5);
+  vec4 diffuse = textureCubeLod(material.reflection_texture, normalize(o), 5);
 
-  return /*specular + */diffuse;
-
-  //return textureCube(cubemap, world_position - world_eye_pos);
-  //return vec4(world_normal, 1.0);
-  //return world_eye_pos;
-  //return world_position;
-  //return vec4(o, 1.0);
+  return specular + diffuse;
 }
-#endif
 
 void main (void)
 {
   float grid = grid_value();
-  gl_FragColor = vec4(grid, grid, grid, 1.0);
+  gl_FragColor = vec4(grid, grid, grid, 1.0) + reflection();
 }
 
 /* EOF */

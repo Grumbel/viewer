@@ -21,6 +21,7 @@ attribute vec3 normal;
 
 varying vec3 frag_position;
 varying vec3 frag_world_position;
+varying vec3 frag_normal;
 
 uniform mat4 ModelMatrix;
 uniform mat4 ModelViewMatrix;
@@ -32,7 +33,7 @@ void main(void)
 {
   frag_position = vec3(ModelViewMatrix * vec4(position, 1.0));
   frag_world_position = vec3(ModelMatrix * vec4(position, 1.0));
-  //frag_normal = NormalMatrix * normal;
+  frag_normal = NormalMatrix * normal;
 
   gl_Position = MVP * vec4(position, 1.0);
 }
