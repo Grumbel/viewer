@@ -41,67 +41,67 @@ Shader::from_file(GLenum type, std::string const& filename,
   }
   else
   {
-    std::regex include_rx("^#\\s*include\\s+\"([^\"]*)\".*$");
-    int line_count = 0;
-    std::ostringstream source;
-    std::string line;
-    std::smatch rx_results;
-    bool version_found = false;
-    while(std::getline(in, line))
-    {
-      line_count += 1;
+    std::vector<std::string> sources;
 
-      if (boost::algorithm::starts_with(line, "#version"))
+    // add version declaration
+#ifdef HAVE_OPENGLES2
+    sources.emplace_back("#version 100\n");
+#else
+    sources.emplace_back("#version 330 core\n");
+#endif
+
+    { // add custom defines
+      std::ostringstream os;
+      for(auto const& def : defines)
       {
-        source << line << '\n';
-        line_count += 1;
-
-        version_found = true;
-
-        // #version must be the first in the source, so insert #define's right after it
-        for(auto const& def : defines)
+        auto equal_pos = def.find('=');
+        if (equal_pos == std::string::npos)
         {
-          auto equal_pos = def.find('=');
-          if (equal_pos == std::string::npos)
-          {
-            source << "#define " << def << '\n';
-          }
-          else
-          {
-            source << "#define " << def.substr(0, equal_pos) << ' ' << def.substr(equal_pos+1) << '\n';
-          }
-        }
-
-        source << "#line " << line_count << '\n';
-      }
-      else if (std::regex_match(line, rx_results, include_rx))
-      {
-        boost::filesystem::path include_filename(rx_results[1]);
-        if (include_filename.is_absolute())
-        {
-          include_file(include_filename.string(), source);
+          os << "#define " << def << '\n';
         }
         else
         {
-          include_file((boost::filesystem::path(filename).parent_path() / include_filename).string(),
-                       source);
+          os << "#define " << def.substr(0, equal_pos) << ' ' << def.substr(equal_pos+1) << '\n';
         }
-        source << "#line " << line_count << '\n';
       }
-      else
-      {
-        source << line << '\n';
-      }
+      sources.emplace_back(os.str());
     }
 
-    if (!version_found)
-    {
-      throw std::runtime_error("#version declaration is missing in " + filename);
+    { // add the actual source file
+      std::regex include_rx("^#\\s*include\\s+\"([^\"]*)\".*$");
+      int line_count = 0;
+      std::ostringstream os;
+      std::string line;
+      while(std::getline(in, line))
+      {
+        std::smatch rx_results;
+        if (std::regex_match(line, rx_results, include_rx))
+        {
+          boost::filesystem::path include_filename(rx_results[1]);
+          if (include_filename.is_absolute())
+          {
+            include_file(include_filename.string(), os);
+          }
+          else
+          {
+            include_file((boost::filesystem::path(filename).parent_path() / include_filename).string(),
+                         os);
+          }
+          os << "#line " << line_count << '\n';
+        }
+        else
+        {
+          os << line << '\n';
+        }
+
+        line_count += 1;
+      }
+      sources.emplace_back(os.str());
     }
 
     ShaderPtr shader = std::make_shared<Shader>(type);
 
-    shader->source(source.str());
+    shader->source(sources);
     shader->compile();
 
     if (!shader->get_compile_status())
@@ -124,6 +124,20 @@ Shader::Shader(GLenum type) :
 Shader::~Shader()
 {
   glDeleteShader(m_shader);
+}
+
+void
+Shader::source(std::vector<std::string> const& sources)
+{
+  std::vector<GLint> length_lst(sources.size());
+  std::vector<const char*> source_lst(sources.size());
+  for(size_t i = 0; i < sources.size(); ++i)
+  {
+    source_lst[i] = sources[i].c_str();
+    length_lst[i] = static_cast<GLint>(sources[i].size());
+  }
+
+  glShaderSource(m_shader, sources.size(), source_lst.data(), length_lst.data());
 }
 
 void

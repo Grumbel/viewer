@@ -41,6 +41,7 @@ public:
   Shader(GLenum type);
   ~Shader();
 
+  void source(std::vector<std::string> const& sources);
   void source(const std::string& source);
   void compile();
 
