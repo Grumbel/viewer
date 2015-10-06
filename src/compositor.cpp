@@ -109,24 +109,34 @@ Compositor::render(Viewer& viewer)
       switch(m_stereo_mode)
       {
         case StereoMode::Cybermaxx:
+#if 0
           material->set_subroutine_uniform(GL_FRAGMENT_SHADER, "fragment_color", "interlaced");
+#endif
           break;
 
         case StereoMode::CrossEye:
+#if 0
           material->set_subroutine_uniform(GL_FRAGMENT_SHADER, "fragment_color", "crosseye");
+#endif
           break;
 
         case StereoMode::Anaglyph:
+#if 0
           material->set_subroutine_uniform(GL_FRAGMENT_SHADER, "fragment_color", "anaglyph");
+#endif
           break;
 
         case StereoMode::Depth:
           material->set_texture(0, m_framebuffer1->get_depth_texture());
+#if 0
           material->set_subroutine_uniform(GL_FRAGMENT_SHADER, "fragment_color", "depth");
+#endif
           break;
 
         default:
+#if 0
           material->set_subroutine_uniform(GL_FRAGMENT_SHADER, "fragment_color", "mono");
+#endif
           break;
       }
     } // setup material

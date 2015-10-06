@@ -110,14 +110,10 @@ class UniformGroup
 {
 private:
   std::vector<std::unique_ptr<UniformBase> > m_uniforms;
-  std::unordered_map<std::string, std::string> m_vertex_subroutine_uniforms;
-  std::unordered_map<std::string, std::string> m_fragment_subroutine_uniforms;
 
 public:
   UniformGroup() :
-    m_uniforms(),
-    m_vertex_subroutine_uniforms(),
-    m_fragment_subroutine_uniforms()
+    m_uniforms()
   {}
 
   template<typename T>
@@ -126,26 +122,7 @@ public:
     m_uniforms.emplace_back(std::make_unique<Uniform<T> >(name, value));
   }
 
-  void set_subroutine_uniform(GLenum shadertype,
-                              const std::string& name,
-                              const std::string& subroutine)
-  {
-    if (shadertype == GL_FRAGMENT_SHADER)
-    {
-      m_fragment_subroutine_uniforms[name] = subroutine;
-    }
-    else if (shadertype == GL_VERTEX_SHADER)
-    {
-      m_vertex_subroutine_uniforms[name] = subroutine;
-    }
-    else
-    {
-      assert(!"not implemented");
-    }
-  }
-
   void apply(ProgramPtr prog, const RenderContext& ctx);
-  void apply_subroutines(ProgramPtr prog, GLenum shadertype, const std::unordered_map<std::string, std::string>& subroutines);
 
 private:
   UniformGroup(const UniformGroup&);

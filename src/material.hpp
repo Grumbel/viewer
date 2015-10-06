@@ -72,11 +72,6 @@ public:
     m_uniforms->set_uniform(name, value);
   }
 
-  void set_subroutine_uniform(GLenum shadertype, const std::string& name, const std::string& subroutine)
-  {
-    m_uniforms->set_subroutine_uniform(shadertype, name, subroutine);
-  }
-
   void apply(const RenderContext& context);
 
 private:
