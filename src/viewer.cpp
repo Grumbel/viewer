@@ -105,24 +105,12 @@ Viewer::on_keyboard_event(SDL_KeyboardEvent key)
       m_eye_distance -= 0.01f;
       break;
 
-    case SDL_SCANCODE_SPACE:
-      m_draw_look_at = !m_draw_look_at;
-      break;
-
     case SDL_SCANCODE_C:
       m_compositor->m_ipd += 1;
       break;
 
     case SDL_SCANCODE_R:
       m_compositor->m_ipd -= 1;
-      break;
-
-    case SDL_SCANCODE_KP_PLUS:
-      m_scale *= 1.05f;
-      break;
-
-    case SDL_SCANCODE_KP_MINUS:
-      m_scale /= 1.05f;
       break;
 
     case SDL_SCANCODE_Z:
@@ -430,12 +418,7 @@ Viewer::init_menu()
 
   m_menu->add_item("convergence", &m_convergence, 0.1f);
 
-  //g_menu->add_item("viewport.offset.x",  &g_viewport_offset.x, 1);
-  //g_menu->add_item("viewport.offset.y",  &g_viewport_offset.y, 1);
-
   m_menu->add_item("shadowmap.fov", &m_shadowmap_fov, 1.0f);
-
-  //g_menu->add_item("spot_halo_samples",  &g_spot_halo_samples, 1, 0);
 
   m_menu->add_item("FOV", &m_fov);
 #if 0
@@ -443,27 +426,16 @@ Viewer::init_menu()
 #endif
   //g_menu->add_item("AspectRatio", &m_aspect_ratio, 0.05f, 0.5f, 4.0f);
 
-  //g_menu->add_item("scale", &m_scale, 0.5f, 0.0f);
   m_menu->add_item("eye.distance", &m_eye_distance, 0.1f);
 
-  //g_menu->add_item("spot.cutoff",   &m_spot_cutoff);
-  //g_menu->add_item("spot.exponent", &m_spot_exponent);
-
-  //g_menu->add_item("light.up",  &m_light_up, 1.0f);
-  //g_menu->add_item("light.angle",  &m_light_angle, 1.0f);
-  //g_menu->add_item("light.diffuse",  &m_light_diffuse, 0.1f, 0.0f);
-  //g_menu->add_item("light.specular", &m_light_specular, 0.1f, 0.0f);
+  m_menu->add_item("light.up",  &m_light_up, 1.0f);
+  m_menu->add_item("light.angle",  &m_light_angle, 1.0f);
 
   m_menu->add_item("wiimote.distance_scale",  &m_distance_scale, 0.01f);
   m_menu->add_item("wiimote.scale_x", &m_wiimote_scale.x, 0.01f);
   m_menu->add_item("wiimote.scale_y", &m_wiimote_scale.y, 0.01f);
 
-  //g_menu->add_item("3D", &m_draw_3d);
-  //g_menu->add_item("Headlights", &m_headlights);
-  //g_menu->add_item("Look At Sphere", &m_draw_look_at);
-  //g_menu->add_item("draw depth", &m_draw_depth);
-  //g_menu->add_item("shadow map", &m_render_shadowmap);
-  //g_menu->add_item("grid.size", &m_grid_size, 0.5f);
+  //m_menu->add_item("shadow map", &m_render_shadowmap);
 }
 
 void
@@ -555,10 +527,6 @@ Viewer::process_events(GameController& gamecontroller)
           case SDL_CONTROLLER_BUTTON_X:
             //g_light_angle += 1.0f;
             m_stick.light_rotation = ev.cbutton.state;
-            break;
-
-          case SDL_CONTROLLER_BUTTON_Y:
-            m_headlights = ev.cbutton.state;
             break;
 
           case SDL_CONTROLLER_BUTTON_START:
@@ -809,8 +777,6 @@ Viewer::main_loop(Window& window, GameController& gamecontroller)
     window.swap();
 
     SDL_Delay(1);
-
-    m_grid_offset += glm::vec4(0.0f, 0.0f, 0.001f, 0.0f);
 
     process_events(gamecontroller);
     process_joystick(delta / 1000.0f);

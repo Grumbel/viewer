@@ -8,11 +8,9 @@
 #include <glm/ext.hpp>
 #include <glm/glm.hpp>
 
-#include "armature.hpp"
 #include "framebuffer.hpp"
 #include "material.hpp"
 #include "menu.hpp"
-#include "pose.hpp"
 #include "scene_manager.hpp"
 #include "texture.hpp"
 #include "video_processor.hpp"
@@ -72,22 +70,12 @@ public:
   float m_near_z = 0.1f;
   float m_far_z  = 1000.0f;
 
-  int m_spot_halo_samples = 100;
-
-  bool m_draw_look_at = false;
+  float m_shadowmap_fov = glm::radians(25.0f);
 
   float m_light_angle = 0.0f;
-
-  bool m_headlights = false;
-
-  float m_shadowmap_fov = glm::radians(25.0f);
-  float m_light_diffuse = 1.0f;
-  float m_light_specular = 1.0f;
   float m_light_up = 0.0f;
 
   float m_aspect_ratio = static_cast<GLfloat>(m_screen_w)/static_cast<GLfloat>(m_screen_h);
-  float m_spot_cutoff   = 60.0f;
-  float m_spot_exponent = 30.0f;
 
   bool m_show_menu = true;
   bool m_show_dots = true;
@@ -100,22 +88,9 @@ public:
   float m_distance_offset = 0.0f;
   float m_distance_scale = 0.000f;
   float m_yaw_offset   = 0.0f;
-  glm::vec4 m_grid_offset;
-  float m_grid_size = 2.0f;
-
-  std::unique_ptr<Armature> m_armature;
-  std::unique_ptr<Pose> m_pose;
-
-  float m_scale = 1.0f;
 
   float m_eye_distance = 0.065f;
   float m_convergence = 1.0f;
-
-  glm::ivec2 m_mouse;
-  glm::ivec2 m_last_mouse;
-  glm::mat4 m_object2world;
-  glm::mat4 m_last_object2world;
-  glm::mat4 m_eye_matrix;
 
   glm::vec2 m_wiimote_dot1;
   glm::vec2 m_wiimote_dot2;
