@@ -8,16 +8,15 @@
 #include <glm/ext.hpp>
 #include <glm/glm.hpp>
 
+#include "entity.hpp"
 #include "framebuffer.hpp"
 #include "material.hpp"
 #include "menu.hpp"
 #include "scene_manager.hpp"
 #include "texture.hpp"
 #include "video_processor.hpp"
-#include "renderbuffer.hpp"
 #include "wiimote_manager.hpp"
 #include "window.hpp"
-#include "entity.hpp"
 
 class GameController;
 class Compositor;

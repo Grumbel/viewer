@@ -17,7 +17,6 @@
 #ifndef HEADER_SHADER_HPP
 #define HEADER_SHADER_HPP
 
-#include <GL/glew.h>
 #include <memory>
 #include <tuple>
 #include <vector>

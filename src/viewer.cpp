@@ -16,7 +16,6 @@
 
 #include "viewer.hpp"
 
-#include <GL/glew.h>
 #include <SDL.h>
 #include <SDL_image.h>
 #include <cmath>
@@ -46,6 +45,7 @@
 #include "shader.hpp"
 #include "system.hpp"
 #include "text_surface.hpp"
+#include "renderbuffer.hpp"
 
 namespace {
 
@@ -113,6 +113,7 @@ Viewer::on_keyboard_event(SDL_KeyboardEvent key)
       m_compositor->m_ipd -= 1;
       break;
 
+#ifndef HAVE_OPENGLES2
     case SDL_SCANCODE_Z:
       {
         GLdouble clip_plane[] = { 0.0, 0.0, 1.0, 1.0 };
@@ -134,6 +135,7 @@ Viewer::on_keyboard_event(SDL_KeyboardEvent key)
         glEnable(GL_CLIP_PLANE0);
       }
       break;
+#endif
 
     case SDL_SCANCODE_D:
       m_compositor->toggle_stereo_mode();
@@ -909,6 +911,7 @@ Viewer::main(int argc, char** argv)
   //Joystick joystick = system.create_joystick();
   GameController gamecontroller = system.create_gamecontroller();
 
+#ifndef HAVE_OPENGLES2
   // glew throws 'invalid enum' error in OpenGL3.3Core, thus we eat up the error code
   glewExperimental = true;
   glewInit();
@@ -918,6 +921,7 @@ Viewer::main(int argc, char** argv)
   GLuint vao;
   glGenVertexArrays(1, &vao);
   glBindVertexArray(vao);
+#endif
 
   if (m_opts.wiimote)
   {

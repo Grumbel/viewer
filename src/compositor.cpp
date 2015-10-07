@@ -6,6 +6,7 @@
 #include "opengl_state.hpp"
 #include "viewer.hpp"
 #include "render_context.hpp"
+#include "renderbuffer.hpp"
 #include "log.hpp"
 
 extern std::unique_ptr<Framebuffer> g_shadowmap;
