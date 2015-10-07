@@ -36,7 +36,7 @@ Framebuffer::Framebuffer(int width, int height) :
   assert_gl("framebuffer");
 
 #ifdef HAVE_OPENGLES2
-  m_color_buffer = Texture::create_empty(GL_TEXTURE_2D, GL_RGBA, width, height);
+  m_color_buffer = Texture::create_empty(GL_TEXTURE_2D, GL_RGB, width, height);
 #else
   m_color_buffer = Texture::create_empty(GL_TEXTURE_2D, GL_RGB16F, width, height);
 #endif
@@ -44,7 +44,9 @@ Framebuffer::Framebuffer(int width, int height) :
 
   // attach color and depth buffer
   glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, m_color_buffer->get_target(), m_color_buffer->get_id(), 0);
+#ifndef HAVE_OPENGLES2
   glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT,  m_depth_buffer->get_target(), m_depth_buffer->get_id(), 0);
+#endif
   assert_gl("framebuffer");
 
   GLenum complete = glCheckFramebufferStatus(GL_FRAMEBUFFER);
@@ -55,7 +57,9 @@ Framebuffer::Framebuffer(int width, int height) :
   assert_gl("framebuffer");
 
   log_info("FBO: %s", m_fbo);
+#ifndef HAVE_OPENGLES2
   log_info("Depth Buffer: %s", m_depth_buffer);
+#endif
   log_info("Color Buffer: %s", m_color_buffer);
 
   glBindFramebuffer(GL_FRAMEBUFFER, 0);

@@ -284,6 +284,7 @@ Viewer::init()
 
   m_scene_manager = std::make_unique<SceneManager>();
 
+#ifndef HAVE_OPENGLES2
   { // setup the material that is used by the SceneManager for the
     // shadowmap rendering pass
     MaterialPtr material = std::make_unique<Material>();
@@ -295,6 +296,7 @@ Viewer::init()
                                           Shader::from_file(GL_FRAGMENT_SHADER, "src/glsl/shadowmap.frag")));
     m_scene_manager->set_override_material(material);
   }
+#endif
 
   if (m_video_player) // streaming video
   {
@@ -312,6 +314,7 @@ Viewer::init()
     m_scene_manager->get_world()->attach_child(std::move(node));
   }
 
+#ifndef HAVE_OPENGLES2
   if (true)
   { // create a skybox
     auto mesh = Mesh::create_skybox(500.0f);
@@ -322,6 +325,7 @@ Viewer::init()
     auto node = m_scene_manager->get_world()->create_child();
     node->attach_model(model);
   }
+#endif
 
   m_dot_surface = TextSurface::create("+", TextProperties().set_line_width(3.0f));
 

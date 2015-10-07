@@ -66,12 +66,14 @@ Compositor::render(Viewer& viewer)
   {
     OpenGLState state;
 
+#ifndef HAVE_OPENGLES2
     if (m_render_shadowmap)
     {
       g_shadowmap->bind();
       draw_shadowmap(viewer);
       g_shadowmap->unbind();
     }
+#endif
 
     if (m_stereo_mode == StereoMode::None)
     {
@@ -171,6 +173,7 @@ Compositor::render(Viewer& viewer)
     mgr.render(camera);
 
     // render menu overlay
+#ifndef HAVE_OPENGLES2
     if (true)
     {
       glClear(GL_DEPTH_BUFFER_BIT);
@@ -194,6 +197,7 @@ Compositor::render(Viewer& viewer)
         viewer.m_dot_surface->draw(ctx, viewer.m_wiimote_dot2.x * m_screen_w, viewer.m_wiimote_dot2.y * m_screen_h);
       }
     }
+#endif
   }
 
   assert_gl("display:exit()");

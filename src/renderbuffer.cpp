@@ -44,7 +44,7 @@ Renderbuffer::Renderbuffer(int width, int height) :
 
   glBindRenderbuffer(GL_RENDERBUFFER, m_color_buffer);
 #ifdef HAVE_OPENGLES2
-  glRenderbufferStorage(GL_RENDERBUFFER, GL_RGBA, m_width, m_height);
+  glRenderbufferStorage(GL_RENDERBUFFER, GL_RGB565, m_width, m_height);
 #else
   if (!m_multisample)
   {
@@ -59,7 +59,7 @@ Renderbuffer::Renderbuffer(int width, int height) :
 
   glBindRenderbuffer(GL_RENDERBUFFER, m_depth_buffer);
 #ifdef HAVE_OPENGLES2
-  glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT, m_width, m_height);
+  //glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT, m_width, m_height);
 #else
   if (!m_multisample)
   {
@@ -76,7 +76,9 @@ Renderbuffer::Renderbuffer(int width, int height) :
 
   glBindFramebuffer(GL_FRAMEBUFFER, m_fbo);
   glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_RENDERBUFFER, m_color_buffer);
+#ifndef HAVE_OPENGLES2
   glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT,  GL_RENDERBUFFER, m_depth_buffer);
+#endif
 
   GLenum complete = glCheckFramebufferStatus(GL_FRAMEBUFFER);
   if (complete != GL_FRAMEBUFFER_COMPLETE)
@@ -92,7 +94,9 @@ Renderbuffer::~Renderbuffer()
 {
   glDeleteFramebuffers(1, &m_fbo);
 
+#ifndef HAVE_OPENGLES2
   glDeleteRenderbuffers(1, &m_depth_buffer);
+#endif
   glDeleteRenderbuffers(1, &m_color_buffer);
 }
 

@@ -315,7 +315,11 @@ Mesh::draw()
   {
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_element_array_vbo);
     assert_gl("Mesh::draw: glBindBuffer");
+#ifndef HAVE_OPENGLES2
     glDrawElements(m_primitive_type, m_element_count, GL_UNSIGNED_INT, 0);
+#else
+    glDrawElements(m_primitive_type, m_element_count, GL_UNSIGNED_SHORT, 0);
+#endif
     assert_gl("Mesh::draw: glDrawElements");
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
   }
