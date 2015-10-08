@@ -66,7 +66,7 @@ TextSurface::~TextSurface()
 }
 
 void
-TextSurface::draw(RenderContext& ctx, float x, float y, float z)
+TextSurface::draw(RenderContext const& ctx, float x, float y, float z)
 {
   OpenGLState state;
 

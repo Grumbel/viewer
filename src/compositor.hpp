@@ -8,7 +8,9 @@
 #include "stereo.hpp"
 #include "texture.hpp"
 
+class Camera;
 class Framebuffer;
+class RenderContext;
 class Renderbuffer;
 class Viewer;
 
@@ -48,11 +50,14 @@ public:
 public:
   Compositor(int, int);
 
-  void draw_scene(Viewer& viewer, Stereo stereo);
-  void draw_shadowmap(Viewer& viewer);
   void render(Viewer& viewer);
   void reshape(Viewer& viewer, int w, int h);
   void toggle_stereo_mode();
+
+private:
+  void render_scene(Viewer& viewer, Stereo stereo);
+  void render_shadowmap(Viewer& viewer);
+  void render_menu(RenderContext const& ctx, Viewer const& viewer);
 
 private:
   Compositor(const Compositor&) = delete;

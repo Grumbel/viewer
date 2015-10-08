@@ -70,7 +70,7 @@ public:
               const Cairo::FontExtents& font_extents);
   ~TextSurface();
 
-  void draw(RenderContext& ctx, float x, float y, float z = -1.0f);
+  void draw(RenderContext const& ctx, float x, float y, float z = -1.0f);
 
   int get_width() const
   {

@@ -16,6 +16,9 @@ Compositor::Compositor(int screen_w, int screen_h) :
   m_screen_w(screen_w),
   m_screen_h(screen_h)
 {
+  // FIXME: Why are we using Renderbuffers here?
+  // It's not needed for multisample as there is GL_TEXTURE_2D_MULTISAMPLE
+  // doesn't seem to be needed for HDR either
   m_framebuffer1 = std::make_unique<Framebuffer>(m_screen_w, m_screen_h);
   m_framebuffer2 = std::make_unique<Framebuffer>(m_screen_w, m_screen_h);
   m_renderbuffer1 = std::make_unique<Renderbuffer>(m_screen_w, m_screen_h);
@@ -59,8 +62,6 @@ Compositor::Compositor(int screen_w, int screen_h) :
 void
 Compositor::render(Viewer& viewer)
 {
-  glViewport(m_viewport_offset.x, m_viewport_offset.y, m_screen_w, m_screen_h);
-
   // render the world, twice if stereo is enabled
   if (true)
   {
@@ -70,31 +71,33 @@ Compositor::render(Viewer& viewer)
     if (m_render_shadowmap)
     {
       g_shadowmap->bind();
-      draw_shadowmap(viewer);
+      render_shadowmap(viewer);
       g_shadowmap->unbind();
     }
 #endif
 
     if (m_stereo_mode == StereoMode::None)
     {
-      m_renderbuffer1->bind();
       if (viewer.m_video_material)
       {
         viewer.m_video_material->set_uniform("offset", 0.0f);
       }
-      draw_scene(viewer, Stereo::Center);
+
+      m_renderbuffer1->bind();
+      render_scene(viewer, Stereo::Center);
       m_renderbuffer1->unbind();
 
       m_renderbuffer1->blit(*m_framebuffer1);
     }
     else
     {
-      m_renderbuffer1->bind();
       if (viewer.m_video_material)
       {
         viewer.m_video_material->set_uniform("offset", 0.0f);
       }
-      draw_scene(viewer, Stereo::Left);
+
+      m_renderbuffer1->bind();
+      render_scene(viewer, Stereo::Left);
       m_renderbuffer1->unbind();
 
       m_renderbuffer2->bind();
@@ -102,7 +105,7 @@ Compositor::render(Viewer& viewer)
       {
         viewer.m_video_material->set_uniform("offset", 0.5f);
       }
-      draw_scene(viewer, Stereo::Right);
+      render_scene(viewer, Stereo::Right);
       m_renderbuffer2->unbind();
 
       m_renderbuffer1->blit(*m_framebuffer1);
@@ -177,45 +180,49 @@ Compositor::render(Viewer& viewer)
     SceneManager mgr;
     mgr.get_world()->attach_model(model);
 
+    RenderContext ctx(camera, mgr.get_world());
+
     glViewport(m_viewport_offset.x, m_viewport_offset.y, m_screen_w, m_screen_h);
 
     glClearColor(0.0, 0.0, 0.0, 1.0);
     glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
     mgr.render(camera);
 
-    // render menu overlay
-#ifndef HAVE_OPENGLES2
-    if (true)
-    {
-      glClear(GL_DEPTH_BUFFER_BIT);
-      RenderContext ctx(camera, mgr.get_world());
-
-      if (false && viewer.m_cfg.m_show_menu)
-      {
-        glDisable(GL_BLEND);
-        //g_shadowmap->draw_depth(m_screen_w - 266, 10, 256, 256, -20.0f);
-        g_shadowmap->draw(m_screen_w - 266 - 276, 10, 256, 256, -20.0f);
-      }
-
-      if (viewer.m_cfg.m_show_menu)
-      {
-        viewer.m_menu->draw(ctx, 120.0f, 64.0f);
-      }
-
-      if (viewer.m_cfg.m_show_dots)
-      {
-        viewer.m_dot_surface->draw(ctx, viewer.m_wiimote_dot1.x * m_screen_w, viewer.m_wiimote_dot1.y * m_screen_h);
-        viewer.m_dot_surface->draw(ctx, viewer.m_wiimote_dot2.x * m_screen_w, viewer.m_wiimote_dot2.y * m_screen_h);
-      }
-    }
-#endif
+    render_menu(ctx, viewer);
   }
 
   assert_gl("display:exit()");
 }
 
 void
-Compositor::draw_shadowmap(Viewer& viewer)
+Compositor::render_menu(RenderContext const& ctx, Viewer const& viewer)
+{
+#ifndef HAVE_OPENGLES2
+  // render menu overlay
+  glClear(GL_DEPTH_BUFFER_BIT);
+
+  if (false && viewer.m_cfg.m_show_menu)
+  {
+    glDisable(GL_BLEND);
+    //g_shadowmap->render_depth(m_screen_w - 266, 10, 256, 256, -20.0f);
+    g_shadowmap->draw(m_screen_w - 266 - 276, 10, 256, 256, -20.0f);
+  }
+
+  if (viewer.m_cfg.m_show_menu)
+  {
+    viewer.m_menu->draw(ctx, 120.0f, 64.0f);
+  }
+
+  if (viewer.m_cfg.m_show_dots)
+  {
+    viewer.m_dot_surface->draw(ctx, viewer.m_wiimote_dot1.x * m_screen_w, viewer.m_wiimote_dot1.y * m_screen_h);
+    viewer.m_dot_surface->draw(ctx, viewer.m_wiimote_dot2.x * m_screen_w, viewer.m_wiimote_dot2.y * m_screen_h);
+  }
+#endif
+}
+
+void
+Compositor::render_shadowmap(Viewer& viewer)
 {
   OpenGLState state;
 
@@ -245,7 +252,7 @@ Compositor::draw_shadowmap(Viewer& viewer)
 }
 
 void
-Compositor::draw_scene(Viewer& viewer, Stereo stereo)
+Compositor::render_scene(Viewer& viewer, Stereo stereo)
 {
   OpenGLState state;
 

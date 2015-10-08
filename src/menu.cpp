@@ -28,7 +28,7 @@ Menu::Menu(const TextProperties& text_prop) :
 }
 
 void
-Menu::draw(RenderContext& ctx, float x, float y)
+Menu::draw(RenderContext const& ctx, float x, float y)
 {
   for(auto it = m_items.begin(); it != m_items.end(); ++it)
   {

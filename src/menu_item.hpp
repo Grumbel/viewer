@@ -34,7 +34,7 @@ public:
   virtual ~MenuItem()
   {}
 
-  virtual void draw(RenderContext& ctx, float x, float y)
+  virtual void draw(RenderContext const& ctx, float x, float y)
   {
     m_label_surface->draw(ctx, x, y);
   }
@@ -77,7 +77,7 @@ public:
     left();
   }
 
-  void draw(RenderContext& ctx, float x, float y)
+  void draw(RenderContext const& ctx, float x, float y)
   {
     MenuItem::draw(ctx, x, y);
 
@@ -140,7 +140,7 @@ public:
     }
   }
 
-  void draw(RenderContext& ctx, float x, float y)
+  void draw(RenderContext const& ctx, float x, float y)
   {
     MenuItem::draw(ctx, x, y);
 
