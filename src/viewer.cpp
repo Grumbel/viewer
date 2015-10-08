@@ -276,13 +276,9 @@ Viewer::on_keyboard_event(SDL_KeyboardEvent key)
 }
 
 void
-Viewer::init()
+Viewer::init_scene(std::vector<std::string> const& model_filenames)
 {
   assert_gl("init()");
-
-  m_compositor = std::make_unique<Compositor>(m_screen_w, m_screen_h);
-
-  m_scene_manager = std::make_unique<SceneManager>();
 
 #ifndef HAVE_OPENGLES2
   { // setup the material that is used by the SceneManager for the
@@ -298,13 +294,8 @@ Viewer::init()
   }
 #endif
 
-  if (m_video_player) // streaming video
-  {
-    init_video_player();
-  }
-
   // build a scene
-  for(auto const& model_filename : m_opts.models)
+  for(auto const& model_filename : model_filenames)
   {
     auto node = Scene::from_file(model_filename);
 
@@ -335,9 +326,9 @@ Viewer::init()
 }
 
 void
-Viewer::init_video_player()
+Viewer::init_video_player(bool video3d)
 {
-  if (!m_opts.video3d)
+  if (!video3d)
   {
     m_video_material = MaterialFactory::get().create("video");
     m_video_material_flip = m_video_material;
@@ -908,7 +899,8 @@ Viewer::parse_args(int argc, char** argv, Options& opts)
 int
 Viewer::main(int argc, char** argv)
 {
-  parse_args(argc, argv, m_opts);
+  Options opts;
+  parse_args(argc, argv, opts);
 
   System system = System::create();
   Window window = system.create_gl_window("OpenGL Viewer", m_screen_w, m_screen_h, false, 0);
@@ -927,19 +919,23 @@ Viewer::main(int argc, char** argv)
   glBindVertexArray(vao);
 #endif
 
-  if (m_opts.wiimote)
+  if (opts.wiimote)
   {
     m_wiimote_manager = std::make_unique<WiimoteManager>();
   }
 
-  if (!m_opts.video.empty())
+  m_compositor = std::make_unique<Compositor>(m_screen_w, m_screen_h);
+  m_scene_manager = std::make_unique<SceneManager>();
+
+  if (!opts.video.empty())
   {
     Gst::init(argc, argv);
-    std::cout << "Playing video: " << m_opts.video << std::endl;
-    m_video_player = std::make_unique<VideoProcessor>(m_opts.video);
+    std::cout << "Playing video: " << opts.video << std::endl;
+    m_video_player = std::make_unique<VideoProcessor>(opts.video);
+    init_video_player(opts.video3d);
   }
 
-  init();
+  init_scene(opts.models);
 
   std::cout << "main: " << std::this_thread::get_id() << std::endl;
 

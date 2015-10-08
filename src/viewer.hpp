@@ -76,7 +76,6 @@ public:
 class Viewer
 {
 public:
-  Options m_opts;
   Configuration m_cfg;
 
   // resources
@@ -119,9 +118,9 @@ private:
   void update_freeflight_mode(float dt);
   void update_fps_mode(float dt);
 
-  void init();
+  void init_scene(std::vector<std::string> const& model_filenames);
   void init_menu();
-  void init_video_player();
+  void init_video_player(bool video3d);
 
   void update_world(float dt);
   void update_offsets(glm::vec2 p1, glm::vec2 p2);
