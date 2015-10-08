@@ -72,11 +72,11 @@ Viewer::on_keyboard_event(SDL_KeyboardEvent key)
   switch (key.keysym.scancode)
   {
     case SDL_SCANCODE_TAB:
-      m_show_menu = !m_show_menu;
+      m_cfg.m_show_menu = !m_cfg.m_show_menu;
       break;
 
     case SDL_SCANCODE_F3:
-      m_show_calibration = !m_show_calibration;
+      m_cfg.m_show_calibration = !m_cfg.m_show_calibration;
       break;
 
     case SDL_SCANCODE_ESCAPE:
@@ -98,11 +98,11 @@ Viewer::on_keyboard_event(SDL_KeyboardEvent key)
       break;
 
     case SDL_SCANCODE_N:
-      m_eye_distance += 0.01f;
+      m_cfg.m_eye_distance += 0.01f;
       break;
 
     case SDL_SCANCODE_T:
-      m_eye_distance -= 0.01f;
+      m_cfg.m_eye_distance -= 0.01f;
       break;
 
     case SDL_SCANCODE_C:
@@ -142,51 +142,51 @@ Viewer::on_keyboard_event(SDL_KeyboardEvent key)
       break;
 
     case SDL_SCANCODE_KP_8: // up
-      m_eye += glm::normalize(m_look_at);
+      m_cfg.m_eye += glm::normalize(m_cfg.m_look_at);
       break;
 
     case SDL_SCANCODE_KP_2: // down
-      m_eye -= glm::normalize(m_look_at);
+      m_cfg.m_eye -= glm::normalize(m_cfg.m_look_at);
       break;
 
     case SDL_SCANCODE_KP_4: // left
       {
-        glm::vec3 dir = glm::normalize(m_look_at);
-        dir = glm::rotate(dir, 90.0f, m_up);
-        m_eye += dir;
+        glm::vec3 dir = glm::normalize(m_cfg.m_look_at);
+        dir = glm::rotate(dir, 90.0f, m_cfg.m_up);
+        m_cfg.m_eye += dir;
       }
       break;
 
     case SDL_SCANCODE_KP_6: // right
       {
-        glm::vec3 dir = glm::normalize(m_look_at);
-        dir = glm::rotate(dir, 90.0f, m_up);
-        m_eye -= dir;
+        glm::vec3 dir = glm::normalize(m_cfg.m_look_at);
+        dir = glm::rotate(dir, 90.0f, m_cfg.m_up);
+        m_cfg.m_eye -= dir;
       }
       break;
 
     case SDL_SCANCODE_KP_7: // kp_pos1
-      m_look_at = glm::rotate(m_look_at, 5.0f, m_up);
+      m_cfg.m_look_at = glm::rotate(m_cfg.m_look_at, 5.0f, m_cfg.m_up);
       break;
 
     case SDL_SCANCODE_KP_9: // kp_raise
-      m_look_at = glm::rotate(m_look_at, -5.0f, m_up);
+      m_cfg.m_look_at = glm::rotate(m_cfg.m_look_at, -5.0f, m_cfg.m_up);
       break;
 
     case SDL_SCANCODE_KP_1:
-      m_eye -= glm::normalize(m_up);
+      m_cfg.m_eye -= glm::normalize(m_cfg.m_up);
       break;
 
     case SDL_SCANCODE_KP_3:
-      m_eye += glm::normalize(m_up);
+      m_cfg.m_eye += glm::normalize(m_cfg.m_up);
       break;
 
     case SDL_SCANCODE_KP_MULTIPLY:
-      m_fov += glm::radians(1.0f);
+      m_cfg.m_fov += glm::radians(1.0f);
       break;
 
     case SDL_SCANCODE_KP_DIVIDE:
-      m_fov -= glm::radians(1.0f);
+      m_cfg.m_fov -= glm::radians(1.0f);
       break;
 
     case SDL_SCANCODE_F1:
@@ -196,20 +196,20 @@ Viewer::on_keyboard_event(SDL_KeyboardEvent key)
         //g_eye.z *= 1.005f;
         //g_fov = m_fov / std::atan(1.0f / old_eye_z) * std::atan(1.0f / m_eye.z);
 
-        float old_fov = m_fov;
-        m_fov += glm::radians(1.0f);
-        if (m_fov < glm::radians(160.0f))
+        float old_fov = m_cfg.m_fov;
+        m_cfg.m_fov += glm::radians(1.0f);
+        if (m_cfg.m_fov < glm::radians(160.0f))
         {
-          m_eye.z = m_eye.z
+          m_cfg.m_eye.z = m_cfg.m_eye.z
             * (2.0*tan(0.5 * old_fov))
-            / (2.0*tan(0.5 * m_fov));
+            / (2.0*tan(0.5 * m_cfg.m_fov));
         }
         else
         {
-          m_fov = 160.0f;
+          m_cfg.m_fov = 160.0f;
         }
-        log_info("fov: %5.2f %f", m_fov, m_eye.z);
-        log_info("w: %f", tan(m_fov /2.0f) * m_eye.z);
+        log_info("fov: %5.2f %f", m_cfg.m_fov, m_cfg.m_eye.z);
+        log_info("w: %f", tan(m_cfg.m_fov /2.0f) * m_cfg.m_eye.z);
       }
       break;
 
@@ -220,20 +220,20 @@ Viewer::on_keyboard_event(SDL_KeyboardEvent key)
         //g_eye.z /= 1.005f;
         //g_fov = m_fov / std::atan(1.0f / old_eye_z) * std::atan(1.0f / m_eye.z);
 
-        float old_fov = m_fov;
-        m_fov -= 1.0f;
-        if (m_fov >= 7.0f)
+        float old_fov = m_cfg.m_fov;
+        m_cfg.m_fov -= 1.0f;
+        if (m_cfg.m_fov >= 7.0f)
         {
-          m_eye.z = m_eye.z
+          m_cfg.m_eye.z = m_cfg.m_eye.z
             * (2.0*tan(0.5 * old_fov))
-            / (2.0*tan(0.5 * m_fov));
+            / (2.0*tan(0.5 * m_cfg.m_fov));
         }
         else
         {
-          m_fov = 7.0f;
+          m_cfg.m_fov = 7.0f;
         }
-        log_info("fov: %5.2f %f", m_fov, m_eye.z);
-        log_info("w: %f", tan(m_fov/2.0f) * m_eye.z);
+        log_info("fov: %5.2f %f", m_cfg.m_fov, m_cfg.m_eye.z);
+        log_info("w: %f", tan(m_cfg.m_fov/2.0f) * m_cfg.m_eye.z);
       }
       break;
 
@@ -246,11 +246,11 @@ Viewer::on_keyboard_event(SDL_KeyboardEvent key)
       break;
 
     case SDL_SCANCODE_UP:
-      m_convergence *= 1.1f;
+      m_cfg.m_convergence *= 1.1f;
       break;
 
     case SDL_SCANCODE_DOWN:
-      m_convergence /= 1.1f;
+      m_cfg.m_convergence /= 1.1f;
       break;
 
     case SDL_SCANCODE_LEFT:
@@ -415,29 +415,29 @@ Viewer::init_menu()
   //g_menu->add_item("eye.y", &g_eye.y);
   //g_menu->add_item("eye.z", &g_eye.z);
 
-  m_menu->add_item("wiimote.camera_control", &m_wiimote_camera_control);
+  m_menu->add_item("wiimote.camera_control", &m_cfg.m_wiimote_camera_control);
 
-  m_menu->add_item("slowfactor", &m_slow_factor, 0.01f, 0.0f);
+  m_menu->add_item("slowfactor", &m_cfg.m_slow_factor, 0.01f, 0.0f);
 
-  m_menu->add_item("depth.near_z", &m_near_z, 0.01, 0.0f);
-  m_menu->add_item("depth.far_z",  &m_far_z, 1.0f);
+  m_menu->add_item("depth.near_z", &m_cfg.m_near_z, 0.01, 0.0f);
+  m_menu->add_item("depth.far_z",  &m_cfg.m_far_z, 1.0f);
 
-  m_menu->add_item("convergence", &m_convergence, 0.1f);
+  m_menu->add_item("convergence", &m_cfg.m_convergence, 0.1f);
 
-  m_menu->add_item("shadowmap.fov", &m_shadowmap_fov, 1.0f);
+  m_menu->add_item("shadowmap.fov", &m_cfg.m_shadowmap_fov, 1.0f);
 
-  m_menu->add_item("FOV", &m_fov);
+  m_menu->add_item("FOV", &m_cfg.m_fov);
 #if 0
   m_menu->add_item("Barrel Power", &m_barrel_power, 0.01f);
 #endif
   //g_menu->add_item("AspectRatio", &m_aspect_ratio, 0.05f, 0.5f, 4.0f);
 
-  m_menu->add_item("eye.distance", &m_eye_distance, 0.1f);
+  m_menu->add_item("eye.distance", &m_cfg.m_eye_distance, 0.1f);
 
-  m_menu->add_item("light.up",  &m_light_up, 1.0f);
-  m_menu->add_item("light.angle",  &m_light_angle, 1.0f);
+  m_menu->add_item("light.up",  &m_cfg.m_light_up, 1.0f);
+  m_menu->add_item("light.angle",  &m_cfg.m_light_angle, 1.0f);
 
-  m_menu->add_item("wiimote.distance_scale",  &m_distance_scale, 0.01f);
+  m_menu->add_item("wiimote.distance_scale",  &m_cfg.m_distance_scale, 0.01f);
   m_menu->add_item("wiimote.scale_x", &m_wiimote_scale.x, 0.01f);
   m_menu->add_item("wiimote.scale_y", &m_wiimote_scale.y, 0.01f);
 
@@ -538,14 +538,14 @@ Viewer::process_events(GameController& gamecontroller)
           case SDL_CONTROLLER_BUTTON_START:
             if (ev.cbutton.state)
             {
-              m_show_menu = !m_show_menu;
+              m_cfg.m_show_menu = !m_cfg.m_show_menu;
             }
             break;
 
           case SDL_CONTROLLER_BUTTON_BACK:
             if (ev.cbutton.state)
             {
-              m_show_dots = !m_show_dots;
+              m_cfg.m_show_dots = !m_cfg.m_show_dots;
             }
             break;
 
@@ -653,42 +653,42 @@ Viewer::update_menu()
 void
 Viewer::update_freeflight_mode(float dt)
 {
-  float delta = dt * 5.0f * m_slow_factor;
+  float delta = dt * 5.0f * m_cfg.m_slow_factor;
 
   {
     // forward/backward
-    m_eye += glm::normalize(m_look_at) * m_stick.dir.z * delta;
+    m_cfg.m_eye += glm::normalize(m_cfg.m_look_at) * m_stick.dir.z * delta;
 
     // up/down
-    m_eye += glm::normalize(m_up) * m_stick.dir.y * delta;
+    m_cfg.m_eye += glm::normalize(m_cfg.m_up) * m_stick.dir.y * delta;
 
     // left/right
-    glm::vec3 dir = glm::normalize(m_look_at);
-    dir = glm::rotate(dir, 90.0f, m_up);
-    m_eye += glm::normalize(dir) * m_stick.dir.x * delta;
+    glm::vec3 dir = glm::normalize(m_cfg.m_look_at);
+    dir = glm::rotate(dir, 90.0f, m_cfg.m_up);
+    m_cfg.m_eye += glm::normalize(dir) * m_stick.dir.x * delta;
   }
 
   { // handle rotation
     float angle_d = 20.0f;
 
     // yaw
-    m_look_at = glm::rotate(m_look_at, angle_d * m_stick.rot.y * delta, m_up);
+    m_cfg.m_look_at = glm::rotate(m_cfg.m_look_at, angle_d * m_stick.rot.y * delta, m_cfg.m_up);
 
     // roll
-    m_up = glm::rotate(m_up, angle_d * m_stick.rot.z * delta, m_look_at);
+    m_cfg.m_up = glm::rotate(m_cfg.m_up, angle_d * m_stick.rot.z * delta, m_cfg.m_look_at);
 
     // pitch
-    glm::vec3 cross = glm::cross(m_look_at, m_up);
-    m_up = glm::rotate(m_up, angle_d * m_stick.rot.x * delta, cross);
-    m_look_at = glm::rotate(m_look_at, angle_d * m_stick.rot.x * delta, cross);
+    glm::vec3 cross = glm::cross(m_cfg.m_look_at, m_cfg.m_up);
+    m_cfg.m_up = glm::rotate(m_cfg.m_up, angle_d * m_stick.rot.x * delta, cross);
+    m_cfg.m_look_at = glm::rotate(m_cfg.m_look_at, angle_d * m_stick.rot.x * delta, cross);
   }
 }
 
 void
 Viewer::update_fps_mode(float dt)
 {
-  float focus_distance = glm::length(m_look_at);
-  auto tmp = m_look_at;
+  float focus_distance = glm::length(m_cfg.m_look_at);
+  auto tmp = m_cfg.m_look_at;
   auto xz_dist = glm::sqrt(tmp.x * tmp.x + tmp.z * tmp.z);
   float pitch = glm::atan(tmp.y, xz_dist);
   float yaw   = glm::atan(tmp.z, tmp.x);
@@ -698,7 +698,7 @@ Viewer::update_fps_mode(float dt)
 
   pitch = glm::clamp(pitch, -glm::half_pi<float>() + 0.001f, glm::half_pi<float>() - 0.001f);
 
-  if (false && m_wiimote_camera_control)
+  if (false && m_cfg.m_wiimote_camera_control)
   {
     pitch = 0.0f;
   }
@@ -709,23 +709,23 @@ Viewer::update_fps_mode(float dt)
   //log_debug("yaw: %f pitch: %f", yaw, pitch);
 
   // forward/backward
-  m_eye += 10.0f * forward * m_stick.dir.z * dt * m_slow_factor;
+  m_cfg.m_eye += 10.0f * forward * m_stick.dir.z * dt * m_cfg.m_slow_factor;
 
   // strafe
-  m_eye += 10.0f * glm::vec3(forward.z, 0.0f, -forward.x) * m_stick.dir.x * dt * m_slow_factor;
+  m_cfg.m_eye += 10.0f * glm::vec3(forward.z, 0.0f, -forward.x) * m_stick.dir.x * dt * m_cfg.m_slow_factor;
 
   // up/down
-  m_eye.y += 10.0f * m_stick.dir.y * dt * m_slow_factor;
+  m_cfg.m_eye.y += 10.0f * m_stick.dir.y * dt * m_cfg.m_slow_factor;
 
-  m_look_at = focus_distance * glm::vec3(glm::cos(pitch) * glm::cos(yaw),
+  m_cfg.m_look_at = focus_distance * glm::vec3(glm::cos(pitch) * glm::cos(yaw),
                                          glm::sin(pitch),
                                          glm::cos(pitch) * glm::sin(yaw));
 
-  float f = sqrt(m_look_at.x * m_look_at.x + m_look_at.z * m_look_at.z);
-  m_up.x = -m_look_at.x/f * m_look_at.y;
-  m_up.y = f;
-  m_up.z = -m_look_at.z/f * m_look_at.y;
-  m_up = glm::normalize(m_up);
+  float f = sqrt(m_cfg.m_look_at.x * m_cfg.m_look_at.x + m_cfg.m_look_at.z * m_cfg.m_look_at.z);
+  m_cfg.m_up.x = -m_cfg.m_look_at.x/f * m_cfg.m_look_at.y;
+  m_cfg.m_up.y = f;
+  m_cfg.m_up.z = -m_cfg.m_look_at.z/f * m_cfg.m_look_at.y;
+  m_cfg.m_up = glm::normalize(m_cfg.m_up);
 }
 
 void
@@ -752,12 +752,12 @@ Viewer::process_joystick(float dt)
               m_stick.rot.x, m_stick.rot.y, m_stick.rot.z);
   }
 
-  float delta = dt * 5.0f * m_slow_factor;
+  float delta = dt * 5.0f * m_cfg.m_slow_factor;
 
   if (m_stick.light_rotation)
   {
     //log_debug("light angle: %f", m_light_angle);
-    m_light_angle += delta * 30.0f;
+    m_cfg.m_light_angle += delta * 30.0f;
   }
 
   // update_freeflight_mode(dt);
@@ -841,16 +841,16 @@ Viewer::update_offsets(glm::vec2 p1, glm::vec2 p2)
 
   glm::vec2 r = p2 - p1;
   float angle = glm::atan(-r.y, r.x);
-  m_roll_offset = angle;
-  m_distance_offset = m_distance_scale * glm::length(r) / 2.0f * glm::tan(glm::radians(m_fov));
+  m_cfg.m_roll_offset = angle;
+  m_cfg.m_distance_offset = m_cfg.m_distance_scale * glm::length(r) / 2.0f * glm::tan(glm::radians(m_cfg.m_fov));
   glm::vec2 c = (p1+p2)/2.0f;
 
   c -= glm::vec2(512, 384);
-  c = glm::rotate(c, m_roll_offset);
+  c = glm::rotate(c, m_cfg.m_roll_offset);
   c += glm::vec2(512, 384);
 
-  m_yaw_offset   = ((c.x / 1024.0f) - 0.5f) * glm::half_pi<float>() * m_wiimote_scale.x;
-  m_pitch_offset = ((c.y /  768.0f) - 0.5f) * glm::half_pi<float>() * m_wiimote_scale.y;
+  m_cfg.m_yaw_offset   = ((c.x / 1024.0f) - 0.5f) * glm::half_pi<float>() * m_wiimote_scale.x;
+  m_cfg.m_pitch_offset = ((c.y /  768.0f) - 0.5f) * glm::half_pi<float>() * m_wiimote_scale.y;
 
   m_wiimote_dot1.x = p1.x / 1024.0f;
   m_wiimote_dot1.y = 1.0f - (p1.y /  768.0f);

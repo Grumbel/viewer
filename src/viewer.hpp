@@ -38,31 +38,12 @@ struct Stick
   unsigned int hat;
 };
 
-class Viewer
+class Configuration
 {
 public:
-  Options m_opts;
-
-  // resources
-  MaterialPtr m_video_material;
-  MaterialPtr m_video_material_flip;
-
-  TextSurfacePtr m_dot_surface;
-
   bool m_show_calibration = false;
-
-  // systems
-  std::unique_ptr<Menu> m_menu;
-  std::unique_ptr<SceneManager> m_scene_manager;
-  std::unique_ptr<VideoProcessor> m_video_player;
-  std::unique_ptr<WiimoteManager> m_wiimote_manager;
-
   float m_slow_factor = 0.5f;
-
   bool m_wiimote_camera_control = false;
-
-  int m_screen_w = 640;
-  int m_screen_h = 480;
   //float m_fov = glm::radians(56.0f);
   float m_fov = glm::radians(42.0f);
 
@@ -74,7 +55,7 @@ public:
   float m_light_angle = 0.0f;
   float m_light_up = 0.0f;
 
-  float m_aspect_ratio = static_cast<GLfloat>(m_screen_w)/static_cast<GLfloat>(m_screen_h);
+  float m_aspect_ratio = static_cast<GLfloat>(640)/static_cast<GLfloat>(480);
 
   bool m_show_menu = true;
   bool m_show_dots = true;
@@ -90,6 +71,28 @@ public:
 
   float m_eye_distance = 0.065f;
   float m_convergence = 1.0f;
+};
+
+class Viewer
+{
+public:
+  Options m_opts;
+  Configuration m_cfg;
+
+  // resources
+  MaterialPtr m_video_material;
+  MaterialPtr m_video_material_flip;
+
+  TextSurfacePtr m_dot_surface;
+
+  // systems
+  std::unique_ptr<Menu> m_menu;
+  std::unique_ptr<SceneManager> m_scene_manager;
+  std::unique_ptr<VideoProcessor> m_video_player;
+  std::unique_ptr<WiimoteManager> m_wiimote_manager;
+
+  int m_screen_w = 640;
+  int m_screen_h = 480;
 
   glm::vec2 m_wiimote_dot1;
   glm::vec2 m_wiimote_dot2;

@@ -116,7 +116,7 @@ Compositor::render(Viewer& viewer)
       material->set_uniform("left_eye",  0);
       material->set_uniform("right_eye", 1);
 
-      if (!viewer.m_show_calibration)
+      if (!viewer.m_cfg.m_show_calibration)
       {
         material->set_texture(0, m_framebuffer1->get_color_texture());
         material->set_texture(1, m_framebuffer2->get_color_texture());
@@ -127,9 +127,11 @@ Compositor::render(Viewer& viewer)
         material->set_texture(1, m_calibration_right_texture);
       }
 
+      m_viewport_offset = {0, 0};
       switch(m_stereo_mode)
       {
         case StereoMode::Cybermaxx:
+          m_viewport_offset = {-41, 16};
           m_composition_prog = m_cybermaxx_prog;
           break;
 
@@ -179,19 +181,19 @@ Compositor::render(Viewer& viewer)
       glClear(GL_DEPTH_BUFFER_BIT);
       RenderContext ctx(camera, mgr.get_world());
 
-      if (false && viewer.m_show_menu)
+      if (false && viewer.m_cfg.m_show_menu)
       {
         glDisable(GL_BLEND);
         //g_shadowmap->draw_depth(m_screen_w - 266, 10, 256, 256, -20.0f);
         g_shadowmap->draw(m_screen_w - 266 - 276, 10, 256, 256, -20.0f);
       }
 
-      if (viewer.m_show_menu)
+      if (viewer.m_cfg.m_show_menu)
       {
         viewer.m_menu->draw(ctx, 120.0f, 64.0f);
       }
 
-      if (viewer.m_show_dots)
+      if (viewer.m_cfg.m_show_dots)
       {
         viewer.m_dot_surface->draw(ctx, viewer.m_wiimote_dot1.x * m_screen_w, viewer.m_wiimote_dot1.y * m_screen_h);
         viewer.m_dot_surface->draw(ctx, viewer.m_wiimote_dot2.x * m_screen_w, viewer.m_wiimote_dot2.y * m_screen_h);
@@ -213,12 +215,12 @@ Compositor::draw_shadowmap(Viewer& viewer)
   glClearColor(1.0, 0.0, 1.0, 1.0);
   glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
 
-  glm::vec3 light_pos = glm::rotate(glm::vec3(10.0f, 10.0f, 10.0f), viewer.m_light_angle, glm::vec3(0.0f, 1.0f, 0.0f));
-  glm::vec3 up = glm::rotate(glm::vec3(0.0f, 1.0f, 0.0f), viewer.m_light_up, glm::vec3(0.0f, 0.0f, 1.0f));
+  glm::vec3 light_pos = glm::rotate(glm::vec3(10.0f, 10.0f, 10.0f), viewer.m_cfg.m_light_angle, glm::vec3(0.0f, 1.0f, 0.0f));
+  glm::vec3 up = glm::rotate(glm::vec3(0.0f, 1.0f, 0.0f), viewer.m_cfg.m_light_up, glm::vec3(0.0f, 0.0f, 1.0f));
   glm::vec3 look_at(0.0f, 0.0f, 0.0f);
 
   Camera camera;
-  camera.perspective(viewer.m_shadowmap_fov, 1.0f, viewer.m_near_z, viewer.m_far_z);
+  camera.perspective(viewer.m_cfg.m_shadowmap_fov, 1.0f, viewer.m_cfg.m_near_z, viewer.m_cfg.m_far_z);
   //camera.ortho(-25.0f, 25.0f, -25.0f, 25.0f, m_near_z, m_far_z);
 
   camera.look_at(light_pos, look_at, up);
@@ -244,13 +246,13 @@ Compositor::draw_scene(Viewer& viewer, Stereo stereo)
   glClearColor(0.0, 0.0, 0.0, 1.0);
   glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
 
-  glm::vec3 look_at = viewer.m_look_at;
-  glm::vec3 up = viewer.m_up;
+  glm::vec3 look_at = viewer.m_cfg.m_look_at;
+  glm::vec3 up = viewer.m_cfg.m_up;
 
   glm::vec3 sideways_ = glm::normalize(glm::cross(look_at, up));
-  glm::vec3 eye = viewer.m_eye + glm::normalize(look_at) * viewer.m_distance_offset;
+  glm::vec3 eye = viewer.m_cfg.m_eye + glm::normalize(look_at) * viewer.m_cfg.m_distance_offset;
 
-  if (viewer.m_wiimote_camera_control && viewer.m_wiimote_manager)
+  if (viewer.m_cfg.m_wiimote_camera_control && viewer.m_wiimote_manager)
   {
     glm::quat q = glm::inverse(glm::quat(glm::mat3(glm::lookAt(glm::vec3(), look_at, up))));
 
@@ -260,12 +262,12 @@ Compositor::draw_scene(Viewer& viewer, Stereo stereo)
   }
   else
   {
-    look_at = glm::rotate(look_at, viewer.m_yaw_offset, up);
-    look_at = glm::rotate(look_at, -viewer.m_pitch_offset, sideways_);
-    up = glm::rotate(up, -viewer.m_roll_offset, look_at);
+    look_at = glm::rotate(look_at, viewer.m_cfg.m_yaw_offset, up);
+    look_at = glm::rotate(look_at, -viewer.m_cfg.m_pitch_offset, sideways_);
+    up = glm::rotate(up, -viewer.m_cfg.m_roll_offset, look_at);
   }
 
-  glm::vec3 sideways = glm::normalize(glm::cross(look_at, up)) * viewer.m_eye_distance * 0.5f;
+  glm::vec3 sideways = glm::normalize(glm::cross(look_at, up)) * viewer.m_cfg.m_eye_distance * 0.5f;
   switch(stereo)
   {
     case Stereo::Left:
@@ -282,8 +284,8 @@ Compositor::draw_scene(Viewer& viewer, Stereo stereo)
   }
 
   Camera camera;
-  camera.perspective(viewer.m_fov, viewer.m_aspect_ratio, viewer.m_near_z, viewer.m_far_z);
-  camera.look_at(eye + sideways, eye + look_at * viewer.m_convergence, up);
+  camera.perspective(viewer.m_cfg.m_fov, viewer.m_cfg.m_aspect_ratio, viewer.m_cfg.m_near_z, viewer.m_cfg.m_far_z);
+  camera.look_at(eye + sideways, eye + look_at * viewer.m_cfg.m_convergence, up);
 
   viewer.m_scene_manager->render(camera, false, stereo);
 }
@@ -303,7 +305,7 @@ Compositor::reshape(Viewer& viewer, int w, int h)
   m_renderbuffer1 = std::make_unique<Renderbuffer>(m_screen_w, m_screen_h);
   m_renderbuffer2 = std::make_unique<Renderbuffer>(m_screen_w, m_screen_h);
 
-  viewer.m_aspect_ratio = static_cast<GLfloat>(m_screen_w)/static_cast<GLfloat>(m_screen_h);
+  viewer.m_cfg.m_aspect_ratio = static_cast<GLfloat>(m_screen_w)/static_cast<GLfloat>(m_screen_h);
 
   assert_gl("reshape");
 }

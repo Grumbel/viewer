@@ -23,7 +23,7 @@ public:
   std::unique_ptr<Renderbuffer> m_renderbuffer1;
   std::unique_ptr<Renderbuffer> m_renderbuffer2;
 
-  glm::ivec2 m_viewport_offset = {-41, 16};
+  glm::ivec2 m_viewport_offset = { 0, 0 };
   float m_barrel_power = 0.05f;
   float m_ipd = 0.0f;
   int m_screen_w = 640;
