@@ -52,8 +52,10 @@ Texture::create_empty(GLenum target, GLenum format, int width, int height)
   assert_gl("framebuffer2");
   glBindTexture(target, texture);
   assert_gl("framebuffer1");
+#ifdef HAVE_OPENGLES2
   glTexImage2D(target, 0, format,  width, height, 0, format, GL_UNSIGNED_BYTE, NULL);
-#ifndef HAVE_OPENGLES2
+#else
+  glTexImage2D(target, 0, format,  width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, NULL);
   glTexParameterf(target, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
   glTexParameterf(target, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
   glTexParameterf(target, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
