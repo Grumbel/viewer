@@ -34,10 +34,43 @@ struct MaterialInfo
 uniform MaterialInfo material;
 #endif
 
+#if defined(VIDEO3D)
+uniform int eye_index;
+#endif
+
+#if !defined(VIDEO_LEFT_OFFSET)
+#  define VIDEO_LEFT_OFFSET vec2(0, 0)
+#endif
+
+#if !defined(VIDEO_LEFT_SCALE)
+#  define VIDEO_LEFT_SCALE vec2(1, 1)
+#endif
+
+#if !defined(VIDEO_RIGHT_OFFSET)
+#  define VIDEO_RIGHT_OFFSET vec2(0, 0)
+#endif
+
+#if !defined(VIDEO_RIGHT_SCALE)
+#  define VIDEO_RIGHT_SCALE vec2(1, 1)
+#endif
+
 // ---------------------------------------------------------------------------
 void main(void)
 {
-  vec3 diff = texture2D(texture_diff, vec2(1, -1) * frag_uv).rgb;
+#if defined(VIDEO3D)
+  vec2 uv;
+  if (eye_index == 0)
+  {
+    uv = VIDEO_LEFT_OFFSET + VIDEO_LEFT_SCALE * frag_uv;
+  }
+  else
+  {
+    uv = VIDEO_RIGHT_OFFSET + VIDEO_RIGHT_SCALE * frag_uv;
+  }
+  vec3 diff = texture2D(texture_diff, uv).rgb;
+#else
+  vec3 diff = texture2D(texture_diff, frag_uv).rgb;
+#endif
 
 #if defined(REFLECTION_TEXTURE)
   vec3 o = reflect(frag_position, normalize(frag_normal));

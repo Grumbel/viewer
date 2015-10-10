@@ -100,6 +100,16 @@ Material::apply(RenderContext const& context)
   glBlendFunc(m_blend_sfactor, m_blend_dfactor);
   assert_gl("GL props set");
 
+  if (context.get_stereo() == Stereo::Center ||
+      context.get_stereo() == Stereo::Left)
+  {
+    m_uniforms->set_uniform("eye_index", 0);
+  }
+  else
+  {
+    m_uniforms->set_uniform("eye_index", 1);
+  }
+
   for(auto const& it : m_textures)
   {
     auto const& texture_unit = it.first;

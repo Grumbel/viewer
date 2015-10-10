@@ -4,4 +4,5 @@ material.specular          1.0  1.0  1.0
 material.shininess         250
 material.reflection_texture "data/textures/miramar/"
 program.vertex		"src/glsl/video.vert" REFLECTION_TEXTURE
-program.fragment	"src/glsl/video.frag" REFLECTION_TEXTURE
+program.fragment	"src/glsl/video.frag" REFLECTION_TEXTURE VIDEO3D "VIDEO_LEFT_SCALE=vec2(1, -0.5)" "VIDEO_LEFT_OFFSET=vec2(0, 0)" "VIDEO_RIGHT_SCALE=vec2(1, -0.5)" "VIDEO_RIGHT_OFFSET=vec2(0, 0.5)"
+# program.fragment	"src/glsl/video.frag" REFLECTION_TEXTURE
