@@ -329,76 +329,44 @@ Viewer::init_scene(std::vector<std::string> const& model_filenames)
 void
 Viewer::init_video_player(bool video3d)
 {
-  if (!video3d)
-  {
-    m_video_material = MaterialFactory::get().create("video");
-    m_video_material_flip = m_video_material;
-  }
-  else
-  {
-    m_video_material = MaterialFactory::get().create("video3d");
-    m_video_material_flip = MaterialFactory::get().create("video3d-flip");
-  }
+  MaterialPtr video_material = MaterialFactory::get().from_file("data/room/video.material");
 
   if (false)
-  {
-    if (false)
-    { // flat canvas
-      auto node = m_scene_manager->get_world()->create_child();
-      ModelPtr model = std::make_shared<Model>();
+  { // flat canvas
+    auto node = m_scene_manager->get_world()->create_child();
+    ModelPtr model = std::make_shared<Model>();
 
-      model->add_mesh(Mesh::create_plane(5.0f));
-      node->set_position(glm::vec3(0.0f, 0.0f, -10.0f));
-      node->set_orientation(glm::quat(glm::vec3(glm::half_pi<float>(), 0.0f, 0.0f)));
-      node->set_scale(glm::vec3(4.0f, 1.0f, 2.25f));
+    model->add_mesh(Mesh::create_plane(5.0f));
+    node->set_position(glm::vec3(0.0f, 0.0f, -10.0f));
+    node->set_orientation(glm::quat(glm::vec3(glm::half_pi<float>(), 0.0f, 0.0f)));
+    node->set_scale(glm::vec3(4.0f, 1.0f, 2.25f));
 
-      model->set_material(m_video_material);
-      node->attach_model(model);
-    }
-    else
-    { // 360 canvas
-      auto node = m_scene_manager->get_world()->create_child();
+    model->set_material(video_material);
+    node->attach_model(model);
+  }
+  else
+  { // 360 canvas
+    auto node = m_scene_manager->get_world()->create_child();
 
-      int rings = 32;
-      int segments = 32;
+    int rings = 32;
+    int segments = 32;
 
-      float hfov = glm::radians(360.0f);
-      float vfov = glm::radians(180.0f);
+    float hfov = glm::radians(360.0f);
+    float vfov = glm::radians(180.0f);
 
-      //float hfov = glm::radians(90.0f);
-      //float vfov = glm::radians(64.0f);
+    //float hfov = glm::radians(90.0f);
+    //float vfov = glm::radians(64.0f);
 
-      //float hfov = glm::radians(125.0f);
-      //float vfov = glm::radians(70.3f);
+    //float hfov = glm::radians(125.0f);
+    //float vfov = glm::radians(70.3f);
 
-      //float hfov = glm::radians(90.0f);
-      //float vfov = glm::radians(50.0f);
+    //float hfov = glm::radians(90.0f);
+    //float vfov = glm::radians(50.0f);
 
-      ModelPtr model = std::make_shared<Model>();
-      model->set_material(m_video_material);
-      model->add_mesh(Mesh::create_curved_screen(15.0f, hfov, vfov, rings, segments));
-      node->attach_model(model);
-
-      if (false)
-      {
-        model->add_mesh(Mesh::create_curved_screen(15.0f, hfov, vfov, rings, segments, 0, 16, false, true));
-        model->add_mesh(Mesh::create_curved_screen(15.0f, hfov, vfov, rings, segments, 0, -16, false, true));
-
-        ModelPtr model_flip = std::make_shared<Model>();
-
-        model_flip->add_mesh(Mesh::create_curved_screen(15.0f, hfov, vfov, rings, segments, 16, 0, true, false));
-        model_flip->add_mesh(Mesh::create_curved_screen(15.0f, hfov, vfov, rings, segments, -16, 0, true, false));
-
-        model_flip->add_mesh(Mesh::create_curved_screen(15.0f, hfov, vfov, rings, segments, 16, 16, true, true));
-        model_flip->add_mesh(Mesh::create_curved_screen(15.0f, hfov, vfov, rings, segments, -16, 16, true, true));
-
-        model_flip->add_mesh(Mesh::create_curved_screen(15.0f, hfov, vfov, rings, segments, 16, -16, true, true));
-        model_flip->add_mesh(Mesh::create_curved_screen(15.0f, hfov, vfov, rings, segments, -16, -16, true, true));
-
-        model_flip->set_material(m_video_material_flip);
-        node->attach_model(model_flip);
-      }
-    }
+    ModelPtr model = std::make_shared<Model>();
+    model->set_material(video_material);
+    model->add_mesh(Mesh::create_curved_screen(15.0f, hfov, vfov, rings, segments));
+    node->attach_model(model);
   }
 }
 
@@ -813,16 +781,7 @@ Viewer::main_loop(Window& window, GameController& gamecontroller)
     if (m_video_player)
     {
       m_video_player->update();
-      TexturePtr texture = m_video_player->get_texture();
-      g_video_texture = texture;
-      if (texture)
-      {
-        m_video_material->set_texture(0, texture);
-        if (m_video_material_flip)
-        {
-          m_video_material_flip->set_texture(0, texture);
-        }
-      }
+      g_video_texture = m_video_player->get_texture();
     }
   }
 }

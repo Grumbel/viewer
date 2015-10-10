@@ -78,10 +78,6 @@ class Viewer
 public:
   Configuration m_cfg;
 
-  // resources
-  MaterialPtr m_video_material;
-  MaterialPtr m_video_material_flip;
-
   TextSurfacePtr m_dot_surface;
 
   // systems

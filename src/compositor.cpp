@@ -78,11 +78,6 @@ Compositor::render(Viewer& viewer)
 
     if (m_stereo_mode == StereoMode::None)
     {
-      if (viewer.m_video_material)
-      {
-        viewer.m_video_material->set_uniform("offset", 0.0f);
-      }
-
       m_renderbuffer1->bind();
       render_scene(viewer, Stereo::Center);
       m_renderbuffer1->unbind();
@@ -91,20 +86,11 @@ Compositor::render(Viewer& viewer)
     }
     else
     {
-      if (viewer.m_video_material)
-      {
-        viewer.m_video_material->set_uniform("offset", 0.0f);
-      }
-
       m_renderbuffer1->bind();
       render_scene(viewer, Stereo::Left);
       m_renderbuffer1->unbind();
 
       m_renderbuffer2->bind();
-      if (viewer.m_video_material)
-      {
-        viewer.m_video_material->set_uniform("offset", 0.5f);
-      }
       render_scene(viewer, Stereo::Right);
       m_renderbuffer2->unbind();
 
