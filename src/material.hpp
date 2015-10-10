@@ -29,13 +29,21 @@
 
 class RenderContext;
 
+class TextureValue
+{
+public:
+  enum { REGULAR_TEXTURE, VIDEO_TEXTURE } type;
+  TexturePtr primary;
+  TexturePtr secondary; // used for right eye in stereo
+};
+
 class Material
 {
 private:
   bool m_cast_shadow;
 
   ProgramPtr m_program;
-  std::unordered_map<int, std::tuple<TexturePtr, TexturePtr> > m_textures;
+  std::unordered_map<int, TextureValue> m_textures;
   UniformGroupPtr m_uniforms;
 
   std::unordered_map<GLenum, bool> m_capabilities;
@@ -55,8 +63,9 @@ public:
   bool cast_shadow() const { return m_cast_shadow; }
 
   void set_program(ProgramPtr program) { m_program = program; }
-  void set_texture(int unit, TexturePtr texture) { m_textures[unit] = std::make_tuple(texture, texture); }
-  void set_texture(int unit, TexturePtr left, TexturePtr right) { m_textures[unit] = std::make_tuple(left, right); }
+  void set_texture(int unit, TexturePtr texture) { m_textures[unit] = {TextureValue::REGULAR_TEXTURE, texture, texture}; }
+  void set_texture(int unit, TexturePtr left, TexturePtr right) { m_textures[unit] = {TextureValue::REGULAR_TEXTURE, left, right}; }
+  void set_video_texture(int unit) { m_textures[unit] = {TextureValue::VIDEO_TEXTURE, {}, {}}; }
 
   void color_mask(bool r, bool g, bool b, bool a);
   void depth_mask(bool flag);

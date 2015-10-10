@@ -47,12 +47,16 @@ SceneManager::render(Camera const& camera, bool geometry_pass, Stereo stereo)
   render_node(id, m_view.get(), geometry_pass, stereo);
 }
 
+extern TexturePtr g_video_texture;
+
 void
 SceneManager::render_node(Camera const& camera, SceneNode* node, bool geometry_pass, Stereo stereo)
 {
   OpenGLState state;
 
   RenderContext context(camera, node);
+
+  context.set_video_texture(g_video_texture);
 
   context.set_stereo(stereo);
 

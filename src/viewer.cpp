@@ -65,6 +65,7 @@ void print_scene_graph(SceneNode* node, int depth = 0)
 
 std::unique_ptr<Framebuffer> g_shadowmap;
 glm::mat4 g_shadowmap_matrix;
+TexturePtr g_video_texture;
 
 void
 Viewer::on_keyboard_event(SDL_KeyboardEvent key)
@@ -340,60 +341,63 @@ Viewer::init_video_player(bool video3d)
   }
 
   if (false)
-  { // flat canvas
-    auto node = m_scene_manager->get_world()->create_child();
-    ModelPtr model = std::make_shared<Model>();
-
-    model->add_mesh(Mesh::create_plane(5.0f));
-    node->set_position(glm::vec3(0.0f, 0.0f, -10.0f));
-    node->set_orientation(glm::quat(glm::vec3(glm::half_pi<float>(), 0.0f, 0.0f)));
-    node->set_scale(glm::vec3(4.0f, 1.0f, 2.25f));
-
-    model->set_material(m_video_material);
-    node->attach_model(model);
-  }
-  else
-  { // 360 canvas
-    auto node = m_scene_manager->get_world()->create_child();
-
-    int rings = 32;
-    int segments = 32;
-
-    float hfov = glm::radians(360.0f);
-    float vfov = glm::radians(180.0f);
-
-    //float hfov = glm::radians(90.0f);
-    //float vfov = glm::radians(64.0f);
-
-    //float hfov = glm::radians(125.0f);
-    //float vfov = glm::radians(70.3f);
-
-    //float hfov = glm::radians(90.0f);
-    //float vfov = glm::radians(50.0f);
-
-    ModelPtr model = std::make_shared<Model>();
-    model->set_material(m_video_material);
-    model->add_mesh(Mesh::create_curved_screen(15.0f, hfov, vfov, rings, segments));
-    node->attach_model(model);
-
+  {
     if (false)
-    {
-      model->add_mesh(Mesh::create_curved_screen(15.0f, hfov, vfov, rings, segments, 0, 16, false, true));
-      model->add_mesh(Mesh::create_curved_screen(15.0f, hfov, vfov, rings, segments, 0, -16, false, true));
+    { // flat canvas
+      auto node = m_scene_manager->get_world()->create_child();
+      ModelPtr model = std::make_shared<Model>();
 
-      ModelPtr model_flip = std::make_shared<Model>();
+      model->add_mesh(Mesh::create_plane(5.0f));
+      node->set_position(glm::vec3(0.0f, 0.0f, -10.0f));
+      node->set_orientation(glm::quat(glm::vec3(glm::half_pi<float>(), 0.0f, 0.0f)));
+      node->set_scale(glm::vec3(4.0f, 1.0f, 2.25f));
 
-      model_flip->add_mesh(Mesh::create_curved_screen(15.0f, hfov, vfov, rings, segments, 16, 0, true, false));
-      model_flip->add_mesh(Mesh::create_curved_screen(15.0f, hfov, vfov, rings, segments, -16, 0, true, false));
+      model->set_material(m_video_material);
+      node->attach_model(model);
+    }
+    else
+    { // 360 canvas
+      auto node = m_scene_manager->get_world()->create_child();
 
-      model_flip->add_mesh(Mesh::create_curved_screen(15.0f, hfov, vfov, rings, segments, 16, 16, true, true));
-      model_flip->add_mesh(Mesh::create_curved_screen(15.0f, hfov, vfov, rings, segments, -16, 16, true, true));
+      int rings = 32;
+      int segments = 32;
 
-      model_flip->add_mesh(Mesh::create_curved_screen(15.0f, hfov, vfov, rings, segments, 16, -16, true, true));
-      model_flip->add_mesh(Mesh::create_curved_screen(15.0f, hfov, vfov, rings, segments, -16, -16, true, true));
+      float hfov = glm::radians(360.0f);
+      float vfov = glm::radians(180.0f);
 
-      model_flip->set_material(m_video_material_flip);
-      node->attach_model(model_flip);
+      //float hfov = glm::radians(90.0f);
+      //float vfov = glm::radians(64.0f);
+
+      //float hfov = glm::radians(125.0f);
+      //float vfov = glm::radians(70.3f);
+
+      //float hfov = glm::radians(90.0f);
+      //float vfov = glm::radians(50.0f);
+
+      ModelPtr model = std::make_shared<Model>();
+      model->set_material(m_video_material);
+      model->add_mesh(Mesh::create_curved_screen(15.0f, hfov, vfov, rings, segments));
+      node->attach_model(model);
+
+      if (false)
+      {
+        model->add_mesh(Mesh::create_curved_screen(15.0f, hfov, vfov, rings, segments, 0, 16, false, true));
+        model->add_mesh(Mesh::create_curved_screen(15.0f, hfov, vfov, rings, segments, 0, -16, false, true));
+
+        ModelPtr model_flip = std::make_shared<Model>();
+
+        model_flip->add_mesh(Mesh::create_curved_screen(15.0f, hfov, vfov, rings, segments, 16, 0, true, false));
+        model_flip->add_mesh(Mesh::create_curved_screen(15.0f, hfov, vfov, rings, segments, -16, 0, true, false));
+
+        model_flip->add_mesh(Mesh::create_curved_screen(15.0f, hfov, vfov, rings, segments, 16, 16, true, true));
+        model_flip->add_mesh(Mesh::create_curved_screen(15.0f, hfov, vfov, rings, segments, -16, 16, true, true));
+
+        model_flip->add_mesh(Mesh::create_curved_screen(15.0f, hfov, vfov, rings, segments, 16, -16, true, true));
+        model_flip->add_mesh(Mesh::create_curved_screen(15.0f, hfov, vfov, rings, segments, -16, -16, true, true));
+
+        model_flip->set_material(m_video_material_flip);
+        node->attach_model(model_flip);
+      }
     }
   }
 }
@@ -810,6 +814,7 @@ Viewer::main_loop(Window& window, GameController& gamecontroller)
     {
       m_video_player->update();
       TexturePtr texture = m_video_player->get_texture();
+      g_video_texture = texture;
       if (texture)
       {
         m_video_material->set_texture(0, texture);

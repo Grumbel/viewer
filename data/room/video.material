@@ -1,0 +1,7 @@
+material.diffuse           0.5  0.5  1.0
+material.diffuse_texture   "buildin://video-texture"
+material.specular          1.0  1.0  1.0
+material.shininess         250
+material.reflection_texture "data/textures/miramar/"
+program.vertex		"src/glsl/video.vert" REFLECTION_TEXTURE
+program.fragment	"src/glsl/video.frag" REFLECTION_TEXTURE

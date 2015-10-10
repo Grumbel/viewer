@@ -16,14 +16,36 @@
 
 uniform mat4 MVP;
 
+#if defined(REFLECTION_TEXTURE)
+varying vec3 frag_position;
+varying vec3 frag_normal;
+#endif
+
 varying vec2 frag_uv;
 
 uniform sampler2D texture_diff;
 
+#ifdef REFLECTION_TEXTURE
+struct MaterialInfo
+{
+  samplerCube reflection_texture;
+};
+
+uniform MaterialInfo material;
+#endif
+
 // ---------------------------------------------------------------------------
 void main(void)
 {
-  vec3 diff = texture2D(texture_diff, frag_uv).rgb;
+  vec3 diff = texture2D(texture_diff, vec2(1, -1) * frag_uv).rgb;
+
+#if defined(REFLECTION_TEXTURE)
+  vec3 o = reflect(frag_position, normalize(frag_normal));
+  vec4 col = textureCube(material.reflection_texture, normalize(o));
+  diff = mix(diff, col.rgb,
+             0.25 + 0.5 * (1.0 - dot(vec3(0, 0, 1), normalize(frag_normal))));
+#endif
+
   gl_FragColor = vec4(diff, 1.0);
 }
 

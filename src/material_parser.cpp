@@ -125,7 +125,15 @@ MaterialParser::parse(std::istream& in)
           has_diffuse_texture = true;
           if (args.size() == 2)
           {
-            m_material->set_texture(current_texture_unit, Texture::from_file(to_string(args.begin()+1, args.end())));
+            std::string diffuse_texture_name = to_string(args.begin()+1, args.end());
+            if (diffuse_texture_name == "buildin://video-texture")
+            {
+              m_material->set_video_texture(current_texture_unit);
+            }
+            else
+            {
+              m_material->set_texture(current_texture_unit, Texture::from_file(diffuse_texture_name));
+            }
           }
           else if (args.size() == 3)
           {

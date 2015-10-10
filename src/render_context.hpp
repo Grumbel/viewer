@@ -5,6 +5,7 @@
 #include "material.hpp"
 #include "scene_node.hpp"
 #include "stereo.hpp"
+#include "texture.hpp"
 
 class RenderContext
 {
@@ -14,6 +15,7 @@ private:
   bool m_geometry_pass;
   MaterialPtr m_override_material;
   Stereo m_stero;
+  TexturePtr m_video_texture;
 
 public:
   RenderContext(Camera const& camera,
@@ -69,6 +71,16 @@ public:
   MaterialPtr get_override_material() const
   {
     return m_override_material;
+  }
+
+  void set_video_texture(TexturePtr const& video_texture)
+  {
+    m_video_texture = video_texture;
+  }
+
+  TexturePtr get_video_texture() const
+  {
+    return m_video_texture;
   }
 
 private:

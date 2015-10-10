@@ -100,24 +100,36 @@ Material::apply(RenderContext const& context)
   glBlendFunc(m_blend_sfactor, m_blend_dfactor);
   assert_gl("GL props set");
 
-  switch(context.get_stereo())
+  for(auto const& it : m_textures)
   {
-    case Stereo::Center:
-    case Stereo::Left:
-      for(auto const& it : m_textures)
-      {
-        glActiveTexture(GL_TEXTURE0 + it.first);
-        glBindTexture(std::get<0>(it.second)->get_target(), std::get<0>(it.second)->get_id());
-      }
-      break;
+    auto const& texture_unit = it.first;
+    auto const& texture_value = it.second;
 
-    case Stereo::Right:
-      for(auto const& it : m_textures)
+    if (texture_value.type == TextureValue::VIDEO_TEXTURE)
+    {
+      TexturePtr const& texture = context.get_video_texture();
+      if (texture)
       {
-        glActiveTexture(GL_TEXTURE0 + it.first);
-        glBindTexture(std::get<1>(it.second)->get_target(), std::get<1>(it.second)->get_id());
+        glActiveTexture(GL_TEXTURE0 + texture_unit);
+        glBindTexture(texture->get_target(), texture->get_id());
       }
-      break;
+    }
+    else
+    {
+      switch(context.get_stereo())
+      {
+        case Stereo::Center:
+        case Stereo::Left:
+          glActiveTexture(GL_TEXTURE0 + texture_unit);
+          glBindTexture(texture_value.primary->get_target(), texture_value.primary->get_id());
+          break;
+
+        case Stereo::Right:
+          glActiveTexture(GL_TEXTURE0 + texture_unit);
+          glBindTexture(texture_value.secondary->get_target(), texture_value.secondary->get_id());
+          break;
+      }
+    }
   }
   assert_gl("textures bound");
 
