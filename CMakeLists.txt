@@ -103,4 +103,39 @@ if(BUILD_TESTS)
   endforeach(SOURCE)
 endif()
 
+if(BUILD_BENCHMARKS)
+  # build google-benchmark
+  include_directories(${PROJECT_SOURCE_DIR}/src)
+  set(BENCHMARK_SOURCES
+    "external/benchmark/src/benchmark.cc"
+    "external/benchmark/src/colorprint.cc"
+    "external/benchmark/src/commandlineflags.cc"
+    "external/benchmark/src/console_reporter.cc"
+    "external/benchmark/src/csv_reporter.cc"
+    "external/benchmark/src/json_reporter.cc"
+    "external/benchmark/src/log.cc"
+    "external/benchmark/src/reporter.cc"
+    "external/benchmark/src/sleep.cc"
+    "external/benchmark/src/string_util.cc"
+    "external/benchmark/src/sysinfo.cc"
+    "external/benchmark/src/walltime.cc"
+    "external/benchmark/src/re_std.cc")
+  add_library(benchmark ${BENCHMARK_SOURCES})
+  target_compile_definitions(benchmark PUBLIC -DNDEBUG -DHAVE_STD_REGEX)
+  target_compile_options(benchmark PRIVATE -std=c++1y)
+  target_include_directories(benchmark SYSTEM PUBLIC
+    ${CMAKE_CURRENT_SOURCE_DIR}/external/benchmark/include)
+
+  # build benchmarks
+  file(GLOB BENCHMARKSOURCES benchmarks/*.cpp)
+  foreach(SOURCE ${BENCHMARKSOURCES})
+    get_filename_component(SOURCE_BASENAME ${SOURCE} NAME_WE)
+    add_executable(${SOURCE_BASENAME} ${SOURCE})
+    target_link_libraries(${SOURCE_BASENAME} benchmark ${CMAKE_THREAD_LIBS_INIT})
+    set_target_properties(${SOURCE_BASENAME} PROPERTIES
+      RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/benchmarks/")
+    target_compile_options(${SOURCE_BASENAME} PRIVATE -std=c++1y ${WARNINGS_CXX_FLAGS})
+  endforeach(SOURCE)
+endif()
+
 # EOF #
