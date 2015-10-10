@@ -109,7 +109,7 @@ public:
 class UniformGroup
 {
 private:
-  std::vector<std::unique_ptr<UniformBase> > m_uniforms;
+  std::unordered_map<std::string, std::unique_ptr<UniformBase> > m_uniforms;
 
 public:
   UniformGroup() :
@@ -119,7 +119,8 @@ public:
   template<typename T>
   void set_uniform(const std::string& name, T const& value)
   {
-    m_uniforms.emplace_back(std::make_unique<Uniform<T> >(name, value));
+    // FIXME: reallocating the uniform each time is not such a good idea
+    m_uniforms[name] = std::make_unique<Uniform<T> >(name, value);
   }
 
   void apply(ProgramPtr prog, RenderContext const& ctx);

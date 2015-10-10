@@ -66,9 +66,9 @@ void
 UniformGroup::apply(ProgramPtr prog, RenderContext const& ctx)
 {
   assert_gl("apply:enter");
-  for(auto& uniform : m_uniforms)
+  for(auto& uniform_it : m_uniforms)
   {
-    uniform->apply(prog, ctx);
+    uniform_it.second->apply(prog, ctx);
   }
   assert_gl("apply:exit");
 }
