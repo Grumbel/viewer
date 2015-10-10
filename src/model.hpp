@@ -41,7 +41,7 @@ public:
     m_material()
   {}
 
-  void draw(const RenderContext& context);
+  void draw(RenderContext const& context);
 
   void set_material(MaterialPtr material) { m_material = material; }
   void add_mesh(std::unique_ptr<Mesh> mesh)

@@ -35,7 +35,7 @@ SceneManager::create_light()
 }
 
 void
-SceneManager::render(const Camera& camera, bool geometry_pass, Stereo stereo)
+SceneManager::render(Camera const& camera, bool geometry_pass, Stereo stereo)
 {
   m_world->update_transform();
   m_view->update_transform();
@@ -48,7 +48,7 @@ SceneManager::render(const Camera& camera, bool geometry_pass, Stereo stereo)
 }
 
 void
-SceneManager::render_node(const Camera& camera, SceneNode* node, bool geometry_pass, Stereo stereo)
+SceneManager::render_node(Camera const& camera, SceneNode* node, bool geometry_pass, Stereo stereo)
 {
   OpenGLState state;
 
@@ -66,7 +66,7 @@ SceneManager::render_node(const Camera& camera, SceneNode* node, bool geometry_p
     model->draw(context);
   }
 
-  for(const auto& child : node->get_children())
+  for(auto const& child : node->get_children())
   {
     render_node(camera, child.get(), geometry_pass, stereo);
   }

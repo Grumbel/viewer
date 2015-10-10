@@ -20,7 +20,7 @@
 #include "render_context.hpp"
 
 void
-Uniform<UniformSymbol>::apply(ProgramPtr prog, const RenderContext& ctx)
+Uniform<UniformSymbol>::apply(ProgramPtr prog, RenderContext const& ctx)
 {
   assert_gl("Uniform<UniformSymbol>::apply:enter");
   switch(m_value)
@@ -57,13 +57,13 @@ Uniform<UniformSymbol>::apply(ProgramPtr prog, const RenderContext& ctx)
 }
 
 void
-Uniform<UniformCallback>::apply(ProgramPtr prog, const RenderContext& ctx)
+Uniform<UniformCallback>::apply(ProgramPtr prog, RenderContext const& ctx)
 {
   m_value(prog, m_name, ctx);
 }
 
 void
-UniformGroup::apply(ProgramPtr prog, const RenderContext& ctx)
+UniformGroup::apply(ProgramPtr prog, RenderContext const& ctx)
 {
   assert_gl("apply:enter");
   for(auto& uniform : m_uniforms)

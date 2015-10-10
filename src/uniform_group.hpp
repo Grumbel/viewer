@@ -53,7 +53,7 @@ public:
   virtual ~UniformBase() {}
 
   std::string get_name() const { return m_name; }
-  virtual void apply(ProgramPtr prog, const RenderContext& ctx) = 0;
+  virtual void apply(ProgramPtr prog, RenderContext const& ctx) = 0;
 };
 
 template<typename T>
@@ -63,12 +63,12 @@ private:
   T m_value;
 
 public:
-  Uniform(const std::string& name, const T& value) :
+  Uniform(const std::string& name, T const& value) :
     UniformBase(name),
     m_value(value)
   {}
 
-  void apply(ProgramPtr prog, const RenderContext& ctx)
+  void apply(ProgramPtr prog, RenderContext const& ctx)
   {
     prog->set_uniform(m_name, m_value);
   }
@@ -81,15 +81,15 @@ private:
   UniformSymbol m_value;
 
 public:
-  Uniform(const std::string& name, const UniformSymbol& value) :
+  Uniform(const std::string& name, UniformSymbol const& value) :
     UniformBase(name),
     m_value(value)
   {}
 
-  void apply(ProgramPtr prog, const RenderContext& ctx);
+  void apply(ProgramPtr prog, RenderContext const& ctx);
 };
 
-typedef std::function<void (ProgramPtr prog, const std::string& name, const RenderContext& ctx)> UniformCallback;
+typedef std::function<void (ProgramPtr prog, const std::string& name, RenderContext const& ctx)> UniformCallback;
 
 template<>
 class Uniform<UniformCallback> : public UniformBase
@@ -98,12 +98,12 @@ private:
   UniformCallback m_value;
 
 public:
-  Uniform(const std::string& name, const UniformCallback& value) :
+  Uniform(const std::string& name, UniformCallback const& value) :
     UniformBase(name),
     m_value(value)
   {}
 
-  void apply(ProgramPtr prog, const RenderContext& ctx);
+  void apply(ProgramPtr prog, RenderContext const& ctx);
 };
 
 class UniformGroup
@@ -117,12 +117,12 @@ public:
   {}
 
   template<typename T>
-  void set_uniform(const std::string& name, const T& value)
+  void set_uniform(const std::string& name, T const& value)
   {
     m_uniforms.emplace_back(std::make_unique<Uniform<T> >(name, value));
   }
 
-  void apply(ProgramPtr prog, const RenderContext& ctx);
+  void apply(ProgramPtr prog, RenderContext const& ctx);
 
 private:
   UniformGroup(const UniformGroup&);

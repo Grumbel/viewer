@@ -76,11 +76,11 @@ Material::disable(GLenum cap)
 }
 
 void
-Material::apply(const RenderContext& context)
+Material::apply(RenderContext const& context)
 {
   assert_gl("Material::apply:enter");
 
-  for(const auto& cap : m_capabilities)
+  for(auto const& cap : m_capabilities)
   {
     if (cap.second)
     {
@@ -104,7 +104,7 @@ Material::apply(const RenderContext& context)
   {
     case Stereo::Center:
     case Stereo::Left:
-      for(const auto& it : m_textures)
+      for(auto const& it : m_textures)
       {
         glActiveTexture(GL_TEXTURE0 + it.first);
         glBindTexture(std::get<0>(it.second)->get_target(), std::get<0>(it.second)->get_id());
@@ -112,7 +112,7 @@ Material::apply(const RenderContext& context)
       break;
 
     case Stereo::Right:
-      for(const auto& it : m_textures)
+      for(auto const& it : m_textures)
       {
         glActiveTexture(GL_TEXTURE0 + it.first);
         glBindTexture(std::get<1>(it.second)->get_target(), std::get<1>(it.second)->get_id());

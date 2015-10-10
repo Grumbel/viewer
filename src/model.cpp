@@ -26,7 +26,7 @@
 #include "render_context.hpp"
 
 void
-Model::draw(const RenderContext& context)
+Model::draw(RenderContext const& context)
 {
   if (!m_material)
   {

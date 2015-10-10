@@ -262,7 +262,7 @@ Mesh::Mesh(GLenum primitive_type) :
 
 Mesh::~Mesh()
 {
-  for(const auto& array : m_attribute_arrays)
+  for(auto const& array : m_attribute_arrays)
   {
     glDeleteBuffers(1, &array.second.vbo);
   }
@@ -281,7 +281,7 @@ Mesh::draw()
   //log_debug("Mesh::draw: %d", program);
 
   // activate attribute arrays
-  for(const auto& array : m_attribute_arrays)
+  for(auto const& array : m_attribute_arrays)
   {
     int loc = glGetAttribLocation(program, array.first.c_str());
     if (loc == -1)

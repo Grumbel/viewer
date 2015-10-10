@@ -55,7 +55,7 @@ void print_scene_graph(SceneNode* node, int depth = 0)
             << ": " << node->get_position()
             << " " << node->get_scale()
             << " " << node->get_orientation() << std::endl;
-  for(const auto& child : node->get_children())
+  for(auto const& child : node->get_children())
   {
     print_scene_graph(child.get(), depth+1);
   }

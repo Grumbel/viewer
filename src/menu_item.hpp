@@ -23,7 +23,7 @@
 class MenuItem
 {
 public:
-  MenuItem(const std::string& label, const TextProperties& text_prop) :
+  MenuItem(const std::string& label, TextProperties const& text_prop) :
     m_text_prop(text_prop),
     m_label(label),
     m_label_surface()
@@ -57,7 +57,7 @@ private:
 class BoolMenuItem : public MenuItem
 {
 public:
-  BoolMenuItem(const std::string& label, const TextProperties& text_prop, bool* value_ptr) :
+  BoolMenuItem(const std::string& label, TextProperties const& text_prop, bool* value_ptr) :
     MenuItem(label, text_prop),
     m_value_ptr(value_ptr),
     m_true_surface(),
@@ -101,7 +101,7 @@ template<typename T>
 class ValueMenuItem : public MenuItem
 {
 public:
-  ValueMenuItem(const std::string& label, const TextProperties& text_prop, T* value_ptr, T step,
+  ValueMenuItem(const std::string& label, TextProperties const& text_prop, T* value_ptr, T step,
                 boost::optional<T> min = boost::optional<T>(),
                 boost::optional<T> max = boost::optional<T>()) :
     MenuItem(label, text_prop),

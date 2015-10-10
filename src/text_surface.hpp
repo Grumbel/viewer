@@ -63,7 +63,7 @@ private:
 class TextSurface
 {
 public:
-  static std::shared_ptr<TextSurface> create(const std::string& text, const TextProperties& text_props);
+  static std::shared_ptr<TextSurface> create(const std::string& text, TextProperties const& text_props);
 
   TextSurface(MaterialPtr material, int width, int height,
               const Cairo::TextExtents& text_extents,
@@ -83,7 +83,7 @@ public:
   }
 
 private:
-  static Cairo::RefPtr<Cairo::ImageSurface> create_cairo_surface(const std::string& text, const TextProperties& text_props,
+  static Cairo::RefPtr<Cairo::ImageSurface> create_cairo_surface(const std::string& text, TextProperties const& text_props,
                                                                  Cairo::TextExtents& out_text_extents,
                                                                  Cairo::FontExtents& out_font_extents);
   static TexturePtr create_opengl_texture(Cairo::RefPtr<Cairo::ImageSurface> surface);

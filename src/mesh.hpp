@@ -86,7 +86,7 @@ public:
 
   void draw();
 
-  void attach_array(const std::string& name, const Array& array, int element_count)
+  void attach_array(const std::string& name, Array const& array, int element_count)
   {
     if (m_attribute_arrays.find(name) != m_attribute_arrays.end())
     {

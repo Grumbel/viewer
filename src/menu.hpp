@@ -27,7 +27,7 @@ class Menu
 {
 private:
 public:
-  Menu(const TextProperties& text_prop);
+  Menu(TextProperties const& text_prop);
 
   void draw(RenderContext const& ctx, float x, float y);
   void add_item(const std::string& label, int* value_ptr, int step = 1,

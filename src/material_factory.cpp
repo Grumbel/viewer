@@ -72,14 +72,14 @@ MaterialFactory::from_file(const boost::filesystem::path& filename)
   material->set_uniform("light.specular",  glm::vec3(0.6f, 0.6f, 0.6f));
   material->set_uniform("light.position",
                               UniformCallback(
-                                [](ProgramPtr prog, const std::string& name, const RenderContext& ctx) {
+                                [](ProgramPtr prog, const std::string& name, RenderContext const& ctx) {
                                   glm::vec3 pos(ctx.get_view_matrix() * glm::vec4(50.0f, 50.0f, 50.0f, 1.0f));
                                   prog->set_uniform(name, pos);
                                 }));
 
   material->set_uniform("ShadowMapMatrix",
                               UniformCallback(
-                                [](ProgramPtr prog, const std::string& name, const RenderContext& ctx) {
+                                [](ProgramPtr prog, const std::string& name, RenderContext const& ctx) {
                                   prog->set_uniform(name, g_shadowmap_matrix * ctx.get_model_matrix());
                                 }));
   material->set_texture(2, g_shadowmap->get_depth_texture());
@@ -145,7 +145,7 @@ MaterialFactory::create_phong(const glm::vec3& diffuse,
   //phong->set_uniform("light.position",  glm::vec3(5.0f, 5.0f, 5.0f));
   phong->set_uniform("light.position",
                               UniformCallback(
-                                [](ProgramPtr prog, const std::string& name, const RenderContext& ctx) {
+                                [](ProgramPtr prog, const std::string& name, RenderContext const& ctx) {
                                   glm::vec3 pos(ctx.get_view_matrix() * glm::vec4(50.0f, 50.0f, 50.0f, 1.0f));
                                   prog->set_uniform(name, pos);
                                 }));
@@ -161,7 +161,7 @@ MaterialFactory::create_phong(const glm::vec3& diffuse,
 
   phong->set_uniform("ShadowMapMatrix",
                               UniformCallback(
-                                [](ProgramPtr prog, const std::string& name, const RenderContext& ctx) {
+                                [](ProgramPtr prog, const std::string& name, RenderContext const& ctx) {
                                   prog->set_uniform(name, g_shadowmap_matrix * ctx.get_model_matrix());
                                 }));
   phong->set_texture(0, g_shadowmap->get_depth_texture());
@@ -219,7 +219,7 @@ MaterialFactory::create_textured()
   //material->set_uniform("light.position",  glm::vec3(5.0f, 5.0f, 5.0f));
   material->set_uniform("light.position",
                               UniformCallback(
-                                [](ProgramPtr prog, const std::string& name, const RenderContext& ctx) {
+                                [](ProgramPtr prog, const std::string& name, RenderContext const& ctx) {
                                   glm::vec3 pos(ctx.get_view_matrix() * glm::vec4(50.0f, 50.0f, 50.0f, 1.0f));
                                   prog->set_uniform(name, pos);
                                 }));
@@ -229,7 +229,7 @@ MaterialFactory::create_textured()
 
   material->set_uniform("ShadowMapMatrix",
                               UniformCallback(
-                                [](ProgramPtr prog, const std::string& name, const RenderContext& ctx) {
+                                [](ProgramPtr prog, const std::string& name, RenderContext const& ctx) {
                                   prog->set_uniform(name, g_shadowmap_matrix * ctx.get_model_matrix());
                                 }));
   material->set_texture(2, g_shadowmap->get_depth_texture());

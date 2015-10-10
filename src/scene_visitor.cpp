@@ -25,7 +25,7 @@ SceneVisitor::visit(SceneNode* node, const glm::mat4& matrix)
     visit(model);
   }
 
-  for(const auto& child : node->get_children())
+  for(auto const& child : node->get_children())
   {
     visit(child.get(), m);
   }

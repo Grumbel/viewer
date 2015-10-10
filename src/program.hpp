@@ -43,7 +43,7 @@ public:
   void inspect() const;
 
   template<typename T>
-  void set_uniform(const std::string& name, const T& v)
+  void set_uniform(const std::string& name, T const& v)
   {
     assert_gl("set_uniform:enter");
     int loc = glGetUniformLocation(m_program, name.c_str());

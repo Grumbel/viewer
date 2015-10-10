@@ -24,7 +24,7 @@
 #include "opengl_state.hpp"
 
 std::shared_ptr<TextSurface>
-TextSurface::create(const std::string& text, const TextProperties& text_props)
+TextSurface::create(const std::string& text, TextProperties const& text_props)
 {
   Cairo::TextExtents text_extents;
   Cairo::FontExtents font_extents;
@@ -185,7 +185,7 @@ TextSurface::create_opengl_texture(Cairo::RefPtr<Cairo::ImageSurface> surface)
 }
 
 Cairo::RefPtr<Cairo::ImageSurface>
-TextSurface::create_cairo_surface(const std::string& text, const TextProperties& text_props,
+TextSurface::create_cairo_surface(const std::string& text, TextProperties const& text_props,
                                   Cairo::TextExtents& out_text_extents,
                                   Cairo::FontExtents& out_font_extents)
 {

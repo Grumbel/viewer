@@ -18,7 +18,7 @@
 
 #include "menu_item.hpp"
 
-Menu::Menu(const TextProperties& text_prop) :
+Menu::Menu(TextProperties const& text_prop) :
   m_text_prop(text_prop),
   m_items(),
   m_current_item(0),

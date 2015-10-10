@@ -67,12 +67,12 @@ public:
   void disable(GLenum cap);
 
   template<typename T>
-  void set_uniform(const std::string& name, const T& value)
+  void set_uniform(const std::string& name, T const& value)
   {
     m_uniforms->set_uniform(name, value);
   }
 
-  void apply(const RenderContext& context);
+  void apply(RenderContext const& context);
 
 private:
   Material(const Material&);
