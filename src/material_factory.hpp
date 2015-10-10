@@ -25,6 +25,13 @@
 
 class MaterialFactory
 {
+public:
+  static MaterialFactory& get()
+  {
+    static MaterialFactory instance;
+    return instance;
+  }
+
 private:
   std::unordered_map<std::string, MaterialPtr> m_materials;
 
@@ -33,6 +40,8 @@ public:
 
   MaterialPtr from_file(const boost::filesystem::path& name);
   MaterialPtr create(const std::string& name);
+
+private:
   static MaterialPtr create_phong(const glm::vec3& diffuse,
                                   const glm::vec3& ambient,
                                   const glm::vec3& specular,
@@ -42,16 +51,6 @@ public:
   static MaterialPtr create_textured();
   static MaterialPtr create_video();
   static MaterialPtr create_video3d(bool flip_eyes);
-
-  static MaterialFactory& get()
-  {
-    static MaterialFactory* instance = 0;
-    if (!instance)
-    {
-      instance = new MaterialFactory;
-    }
-    return *instance;
-  }
 
 private:
   MaterialFactory(const MaterialFactory&);
