@@ -203,7 +203,6 @@ Compositor::render_menu(RenderContext const& ctx, Viewer const& viewer)
 
   if (false && viewer.m_cfg.m_show_menu)
   {
-    glDisable(GL_BLEND);
     //g_shadowmap->render_depth(m_screen_w - 266, 10, 256, 256, -20.0f);
     g_shadowmap->draw(m_screen_w - 266 - 276, 10, 256, 256, -20.0f);
   }

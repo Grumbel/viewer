@@ -80,26 +80,23 @@ void
 Framebuffer::draw(float x, float y, float w, float h, float z)
 {
 #ifndef HAVE_OPENGLES2
-  OpenGLState state;
+  GLint target_fbo;
+  glGetIntegerv(GL_FRAMEBUFFER_BINDING, &target_fbo);
 
-  glEnable(GL_TEXTURE_2D);
+  assert_gl("enter: BlitFramebuffer");
+  glBindFramebuffer(GL_DRAW_FRAMEBUFFER, target_fbo);
+  assert_gl("enter: BlitFramebuffer1");
+  glBindFramebuffer(GL_READ_FRAMEBUFFER, m_fbo);
+  glReadBuffer(GL_COLOR_ATTACHMENT0);
+  assert_gl("enter: BlitFramebuffer2");
+  glBlitFramebuffer(0, 0, m_width, m_height,
+                    x, y, x + w, y + h,
+                    GL_COLOR_BUFFER_BIT,
+                    GL_NEAREST);
+  assert_gl("done: BlitFramebuffer");
 
-  glBindTexture(GL_TEXTURE_2D, m_color_buffer->get_id());
-  glBegin(GL_TRIANGLE_FAN);
-  {
-    glTexCoord2f(0.0f, 0.0f);
-    glVertex3f(x, y, z);
-
-    glTexCoord2f(1.0f, 0.0f);
-    glVertex3f(x+w, y, z);
-
-    glTexCoord2f(1.0f, 1.0f);
-    glVertex3f(x+w, y+h, z); // FIXME
-
-    glTexCoord2f(0.0f, 1.0f);
-    glVertex3f(x, y+h, z);
-  }
-  glEnd();
+  glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
+  glBindFramebuffer(GL_READ_FRAMEBUFFER, 0);
 #endif
 }
 
