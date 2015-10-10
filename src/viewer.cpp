@@ -417,7 +417,7 @@ Viewer::init_menu()
 
   m_menu->add_item("shadowmap.fov", &m_cfg.m_shadowmap_fov, 1.0f);
 
-  m_menu->add_item("FOV", &m_cfg.m_fov);
+  m_menu->add_item("FOV", &m_cfg.m_fov, 0.05f);
 #if 0
   m_menu->add_item("Barrel Power", &m_barrel_power, 0.01f);
 #endif
@@ -426,7 +426,7 @@ Viewer::init_menu()
   m_menu->add_item("eye.distance", &m_cfg.m_eye_distance, 0.1f);
 
   m_menu->add_item("light.up",  &m_cfg.m_light_up, 1.0f);
-  m_menu->add_item("light.angle",  &m_cfg.m_light_angle, 1.0f);
+  m_menu->add_item("light.angle",  &m_cfg.m_light_angle, 0.1f);
 
   m_menu->add_item("wiimote.distance_scale",  &m_cfg.m_distance_scale, 0.01f);
   m_menu->add_item("wiimote.scale_x", &m_wiimote_scale.x, 0.01f);
