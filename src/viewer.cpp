@@ -327,12 +327,12 @@ Viewer::init_scene(std::vector<std::string> const& model_filenames)
 }
 
 void
-Viewer::init_video_player(bool video3d)
+Viewer::init_video_player(VideoOptions const& cfg)
 {
   MaterialPtr video_material = MaterialFactory::get().from_file("data/room/video.material");
 
-  if (false)
-  { // flat canvas
+  if (cfg.flat_canvas)
+  {
     auto node = m_scene_manager->get_world()->create_child();
     ModelPtr model = std::make_shared<Model>();
 
@@ -345,27 +345,15 @@ Viewer::init_video_player(bool video3d)
     node->attach_model(model);
   }
   else
-  { // 360 canvas
+  { // round canvas
     auto node = m_scene_manager->get_world()->create_child();
 
     int rings = 32;
     int segments = 32;
 
-    float hfov = glm::radians(360.0f);
-    float vfov = glm::radians(180.0f);
-
-    //float hfov = glm::radians(90.0f);
-    //float vfov = glm::radians(64.0f);
-
-    //float hfov = glm::radians(125.0f);
-    //float vfov = glm::radians(70.3f);
-
-    //float hfov = glm::radians(90.0f);
-    //float vfov = glm::radians(50.0f);
-
     ModelPtr model = std::make_shared<Model>();
     model->set_material(video_material);
-    model->add_mesh(Mesh::create_curved_screen(15.0f, hfov, vfov, rings, segments));
+    model->add_mesh(Mesh::create_curved_screen(15.0f, cfg.hfov, cfg.vfov, rings, segments));
     node->attach_model(model);
   }
 }
@@ -828,14 +816,27 @@ Viewer::parse_args(int argc, char** argv, Options& opts)
       }
       else if (strcmp("--video", argv[i]) == 0)
       {
-        opts.video = argv[i+1];
+        opts.video.filename = argv[i+1];
         ++i;
       }
       else if (strcmp("--video3d", argv[i]) == 0)
       {
-        opts.video3d = true;
-        opts.video = argv[i+1];
+        opts.video.stereo = true;
+        opts.video.filename = argv[i+1];
         ++i;
+      }
+      else if (strcmp("--video3d-fov", argv[i]) == 0)
+      {
+        if (sscanf(argv[i+1], "%fx%f", &opts.video.hfov, &opts.video.vfov) != 2)
+        {
+          throw std::runtime_error("expected --video3d-fov HFOVxVFOV, got '" + std::string(argv[i]) + "'");
+        }
+        else
+        {
+          opts.video.hfov = glm::radians(opts.video.hfov);
+          opts.video.vfov = glm::radians(opts.video.vfov);
+          ++i;
+        }
       }
       else if (strcmp("--help", argv[i]) == 0 ||
                strcmp("-h", argv[i]) == 0)
@@ -843,9 +844,10 @@ Viewer::parse_args(int argc, char** argv, Options& opts)
         std::cout << "Usage: " << argv[0] << " [OPTIONS]\n"
                   << "\n"
                   << "Options:\n"
-                  << "  --wiimote       Enable Wiimote support\n"
-                  << "  --video FILE    Play video\n"
-                  << "  --video3d FILE  Play 3D video\n";
+                  << "  --wiimote          Enable Wiimote support\n"
+                  << "  --video FILE       Play video\n"
+                  << "  --video3d FILE     Play 3D video\n"
+                  << "  --video3d-fov H:V  Horizontal and vertical FOV\n";
         exit(0);
       }
       else
@@ -891,12 +893,12 @@ Viewer::main(int argc, char** argv)
   m_compositor = std::make_unique<Compositor>(m_screen_w, m_screen_h);
   m_scene_manager = std::make_unique<SceneManager>();
 
-  if (!opts.video.empty())
+  if (!opts.video.filename.empty())
   {
     Gst::init(argc, argv);
-    std::cout << "Playing video: " << opts.video << std::endl;
-    m_video_player = std::make_unique<VideoProcessor>(opts.video);
-    init_video_player(opts.video3d);
+    std::cout << "Playing video: " << opts.video.filename << std::endl;
+    m_video_player = std::make_unique<VideoProcessor>(opts.video.filename);
+    init_video_player(opts.video);
   }
 
   init_scene(opts.models);

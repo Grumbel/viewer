@@ -21,11 +21,19 @@
 class GameController;
 class Compositor;
 
+struct VideoOptions
+{
+  std::string filename = {};
+  bool stereo = false;
+  bool flat_canvas = false;
+  float hfov = glm::radians(180.0f);
+  float vfov = glm::radians(180.0f);
+};
+
 struct Options
 {
   bool wiimote = false;
-  std::string video = {};
-  bool video3d = false;
+  VideoOptions video;
   std::vector<std::string> models = {};
 };
 
@@ -116,7 +124,7 @@ private:
 
   void init_scene(std::vector<std::string> const& model_filenames);
   void init_menu();
-  void init_video_player(bool video3d);
+  void init_video_player(VideoOptions const& cfg);
 
   void update_world(float dt);
   void update_offsets(glm::vec2 p1, glm::vec2 p2);
