@@ -396,7 +396,45 @@ Viewer::init_menu()
 }
 
 void
-Viewer::process_events(GameController& gamecontroller)
+Viewer::on_mouse_motion_event(SDL_MouseMotionEvent const& ev)
+{
+  if (ev.state & SDL_BUTTON_LMASK)
+  {
+    float angle_d = 0.0025f;
+
+    m_cfg.m_look_at = glm::rotate(m_cfg.m_look_at, angle_d * ev.xrel, m_cfg.m_up);
+
+    glm::vec3 cross = glm::cross(m_cfg.m_look_at, m_cfg.m_up);
+    m_cfg.m_look_at = glm::rotate(m_cfg.m_look_at, angle_d * ev.yrel, cross);
+  }
+}
+
+void
+Viewer::on_mouse_button_event(Window& window, SDL_MouseButtonEvent const& ev)
+{
+  if (ev.button == SDL_BUTTON_LEFT)
+  {
+    if (ev.type == SDL_MOUSEBUTTONDOWN)
+    {
+      //window.grab(true);
+      SDL_SetRelativeMouseMode(SDL_TRUE);
+    }
+    else if (ev.type == SDL_MOUSEBUTTONUP)
+    {
+      //window.grab(false);
+      SDL_SetRelativeMouseMode(SDL_FALSE);
+    }
+  }
+}
+
+void
+Viewer::on_mouse_wheel_event(SDL_MouseWheelEvent const& ev)
+{
+  m_cfg.m_fov += glm::radians(static_cast<float>(ev.y));
+}
+
+void
+Viewer::process_events(Window& window, GameController& gamecontroller)
 {
   SDL_Event ev;
   while(SDL_PollEvent(&ev))
@@ -427,10 +465,16 @@ Viewer::process_events(GameController& gamecontroller)
         break;
 
       case SDL_MOUSEMOTION:
+        on_mouse_motion_event(ev.motion);
         break;
 
       case SDL_MOUSEBUTTONDOWN:
       case SDL_MOUSEBUTTONUP:
+        on_mouse_button_event(window, ev.button);
+        break;
+
+      case SDL_MOUSEWHEEL:
+        on_mouse_wheel_event(ev.wheel);
         break;
 
       case SDL_CONTROLLERAXISMOTION:
@@ -735,7 +779,7 @@ Viewer::main_loop(Window& window, GameController& gamecontroller)
 
     SDL_Delay(1);
 
-    process_events(gamecontroller);
+    process_events(window, gamecontroller);
     process_joystick(delta / 1000.0f);
 
     if (false && m_wiimote_manager)

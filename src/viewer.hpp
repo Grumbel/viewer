@@ -115,8 +115,11 @@ public:
   std::vector<std::unique_ptr<Entity> > m_entities;
 
 private:
+  void on_mouse_motion_event(SDL_MouseMotionEvent const& ev);
+  void on_mouse_button_event(Window& window, SDL_MouseButtonEvent const& ev);
+  void on_mouse_wheel_event(SDL_MouseWheelEvent const& ev);
   void on_keyboard_event(SDL_KeyboardEvent key);
-  void process_events(GameController& gamecontroller);
+  void process_events(Window& window, GameController& gamecontroller);
   void process_joystick(float dt);
   void update_menu();
   void update_freeflight_mode(float dt);
