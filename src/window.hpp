@@ -17,6 +17,7 @@ public:
   ~Window();
 
   void swap();
+  void grab(bool grabbed);
 
 private:
   Window(const Window&) = delete;

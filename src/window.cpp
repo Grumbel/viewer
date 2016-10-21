@@ -24,9 +24,17 @@ Window::~Window()
 }
 
 void
+Window::grab(bool grabbed)
+{
+  SDL_SetWindowGrab(m_window, static_cast<SDL_bool>(grabbed));
+}
+
+void
 Window::swap()
 {
   SDL_GL_SwapWindow(m_window);
 }
+
+
 
 /* EOF */
