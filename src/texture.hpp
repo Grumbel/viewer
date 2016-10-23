@@ -18,7 +18,7 @@ private:
 
 public:
   static TexturePtr cubemap_from_file(const std::string& filename);
-  static TexturePtr from_file(const std::string& filename, bool build_mipmaps = true);
+  static TexturePtr from_file(const std::string& filename, bool build_mipmaps = true, bool exception_on_fail = false);
   static TexturePtr from_rgb_data(int width, int height, int pitch, void* data);
   static TexturePtr create_lightspot(int width, int height);
   static TexturePtr create_random_noise(int width, int height);

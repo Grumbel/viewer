@@ -8,6 +8,7 @@
 #include <string.h>
 #include <vector>
 
+#include "log.hpp"
 #include "assert_gl.hpp"
 #include "opengl_state.hpp"
 
@@ -287,17 +288,37 @@ Texture::cubemap_from_file(const std::string& filename)
 }
 
 TexturePtr
-Texture::from_file(const std::string& filename, bool build_mipmaps)
+Texture::from_file(const std::string& filename, bool build_mipmaps, bool exception_on_fail)
 {
   OpenGLState state;
 
   SDL_Surface* surface = IMG_Load(filename.c_str());
   if (!surface)
   {
-    throw std::runtime_error("Texture: couldn't open " + filename);
+    if (exception_on_fail)
+    {
+      throw std::runtime_error("Texture: couldn't open " + filename);
+    }
+    else
+    {
+      // create replacement texture
+      log_error("Texture: couldn't open %s, using replacement texture", filename);
+
+      Uint32 rmask = 0x000000ff;
+      Uint32 gmask = 0x0000ff00;
+      Uint32 bmask = 0x00ff0000;
+      Uint32 amask = 0xff000000;
+
+      surface = SDL_CreateRGBSurface(0, 32, 32, 32, rmask, gmask, bmask, amask);
+      if (!surface)
+      {
+        log_error("Texture: SDL_CreateRGBSurface() failed: %s", SDL_GetError());
+        throw std::runtime_error("Texture: replacement texture creation failed");
+      }
+    }
   }
-  else
-  {
+
+  { // create texture
     vflip_surface(surface);
 
     GLenum target = GL_TEXTURE_2D;
