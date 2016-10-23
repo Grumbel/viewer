@@ -246,30 +246,6 @@ Viewer::on_keyboard_event(SDL_KeyboardEvent key)
       //glutFullScreen();
       break;
 
-    case SDL_SCANCODE_UP:
-      m_cfg.m_convergence *= 1.1f;
-      break;
-
-    case SDL_SCANCODE_DOWN:
-      m_cfg.m_convergence /= 1.1f;
-      break;
-
-    case SDL_SCANCODE_LEFT:
-      //g_look_at.x += 1.0f;
-      break;
-
-    case SDL_SCANCODE_RIGHT:
-      //g_look_at.x -= 1.0f;
-      break;
-
-    case SDL_SCANCODE_PAGEUP:
-      //g_look_at.y -= 1.0f;
-      break;
-
-    case SDL_SCANCODE_PAGEDOWN:
-      //g_look_at.y += 1.0f;
-      break;
-
     default:
       log_info("unknown key: %d", static_cast<int>(key.keysym.sym));
       break;
@@ -400,7 +376,7 @@ Viewer::on_mouse_motion_event(SDL_MouseMotionEvent const& ev)
 {
   if (ev.state & SDL_BUTTON_LMASK)
   {
-    float angle_d = 0.0025f;
+    float angle_d = -0.0025f;
 
     m_cfg.m_look_at = glm::rotate(m_cfg.m_look_at, angle_d * ev.xrel, m_cfg.m_up);
 
@@ -724,6 +700,25 @@ Viewer::update_fps_mode(float dt)
 }
 
 void
+Viewer::process_keyboard(float dt)
+{
+  Uint8 const* state = SDL_GetKeyboardState(NULL);
+
+  auto key2float = [state](size_t lhs, size_t rhs) -> float {
+    if (state[lhs] && !state[rhs]) { return 1.0f; }
+    else if (state[rhs] && !state[lhs]) { return -1.0f; }
+    else { return 0; }
+  };
+
+  m_stick.dir.x = key2float(SDL_SCANCODE_LEFT,
+                            SDL_SCANCODE_RIGHT);
+  m_stick.dir.y = key2float(SDL_SCANCODE_PAGEUP,
+                            SDL_SCANCODE_PAGEDOWN);
+  m_stick.dir.z = key2float(SDL_SCANCODE_UP,
+                            SDL_SCANCODE_DOWN);
+}
+
+void
 Viewer::process_joystick(float dt)
 {
   { // apply deadzone
@@ -781,6 +776,7 @@ Viewer::main_loop(Window& window, GameController& gamecontroller)
 
     process_events(window, gamecontroller);
     process_joystick(delta / 1000.0f);
+    process_keyboard(delta / 1000.0f);
 
     if (false && m_wiimote_manager)
     {

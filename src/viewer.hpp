@@ -121,6 +121,7 @@ private:
   void on_keyboard_event(SDL_KeyboardEvent key);
   void process_events(Window& window, GameController& gamecontroller);
   void process_joystick(float dt);
+  void process_keyboard(float dt);
   void update_menu();
   void update_freeflight_mode(float dt);
   void update_fps_mode(float dt);
