@@ -67,7 +67,7 @@ VideoProcessor::VideoProcessor(const std::string& filename) :
   m_pipeline = Glib::RefPtr<Gst::Pipeline>::cast_dynamic(m_playbin);
 
   Glib::RefPtr<Gst::Element> source = m_pipeline->get_element("mysource");
-  log_info("SOURC: %s", source);
+  //log_info("SOURC: %s", source);
   source->set_property("location", filename);
 
   m_fakesink = m_pipeline->get_element("mysink");
@@ -153,7 +153,7 @@ VideoProcessor::on_bus_message(Glib::RefPtr<Gst::Message> const& msg)
     case Gst::MESSAGE_ERROR:
       {
         auto error_msg = Glib::RefPtr<Gst::MessageError>::cast_static(msg);
-        log_error("Error: %s: %s", msg->get_source()->get_name(), error_msg->parse().what());
+        log_error("Error: %s: %s", msg->get_source()->get_name(), error_msg->parse_debug());
         //assert(!"Failure");
         Glib::signal_idle().connect(sigc::mem_fun(this, &VideoProcessor::shutdown));
       }
@@ -280,15 +280,15 @@ VideoProcessor::update()
     }
 
     {
-      Glib::RefPtr<Gst::MapInfo> mapinfo(new Gst::MapInfo);
+      Gst::MapInfo mapinfo;
       m_buffer->map(mapinfo, Gst::MAP_READ);
       if (!m_texture)
       {
-        m_texture = Texture::from_rgb_data(width, height, m_buffer->get_size() / height, mapinfo->get_data());
+        m_texture = Texture::from_rgb_data(width, height, m_buffer->get_size() / height, mapinfo.get_data());
       }
       else
       {
-        m_texture->upload(width, height, m_buffer->get_size() / height, mapinfo->get_data());
+        m_texture->upload(width, height, m_buffer->get_size() / height, mapinfo.get_data());
       }
       m_buffer->unmap(mapinfo);
     }
@@ -299,9 +299,9 @@ VideoProcessor::update()
 
       { // blit and flip color channels
         unsigned char* op = img->get_data();
-        Glib::RefPtr<Gst::MapInfo> mapinfo(new Gst::MapInfo);
+        Gst::MapInfo mapinfo;
         m_buffer->map(mapinfo, Gst::MAP_READ);
-        unsigned char* ip  = mapinfo->get_data();
+        unsigned char* ip  = mapinfo.get_data();
         int ostride = img->get_stride();
         int istride = m_buffer->get_size() / height;
         for(int y = 0; y < height; ++y)
