@@ -1,4 +1,4 @@
-;; Simple 3D Model Viewer
+;; grumgl - Grumbel's Random Collection of OpenGL Experiments
 ;; Copyright (C) 2019 Ingo Ruhnke <grumbel@gmail.com>
 ;;
 ;; This program is free software: you can redistribute it and/or modify
@@ -58,9 +58,9 @@
 
 (define gstreamermm (load "gstreamermm.scm"))
 
-(define-public viewer
+(define-public grumgl
   (package
-   (name "viewer")
+   (name "grumgl")
    (version current-commit)
    (source (local-file %source-dir
                        #:recursive? #t
@@ -95,14 +95,14 @@
       ("gcc" ,gcc-9)))
    (propagated-inputs
     `(("python" ,python)))
-   (synopsis "Simple 3D Model Viewer")
+   (synopsis "Grumbel's Random Collection of OpenGL Experiments")
    (description "This repository is a messy collection of OpenGL programming
 experiments. It contains a Blender export script for 3D models along
 with a viewer and a tiny 3D engine. It also contains some support for
 the Cybermaxx VR headset as well as anaglyph 3D glasses.")
-   (home-page "https://gitlab.com/grumbel/viewer")
+   (home-page "https://gitlab.com/grumbel/grumgl")
    (license gpl3+)))
 
-viewer
+grumgl
 
 ;; EOF ;;
