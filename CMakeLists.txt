@@ -1,5 +1,23 @@
+# grumgl - Grumbel's Random Collection of OpenGL Experiments
+# Copyright (C) 2012-2019 Ingo Ruhnke <grumbel@gmail.com>
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
 cmake_minimum_required(VERSION 3.0)
-project(viewer VERSION 0.0.0)
+project(grumgl VERSION 0.0.0)
+
+include(GNUInstallDirs)
 
 option(WARNINGS "Switch on extra warnings" OFF)
 option(WERROR "Turn warnings into errors" OFF)
@@ -67,11 +85,11 @@ target_include_directories(wiicpp SYSTEM PUBLIC
   ${CMAKE_CURRENT_SOURCE_DIR}/external/WiiC/src/wiic
   ${CMAKE_CURRENT_SOURCE_DIR}/external/WiiC/src/wiicpp)
 
-file(GLOB VIEWER_SOURCES src/*.cpp)
-add_executable(viewer ${VIEWER_SOURCES})
-target_compile_options(viewer PRIVATE -std=c++1y ${WARNINGS_CXX_FLAGS})
-target_compile_definitions(viewer PRIVATE ${OPENGL_CFLAGS_OTHER})
-target_include_directories(viewer SYSTEM PRIVATE
+file(GLOB GRUMGL_SOURCES src/*.cpp)
+add_executable(grumgl ${GRUMGL_SOURCES})
+target_compile_options(grumgl PRIVATE -std=c++1y ${WARNINGS_CXX_FLAGS})
+target_compile_definitions(grumgl PRIVATE ${OPENGL_CFLAGS_OTHER})
+target_include_directories(grumgl SYSTEM PRIVATE
   ${BLUEZ_INCLUDE_DIRS}
   ${GSTREAMERMM_INCLUDE_DIRS}
   ${SDL2_INCLUDE_DIRS}
@@ -79,7 +97,7 @@ target_include_directories(viewer SYSTEM PRIVATE
   ${CAIROMM_INCLUDE_DIRS}
   ${GLEW_INCLUDE_DIRS}
   ${OPENGL_INCLUDE_DIR})
-target_link_libraries(viewer
+target_link_libraries(grumgl
   wiicpp
   wiic
   bluetooth
@@ -93,12 +111,28 @@ target_link_libraries(viewer
   ${OPENGL_LIBRARIES}
   ${CMAKE_THREAD_LIBS_INIT})
 
+install(TARGETS grumgl
+  DESTINATION ${CMAKE_INSTALL_BINDIR}
+  RENAME grumgl)
+
+install(PROGRAMS tools/blenderexp.py
+  DESTINATION ${CMAKE_INSTALL_BINDIR}
+  RENAME grumgl-blender-export)
+
+install(PROGRAMS tools/splitcubemap.py
+  DESTINATION ${CMAKE_INSTALL_BINDIR}
+  RENAME grumgl-splitcubemap)
+
+file(GLOB SHADER_FILES src/glsl/*.frag src/glsl/*.vert)
+install(FILES ${SHADER_FILES}
+  DESTINATION ${CMAKE_INSTALL_DATADIR}/${PROJECT_NAME}/glsl)
+
 if(BUILD_TESTS)
   file(GLOB TEST_SOURCES test/*.cpp)
   foreach(SOURCE ${TEST_SOURCES})
     get_filename_component(SOURCE_BASENAME ${SOURCE} NAME_WE)
     add_executable(${SOURCE_BASENAME} ${SOURCE})
-    target_link_libraries(${SOURCE_BASENAME} viewerlib)
+    target_link_libraries(${SOURCE_BASENAME} grumgllib)
   endforeach(SOURCE)
 endif()
 
