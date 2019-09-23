@@ -1,4 +1,4 @@
 material.diffuse           1.0  1.0  1.0
 material.specular          0.5  0.5  0.5
-material.diffuse_texture   data/room/autostereo_left.png data/room/autostereo_right.png
+material.diffuse_texture   autostereo_left.png autostereo_right.png
 material.shininess         4

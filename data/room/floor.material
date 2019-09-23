@@ -1,5 +1,5 @@
 material.diffuse           1.0 1.0 1.0
-material.diffuse_texture   "data/room/2-EUROPLAC-Chene Cacao-Parquet et Lambris-Diffuse.jpg"
+material.diffuse_texture   "2-EUROPLAC-Chene Cacao-Parquet et Lambris-Diffuse.jpg"
 material.specular          1.0  1.0  1.0
-material.specular_texture  "data/room/2-EUROPLAC-Chene Cacao-Parquet et Lambris-Reflection.jpg"
+material.specular_texture  "2-EUROPLAC-Chene Cacao-Parquet et Lambris-Reflection.jpg"
 material.shininess         50

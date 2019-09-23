@@ -1,4 +1,4 @@
 material.diffuse           1 1 1
-material.diffuse_texture   "data/room/fabric_three_seat_sofa.jpg"
+material.diffuse_texture   "fabric_three_seat_sofa.jpg"
 material.specular          1.0  1.0  1.0
 material.shininess         2

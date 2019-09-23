@@ -1,5 +1,5 @@
 material.diffuse           0.5  0.5  1.0
-material.diffuse_texture   data/textures/cube/cube_diff.png
-material.specular_texture  data/textures/cube/cube_spec.png
+material.diffuse_texture   textures/cube/cube_diff.png
+material.specular_texture  textures/cube/cube_spec.png
 material.specular          1.0  1.0  1.0
 material.shininess         250
