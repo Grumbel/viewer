@@ -131,9 +131,8 @@ install(PROGRAMS tools/splitcubemap.py
   DESTINATION ${CMAKE_INSTALL_BINDIR}
   RENAME grumgl-splitcubemap)
 
-file(GLOB SHADER_FILES src/glsl/*.frag src/glsl/*.vert)
-install(FILES ${SHADER_FILES}
-  DESTINATION ${CMAKE_INSTALL_DATADIR}/${PROJECT_NAME}/glsl)
+install(DIRECTORY data/
+  DESTINATION ${CMAKE_INSTALL_DATADIR}/${PROJECT_NAME})
 
 if(BUILD_TESTS)
   file(GLOB TEST_SOURCES test/*.cpp)
