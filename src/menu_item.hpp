@@ -17,7 +17,9 @@
 #ifndef HEADER_MENU_ITEM_HPP
 #define HEADER_MENU_ITEM_HPP
 
+#include <optional>
 #include <string>
+
 #include "text_surface.hpp"
 
 class MenuItem
@@ -102,8 +104,8 @@ class ValueMenuItem : public MenuItem
 {
 public:
   ValueMenuItem(const std::string& label, TextProperties const& text_prop, T* value_ptr, T step,
-                boost::optional<T> min = boost::optional<T>(),
-                boost::optional<T> max = boost::optional<T>()) :
+                std::optional<T> min = std::optional<T>(),
+                std::optional<T> max = std::optional<T>()) :
     MenuItem(label, text_prop),
     m_value_ptr(value_ptr),
     m_step(step),
@@ -161,8 +163,8 @@ public:
 private:
   T* m_value_ptr;
   T m_step;
-  boost::optional<T> m_min;
-  boost::optional<T> m_max;
+  std::optional<T> m_min;
+  std::optional<T> m_max;
 
   TextSurfacePtr m_value_surface;
   T m_old_value;

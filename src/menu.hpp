@@ -17,9 +17,9 @@
 #ifndef HEADER_MENU_HPP
 #define HEADER_MENU_HPP
 
-#include <vector>
-#include <boost/optional.hpp>
 #include <memory>
+#include <optional>
+#include <vector>
 
 #include "menu_item.hpp"
 
@@ -31,11 +31,11 @@ public:
 
   void draw(RenderContext const& ctx, float x, float y);
   void add_item(const std::string& label, int* value_ptr, int step = 1,
-                boost::optional<int> min = boost::optional<int>(),
-                boost::optional<int> max = boost::optional<int>());
+                std::optional<int> min = std::optional<int>(),
+                std::optional<int> max = std::optional<int>());
   void add_item(const std::string& label, float* value_ptr, float step = 1.0f,
-                boost::optional<float> min = boost::optional<float>(),
-                boost::optional<float> max = boost::optional<float>());
+                std::optional<float> min = std::optional<float>(),
+                std::optional<float> max = std::optional<float>());
   void add_item(const std::string& label, bool* value_ptr);
 
   void up();

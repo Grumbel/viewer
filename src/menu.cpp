@@ -45,16 +45,16 @@ Menu::draw(RenderContext const& ctx, float x, float y)
 
 void
 Menu::add_item(const std::string& label, float* value_ptr, float step,
-               boost::optional<float> min,
-               boost::optional<float> max)
+               std::optional<float> min,
+               std::optional<float> max)
 {
   m_items.emplace_back(std::make_unique<FloatMenuItem>(label, m_text_prop, value_ptr, step, min, max));
 }
 
 void
 Menu::add_item(const std::string& label, int* value_ptr, int step,
-               boost::optional<int> min,
-               boost::optional<int> max)
+               std::optional<int> min,
+               std::optional<int> max)
 {
   m_items.emplace_back(std::make_unique<ValueMenuItem<int> >(label, m_text_prop, value_ptr, step, min, max));
 }
