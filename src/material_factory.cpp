@@ -56,7 +56,7 @@ MaterialFactory::MaterialFactory() :
 }
 
 MaterialPtr
-MaterialFactory::from_file(const boost::filesystem::path& filename)
+MaterialFactory::from_file(const std::filesystem::path& filename)
 {
   MaterialPtr material = MaterialParser::from_file(filename);
 

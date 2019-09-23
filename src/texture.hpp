@@ -3,7 +3,7 @@
 
 #include <memory>
 #include <string>
-#include <boost/filesystem/path.hpp>
+#include <filesystem>
 
 #include "opengl.hpp"
 
@@ -18,8 +18,8 @@ private:
   GLuint m_id;
 
 public:
-  static TexturePtr cubemap_from_file(const boost::filesystem::path& filename);
-  static TexturePtr from_file(const boost::filesystem::path& filename, bool build_mipmaps = true, bool exception_on_fail = false);
+  static TexturePtr cubemap_from_file(const std::filesystem::path& filename);
+  static TexturePtr from_file(const std::filesystem::path& filename, bool build_mipmaps = true, bool exception_on_fail = false);
   static TexturePtr from_rgb_data(int width, int height, int pitch, void* data);
   static TexturePtr create_lightspot(int width, int height);
   static TexturePtr create_random_noise(int width, int height);

@@ -21,7 +21,7 @@ Scene::from_file(const std::string& filename)
   else
   {
     Scene scene;
-    scene.set_directory(boost::filesystem::path(filename).parent_path());
+    scene.set_directory(std::filesystem::path(filename).parent_path());
     scene.parse_istream(in);
     return scene.get_node();
   }
@@ -42,7 +42,7 @@ Scene::Scene() :
 }
 
 void
-Scene::set_directory(const boost::filesystem::path& path)
+Scene::set_directory(const std::filesystem::path& path)
 {
   m_directory = path;
 }
@@ -108,7 +108,7 @@ Scene::parse_istream(std::istream& in)
 
           if (boost::algorithm::ends_with(material, ".material"))
           {
-            model->set_material(MaterialFactory::get().from_file(m_directory / boost::filesystem::path(material)));
+            model->set_material(MaterialFactory::get().from_file(m_directory / std::filesystem::path(material)));
           }
           else
           {

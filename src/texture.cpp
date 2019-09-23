@@ -197,7 +197,7 @@ Texture::create_lightspot(int width, int height)
 }
 
 namespace {
-SDL_Surface* surface_from_file(const boost::filesystem::path& filename)
+SDL_Surface* surface_from_file(const std::filesystem::path& filename)
 {
   SDL_Surface* surface = IMG_Load(filename.c_str());
   if (!surface)
@@ -212,7 +212,7 @@ SDL_Surface* surface_from_file(const boost::filesystem::path& filename)
 } // namespace
 
 TexturePtr
-Texture::cubemap_from_file(const boost::filesystem::path& filename)
+Texture::cubemap_from_file(const std::filesystem::path& filename)
 {
   OpenGLState state;
 
@@ -288,7 +288,7 @@ Texture::cubemap_from_file(const boost::filesystem::path& filename)
 }
 
 TexturePtr
-Texture::from_file(const boost::filesystem::path& filename, bool build_mipmaps, bool exception_on_fail)
+Texture::from_file(const std::filesystem::path& filename, bool build_mipmaps, bool exception_on_fail)
 {
   OpenGLState state;
 

@@ -3,21 +3,21 @@
 
 #include <iosfwd>
 #include <string>
-#include <boost/filesystem/path.hpp>
+#include <filesystem>
 
 #include "material.hpp"
 
 class MaterialParser
 {
 private:
-  boost::filesystem::path m_filename;
-  boost::filesystem::path m_directory;
+  std::filesystem::path m_filename;
+  std::filesystem::path m_directory;
   MaterialPtr m_material;
 
 public:
-  static MaterialPtr from_file(const boost::filesystem::path& filename);
+  static MaterialPtr from_file(const std::filesystem::path& filename);
 
-  MaterialParser(const boost::filesystem::path& filename);
+  MaterialParser(const std::filesystem::path& filename);
   void parse(std::istream& in);
   MaterialPtr get_material() { return m_material; }
 

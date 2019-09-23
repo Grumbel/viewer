@@ -53,7 +53,7 @@ std::string to_string(T beg, T end)
 } // namespace
 
 MaterialPtr
-MaterialParser::from_file(const boost::filesystem::path& filename)
+MaterialParser::from_file(const std::filesystem::path& filename)
 {
   std::ifstream in(filename.string());
   if (!in)
@@ -68,7 +68,7 @@ MaterialParser::from_file(const boost::filesystem::path& filename)
   }
 }
 
-MaterialParser::MaterialParser(const boost::filesystem::path& filename) :
+MaterialParser::MaterialParser(const std::filesystem::path& filename) :
   m_filename(filename),
   m_directory(filename.parent_path()),
   m_material(std::make_shared<Material>())
@@ -83,8 +83,8 @@ MaterialParser::parse(std::istream& in)
   bool has_specular_texture = false;
   bool has_reflection_texture = false;
   int current_texture_unit = 0;
-  boost::filesystem::path program_vertex   = g_datadir + "/glsl/default.vert";
-  boost::filesystem::path program_fragment = g_datadir + "/glsl/default.frag";
+  std::filesystem::path program_vertex   = g_datadir + "/glsl/default.vert";
+  std::filesystem::path program_fragment = g_datadir + "/glsl/default.frag";
   std::vector<std::string> program_vertex_defines;
   std::vector<std::string> program_fragment_defines;
 

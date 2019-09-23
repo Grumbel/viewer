@@ -2,7 +2,7 @@
 
 #include <boost/algorithm/string/predicate.hpp>
 #include <boost/format.hpp>
-#include <boost/filesystem/path.hpp>
+#include <filesystem>
 #include <sstream>
 #include <fstream>
 #include <regex>
@@ -11,7 +11,7 @@
 
 namespace {
 
-void include_file(boost::filesystem::path const& filename, std::ostream& os)
+void include_file(std::filesystem::path const& filename, std::ostream& os)
 {
   std::ifstream in(filename.string());
   if (!in)
@@ -31,7 +31,7 @@ void include_file(boost::filesystem::path const& filename, std::ostream& os)
 } // namespace
 
 ShaderPtr
-Shader::from_file(GLenum type, boost::filesystem::path const& filename,
+Shader::from_file(GLenum type, std::filesystem::path const& filename,
                   std::vector<std::string> const& defines)
 {
   std::ifstream in(filename.string());
@@ -77,14 +77,14 @@ Shader::from_file(GLenum type, boost::filesystem::path const& filename,
         std::smatch rx_results;
         if (std::regex_match(line, rx_results, include_rx))
         {
-          boost::filesystem::path include_filename(rx_results[1]);
+          std::filesystem::path include_filename(rx_results[1]);
           if (include_filename.is_absolute())
           {
             include_file(include_filename.string(), os);
           }
           else
           {
-            include_file((boost::filesystem::path(filename).parent_path() / include_filename).string(),
+            include_file((std::filesystem::path(filename).parent_path() / include_filename).string(),
                          os);
           }
           os << "#line " << line_count << '\n';

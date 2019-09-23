@@ -58,7 +58,7 @@ else()
   find_package(GLEW REQUIRED)
 endif()
 
-find_package(Boost REQUIRED COMPONENTS system filesystem)
+find_package(Boost REQUIRED)
 find_package(Threads REQUIRED)
 
 find_package(PkgConfig REQUIRED)
@@ -87,7 +87,7 @@ target_include_directories(wiicpp SYSTEM PUBLIC
 
 file(GLOB GRUMGL_SOURCES src/*.cpp)
 add_executable(grumgl ${GRUMGL_SOURCES})
-target_compile_options(grumgl PRIVATE -std=c++1y ${WARNINGS_CXX_FLAGS})
+target_compile_options(grumgl PRIVATE -std=c++17 ${WARNINGS_CXX_FLAGS})
 target_compile_definitions(grumgl PRIVATE ${OPENGL_CFLAGS_OTHER})
 target_include_directories(grumgl SYSTEM PRIVATE
   ${BLUEZ_INCLUDE_DIRS}
@@ -101,7 +101,6 @@ target_link_libraries(grumgl
   wiicpp
   wiic
   bluetooth
-  Boost::filesystem
   ${BLUEZ_LIBRARIES}
   ${GSTREAMERMM_LIBRARIES}
   ${SDL2_LIBRARIES}

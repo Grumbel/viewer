@@ -20,7 +20,7 @@
 #include <memory>
 #include <tuple>
 #include <vector>
-#include <boost/filesystem/path.hpp>
+#include <filesystem>
 
 #include "opengl.hpp"
 
@@ -34,7 +34,7 @@ private:
   GLuint m_shader;
 
 public:
-  static ShaderPtr from_file(GLenum type, boost::filesystem::path const& filename,
+  static ShaderPtr from_file(GLenum type, std::filesystem::path const& filename,
                              std::vector<std::string> const& defines = {});
 
 public:
