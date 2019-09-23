@@ -17,7 +17,6 @@
 #include "pose.hpp"
 
 #include <fstream>
-#include <boost/lexical_cast.hpp>
 #include <boost/tokenizer.hpp>
 #define GLM_FORCE_RADIANS
 #include <glm/ext.hpp>
@@ -32,7 +31,7 @@ glm::mat4 mat4(const std::vector<std::string>& args)
   glm::mat4 m;
   for(int i = 0; i < 16; ++i)
   {
-    glm::value_ptr(m)[i] = boost::lexical_cast<float>(args[i+1]);
+    glm::value_ptr(m)[i] = std::stof(args[i+1]);
   }
   return m;
 }

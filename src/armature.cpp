@@ -17,7 +17,6 @@
 #include "armature.hpp"
 
 #include <fstream>
-#include <boost/lexical_cast.hpp>
 #include <boost/tokenizer.hpp>
 #define GLM_FORCE_RADIANS
 #include <glm/ext.hpp>
@@ -29,9 +28,9 @@ namespace {
 
 glm::vec3 vec3(const std::vector<std::string>& args)
 {
-  return glm::vec3(boost::lexical_cast<float>(args[1]),
-                   boost::lexical_cast<float>(args[2]),
-                   boost::lexical_cast<float>(args[3]));
+  return glm::vec3(std::stof(args[1]),
+                   std::stof(args[2]),
+                   std::stof(args[3]));
 }
 
 
@@ -40,7 +39,7 @@ glm::mat3 mat3(const std::vector<std::string>& args)
   glm::mat3 m;
   for(int i = 0; i < 9; ++i)
   {
-    glm::value_ptr(m)[i] = boost::lexical_cast<float>(args[i+1]);
+    glm::value_ptr(m)[i] = std::stof(args[i+1]);
   }
   return m;
 }
@@ -50,7 +49,7 @@ glm::mat4 mat4(const std::vector<std::string>& args)
   glm::mat4 m;
   for(int i = 0; i < 16; ++i)
   {
-    glm::value_ptr(m)[i] = boost::lexical_cast<float>(args[i+1]);
+    glm::value_ptr(m)[i] = std::stof(args[i+1]);
   }
   return m;
 }

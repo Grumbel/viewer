@@ -1,6 +1,5 @@
 #include "material_parser.hpp"
 
-#include <boost/lexical_cast.hpp>
 #include <boost/algorithm/string/predicate.hpp>
 #include <stdexcept>
 #include <fstream>
@@ -19,7 +18,7 @@ glm::vec3 to_vec3(T beg, T end, const glm::vec3& default_value)
   glm::vec3 vec = default_value;
   for(T i = beg; i != end; ++i)
   {
-    vec[i - beg] = boost::lexical_cast<float>(*i);
+    vec[i - beg] = std::stof(*i);
   }
   return vec;
 }
@@ -33,7 +32,7 @@ float to_float(T beg, T end)
   }
   else
   {
-    return boost::lexical_cast<float>(*beg);
+    return std::stof(*beg);
   }
 }
 

@@ -19,7 +19,6 @@
 #include <fstream>
 #include <iostream>
 #include <boost/tokenizer.hpp>
-#include <boost/lexical_cast.hpp>
 #include <boost/format.hpp>
 
 #include "log.hpp"

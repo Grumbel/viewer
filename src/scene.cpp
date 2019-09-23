@@ -1,6 +1,5 @@
 #include <boost/algorithm/string/predicate.hpp>
 #include <boost/format.hpp>
-#include <boost/lexical_cast.hpp>
 #include <boost/tokenizer.hpp>
 #include <fstream>
 #include <stdexcept>
@@ -204,42 +203,42 @@ Scene::parse_istream(std::istream& in)
         else if (*it == "loc")
         {
           INCR_AND_CHECK;
-          location.x = boost::lexical_cast<float>(*it);
+          location.x = std::stof(*it);
           INCR_AND_CHECK;
-          location.y = boost::lexical_cast<float>(*it);
+          location.y = std::stof(*it);
           INCR_AND_CHECK;
-          location.z = boost::lexical_cast<float>(*it);
+          location.z = std::stof(*it);
         }
         else if (*it == "rot")
         {
           INCR_AND_CHECK;
-          rotation.w = boost::lexical_cast<float>(*it);
+          rotation.w = std::stof(*it);
           INCR_AND_CHECK;
-          rotation.x = boost::lexical_cast<float>(*it);
+          rotation.x = std::stof(*it);
           INCR_AND_CHECK;
-          rotation.y = boost::lexical_cast<float>(*it);
+          rotation.y = std::stof(*it);
           INCR_AND_CHECK;
-          rotation.z = boost::lexical_cast<float>(*it);
+          rotation.z = std::stof(*it);
         }
         else if (*it == "scale")
         {
           INCR_AND_CHECK;
-          scale.x = boost::lexical_cast<float>(*it);
+          scale.x = std::stof(*it);
           INCR_AND_CHECK;
-          scale.y = boost::lexical_cast<float>(*it);
+          scale.y = std::stof(*it);
           INCR_AND_CHECK;
-          scale.z = boost::lexical_cast<float>(*it);
+          scale.z = std::stof(*it);
         }
         else if (*it == "v")
         {
           glm::vec3 v;
 
           INCR_AND_CHECK;
-          v.x = boost::lexical_cast<float>(*it);
+          v.x = std::stof(*it);
           INCR_AND_CHECK;
-          v.y = boost::lexical_cast<float>(*it);
+          v.y = std::stof(*it);
           INCR_AND_CHECK;
-          v.z = boost::lexical_cast<float>(*it);
+          v.z = std::stof(*it);
 
           position.push_back(v);
         }
@@ -248,9 +247,9 @@ Scene::parse_istream(std::istream& in)
           glm::vec3 vt;
 
           INCR_AND_CHECK;
-          vt.s = boost::lexical_cast<float>(*it);
+          vt.s = std::stof(*it);
           INCR_AND_CHECK;
-          vt.t = boost::lexical_cast<float>(*it);
+          vt.t = std::stof(*it);
 
           texcoord.push_back(vt);
         }
@@ -259,11 +258,11 @@ Scene::parse_istream(std::istream& in)
           glm::vec3 vn;
 
           INCR_AND_CHECK;
-          vn.x = boost::lexical_cast<float>(*it);
+          vn.x = std::stof(*it);
           INCR_AND_CHECK;
-          vn.y = boost::lexical_cast<float>(*it);
+          vn.y = std::stof(*it);
           INCR_AND_CHECK;
-          vn.z = boost::lexical_cast<float>(*it);
+          vn.z = std::stof(*it);
 
           normal.push_back(vn);
         }
@@ -272,13 +271,13 @@ Scene::parse_istream(std::istream& in)
           glm::vec4 bw;
 
           INCR_AND_CHECK;
-          bw.x = boost::lexical_cast<float>(*it);
+          bw.x = std::stof(*it);
           INCR_AND_CHECK;
-          bw.y = boost::lexical_cast<float>(*it);
+          bw.y = std::stof(*it);
           INCR_AND_CHECK;
-          bw.z = boost::lexical_cast<float>(*it);
+          bw.z = std::stof(*it);
           INCR_AND_CHECK;
-          bw.w = boost::lexical_cast<float>(*it);
+          bw.w = std::stof(*it);
 
           bone_weight.push_back(bw);
         }
@@ -287,24 +286,24 @@ Scene::parse_istream(std::istream& in)
           glm::ivec4 bi;
 
           INCR_AND_CHECK;
-          bi.x = boost::lexical_cast<int>(*it);
+          bi.x = std::stoi(*it);
           INCR_AND_CHECK;
-          bi.y = boost::lexical_cast<int>(*it);
+          bi.y = std::stoi(*it);
           INCR_AND_CHECK;
-          bi.z = boost::lexical_cast<int>(*it);
+          bi.z = std::stoi(*it);
           INCR_AND_CHECK;
-          bi.w = boost::lexical_cast<int>(*it);
+          bi.w = std::stoi(*it);
 
           bone_index.push_back(bi);
         }
         else if (*it == "f")
         {
           INCR_AND_CHECK;
-          index.push_back(boost::lexical_cast<int>(*it));
+          index.push_back(std::stoi(*it));
           INCR_AND_CHECK;
-          index.push_back(boost::lexical_cast<int>(*it));
+          index.push_back(std::stoi(*it));
           INCR_AND_CHECK;
-          index.push_back(boost::lexical_cast<int>(*it));
+          index.push_back(std::stoi(*it));
         }
         else if ((*it)[0] == '#')
         {
