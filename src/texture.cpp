@@ -197,12 +197,12 @@ Texture::create_lightspot(int width, int height)
 }
 
 namespace {
-SDL_Surface* surface_from_file(const std::string& filename)
+SDL_Surface* surface_from_file(const boost::filesystem::path& filename)
 {
   SDL_Surface* surface = IMG_Load(filename.c_str());
   if (!surface)
   {
-    throw std::runtime_error("couldn't load " + filename);
+    throw std::runtime_error("couldn't load " + filename.string());
   }
   else
   {
@@ -212,16 +212,16 @@ SDL_Surface* surface_from_file(const std::string& filename)
 } // namespace
 
 TexturePtr
-Texture::cubemap_from_file(const std::string& filename)
+Texture::cubemap_from_file(const boost::filesystem::path& filename)
 {
   OpenGLState state;
 
-  SDL_Surface* up = surface_from_file(filename + "up.png");
-  SDL_Surface* dn = surface_from_file(filename + "dn.png");
-  SDL_Surface* ft = surface_from_file(filename + "ft.png");
-  SDL_Surface* bk = surface_from_file(filename + "bk.png");
-  SDL_Surface* lf = surface_from_file(filename + "lf.png");
-  SDL_Surface* rt = surface_from_file(filename + "rt.png");
+  SDL_Surface* up = surface_from_file(filename / "up.png");
+  SDL_Surface* dn = surface_from_file(filename / "dn.png");
+  SDL_Surface* ft = surface_from_file(filename / "ft.png");
+  SDL_Surface* bk = surface_from_file(filename / "bk.png");
+  SDL_Surface* lf = surface_from_file(filename / "lf.png");
+  SDL_Surface* rt = surface_from_file(filename / "rt.png");
 
   assert(up);
   assert(dn);
@@ -288,7 +288,7 @@ Texture::cubemap_from_file(const std::string& filename)
 }
 
 TexturePtr
-Texture::from_file(const std::string& filename, bool build_mipmaps, bool exception_on_fail)
+Texture::from_file(const boost::filesystem::path& filename, bool build_mipmaps, bool exception_on_fail)
 {
   OpenGLState state;
 
@@ -297,7 +297,7 @@ Texture::from_file(const std::string& filename, bool build_mipmaps, bool excepti
   {
     if (exception_on_fail)
     {
-      throw std::runtime_error("Texture: couldn't open " + filename);
+      throw std::runtime_error("Texture: couldn't open " + filename.string());
     }
     else
     {

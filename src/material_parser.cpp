@@ -52,8 +52,6 @@ std::string to_string(T beg, T end)
 
 } // namespace
 
-//-----------------------------------------------------------------------------
-
 MaterialPtr
 MaterialParser::from_file(const boost::filesystem::path& filename)
 {
@@ -64,24 +62,15 @@ MaterialParser::from_file(const boost::filesystem::path& filename)
   }
   else
   {
-    MaterialParser parser(filename.string());
+    MaterialParser parser(filename);
     parser.parse(in);
     return parser.get_material();
   }
 }
 
-MaterialPtr
-MaterialParser::from_stream(std::istream& in)
-{
-  MaterialParser parser("<unknown>");
-  parser.parse(in);
-  return parser.get_material();
-}
-
-//-----------------------------------------------------------------------------
-
-MaterialParser::MaterialParser(const std::string& filename) :
+MaterialParser::MaterialParser(const boost::filesystem::path& filename) :
   m_filename(filename),
+  m_directory(filename.parent_path()),
   m_material(std::make_shared<Material>())
 {
 }
@@ -94,8 +83,8 @@ MaterialParser::parse(std::istream& in)
   bool has_specular_texture = false;
   bool has_reflection_texture = false;
   int current_texture_unit = 0;
-  std::string program_vertex   = g_datadir + "/glsl/default.vert";
-  std::string program_fragment = g_datadir + "/glsl/default.frag";
+  boost::filesystem::path program_vertex   = g_datadir + "/glsl/default.vert";
+  boost::filesystem::path program_fragment = g_datadir + "/glsl/default.frag";
   std::vector<std::string> program_vertex_defines;
   std::vector<std::string> program_fragment_defines;
 
@@ -133,14 +122,14 @@ MaterialParser::parse(std::istream& in)
             }
             else
             {
-              m_material->set_texture(current_texture_unit, Texture::from_file(diffuse_texture_name));
+              m_material->set_texture(current_texture_unit, Texture::from_file(m_directory / diffuse_texture_name));
             }
           }
           else if (args.size() == 3)
           {
             m_material->set_texture(current_texture_unit,
-                                    Texture::from_file(args[1]),
-                                    Texture::from_file(args[2]));
+                                    Texture::from_file(m_directory / args[1]),
+                                    Texture::from_file(m_directory / args[2]));
           }
           else
           {
@@ -158,7 +147,7 @@ MaterialParser::parse(std::istream& in)
         else if (args[0] == "material.specular_texture")
         {
           has_specular_texture = true;
-          m_material->set_texture(current_texture_unit, Texture::from_file(to_string(args.begin()+1, args.end())));
+          m_material->set_texture(current_texture_unit, Texture::from_file(m_directory / to_string(args.begin()+1, args.end())));
           m_material->set_uniform("material.specular_texture", current_texture_unit);
           current_texture_unit += 1;
         }
@@ -170,7 +159,7 @@ MaterialParser::parse(std::istream& in)
         else if (args[0] == "material.reflection_texture")
         {
           has_reflection_texture = true;
-          m_material->set_texture(current_texture_unit, Texture::cubemap_from_file(to_string(args.begin()+1, args.end())));
+          m_material->set_texture(current_texture_unit, Texture::cubemap_from_file(m_directory / to_string(args.begin()+1, args.end())));
           m_material->set_uniform("material.reflection_texture", current_texture_unit);
           current_texture_unit += 1;
         }
@@ -186,7 +175,7 @@ MaterialParser::parse(std::istream& in)
         }
         else if (args[0] == "program.vertex")
         {
-          program_vertex = args[1];
+          program_vertex = m_directory / args[1];
           if (args.size() > 2)
           {
             program_vertex_defines.insert(program_vertex_defines.end(),
@@ -196,7 +185,7 @@ MaterialParser::parse(std::istream& in)
         }
         else if (args[0] == "program.fragment")
         {
-          program_fragment = args[1];
+          program_fragment = m_directory / args[1];
           if (args.size() > 2)
           {
             program_fragment_defines.insert(program_fragment_defines.end(),

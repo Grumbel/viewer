@@ -11,9 +11,9 @@
 
 namespace {
 
-void include_file(std::string const& filename, std::ostream& os)
+void include_file(boost::filesystem::path const& filename, std::ostream& os)
 {
-  std::ifstream in(filename);
+  std::ifstream in(filename.string());
   if (!in)
   {
     throw std::runtime_error((boost::format("%s: failed to open file") % filename).str());
@@ -31,10 +31,10 @@ void include_file(std::string const& filename, std::ostream& os)
 } // namespace
 
 ShaderPtr
-Shader::from_file(GLenum type, std::string const& filename,
+Shader::from_file(GLenum type, boost::filesystem::path const& filename,
                   std::vector<std::string> const& defines)
 {
-  std::ifstream in(filename);
+  std::ifstream in(filename.string());
   if (!in)
   {
     throw std::runtime_error((boost::format("%s: failed to open file") % filename).str());
