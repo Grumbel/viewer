@@ -39,7 +39,7 @@ else()
   find_package(GLEW REQUIRED)
 endif()
 
-find_package(Boost COMPONENTS system filesystem signals REQUIRED)
+find_package(Boost REQUIRED COMPONENTS system filesystem)
 find_package(Threads REQUIRED)
 
 find_package(PkgConfig REQUIRED)
@@ -82,9 +82,7 @@ target_link_libraries(viewer
   wiicpp
   wiic
   bluetooth
-  ${Boost_SYSTEM_LIBRARY}
-  ${Boost_FILESYSTEM_LIBRARY}
-  ${Boost_SIGNALS_LIBRARY}
+  Boost::filesystem
   ${BLUEZ_LIBRARIES}
   ${GSTREAMERMM_LIBRARIES}
   ${SDL2_LIBRARIES}
