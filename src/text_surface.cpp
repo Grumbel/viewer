@@ -18,6 +18,7 @@
 
 #include <stdlib.h>
 
+#include "globals.hpp"
 #include "mesh.hpp"
 #include "assert_gl.hpp"
 #include "material_factory.hpp"
@@ -37,8 +38,8 @@ TextSurface::create(const std::string& text, TextProperties const& text_props)
 
   MaterialPtr material = std::make_shared<Material>();
 
-  material->set_program(Program::create(Shader::from_file(GL_VERTEX_SHADER,   "src/glsl/basic_texture.vert"),
-                                        Shader::from_file(GL_FRAGMENT_SHADER, "src/glsl/basic_texture.frag")));
+  material->set_program(Program::create(Shader::from_file(GL_VERTEX_SHADER,   g_datadir + "/glsl/basic_texture.vert"),
+                                        Shader::from_file(GL_FRAGMENT_SHADER, g_datadir + "/glsl/basic_texture.frag")));
 
   material->enable(GL_BLEND);
   material->blend_func(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);

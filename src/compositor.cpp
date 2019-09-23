@@ -10,6 +10,7 @@
 #include "render_context.hpp"
 #include "renderbuffer.hpp"
 #include "log.hpp"
+#include "globals.hpp"
 
 extern std::unique_ptr<Framebuffer> g_shadowmap;
 extern glm::mat4 g_shadowmap_matrix;
@@ -28,37 +29,37 @@ Compositor::Compositor(int screen_w, int screen_h) :
   g_shadowmap = std::make_unique<Framebuffer>(m_shadowmap_resolution, m_shadowmap_resolution);
 
   m_cybermaxx_prog = Program::create(
-    Shader::from_file(GL_VERTEX_SHADER, "src/glsl/composite.vert"),
-    Shader::from_file(GL_FRAGMENT_SHADER, "src/glsl/composite.frag",
+    Shader::from_file(GL_VERTEX_SHADER, g_datadir + "/glsl/composite.vert"),
+    Shader::from_file(GL_FRAGMENT_SHADER, g_datadir + "/glsl/composite.frag",
                       {"INTERLACED_COMPOSITION"}));
 
   m_crosseye_prog = Program::create(
-    Shader::from_file(GL_VERTEX_SHADER, "src/glsl/composite.vert"),
-    Shader::from_file(GL_FRAGMENT_SHADER, "src/glsl/composite.frag",
+    Shader::from_file(GL_VERTEX_SHADER, g_datadir + "/glsl/composite.vert"),
+    Shader::from_file(GL_FRAGMENT_SHADER, g_datadir + "/glsl/composite.frag",
                       {"CROSSEYE_COMPOSITION"}));
 
   m_anaglyph_prog = Program::create(
-    Shader::from_file(GL_VERTEX_SHADER, "src/glsl/composite.vert"),
-    Shader::from_file(GL_FRAGMENT_SHADER, "src/glsl/composite.frag",
+    Shader::from_file(GL_VERTEX_SHADER, g_datadir + "/glsl/composite.vert"),
+    Shader::from_file(GL_FRAGMENT_SHADER, g_datadir + "/glsl/composite.frag",
                       {"ANAGLYPH_COMPOSITION"}));
 
   m_depth_prog = Program::create(
-    Shader::from_file(GL_VERTEX_SHADER, "src/glsl/composite.vert"),
-    Shader::from_file(GL_FRAGMENT_SHADER, "src/glsl/composite.frag",
+    Shader::from_file(GL_VERTEX_SHADER, g_datadir + "/glsl/composite.vert"),
+    Shader::from_file(GL_FRAGMENT_SHADER, g_datadir + "/glsl/composite.frag",
                       {"DEPTH_COMPOSITION"}));
 
   m_newsprint_prog = Program::create(
-    Shader::from_file(GL_VERTEX_SHADER, "src/glsl/composite.vert"),
-    Shader::from_file(GL_FRAGMENT_SHADER, "src/glsl/newsprint.frag"));
+    Shader::from_file(GL_VERTEX_SHADER, g_datadir + "/glsl/composite.vert"),
+    Shader::from_file(GL_FRAGMENT_SHADER, g_datadir + "/glsl/newsprint.frag"));
 
   m_mono_prog = Program::create(
-    Shader::from_file(GL_VERTEX_SHADER, "src/glsl/composite.vert"),
-    Shader::from_file(GL_FRAGMENT_SHADER, "src/glsl/composite.frag"));
+    Shader::from_file(GL_VERTEX_SHADER, g_datadir + "/glsl/composite.vert"),
+    Shader::from_file(GL_FRAGMENT_SHADER, g_datadir + "/glsl/composite.frag"));
 
   m_composition_prog = m_mono_prog;
 
-  m_calibration_left_texture = Texture::from_file("data/calibration_left.png", false);
-  m_calibration_right_texture = Texture::from_file("data/calibration_right.png", false);
+  m_calibration_left_texture = Texture::from_file(g_datadir + "/calibration_left.png", false);
+  m_calibration_right_texture = Texture::from_file(g_datadir + "/calibration_right.png", false);
 }
 
 void

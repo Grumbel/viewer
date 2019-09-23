@@ -19,6 +19,7 @@
 #include <stdexcept>
 #include <boost/algorithm/string/predicate.hpp>
 
+#include "globals.hpp"
 #include "framebuffer.hpp"
 #include "material_parser.hpp"
 #include "render_context.hpp"
@@ -116,8 +117,8 @@ MaterialFactory::create_basic_white()
 
   material->set_uniform("MVP", UniformSymbol::ModelViewProjectionMatrix);
 
-  material->set_program(Program::create(Shader::from_file(GL_VERTEX_SHADER,   "src/glsl/basic_white.vert"),
-                                        Shader::from_file(GL_FRAGMENT_SHADER, "src/glsl/basic_white.frag")));
+  material->set_program(Program::create(Shader::from_file(GL_VERTEX_SHADER,   g_datadir + "/glsl/basic_white.vert"),
+                                        Shader::from_file(GL_FRAGMENT_SHADER, g_datadir + "/glsl/basic_white.frag")));
   return material;
 }
 
@@ -131,7 +132,7 @@ MaterialFactory::create_phong(const glm::vec3& diffuse,
 
   phong->enable(GL_CULL_FACE);
   phong->enable(GL_DEPTH_TEST);
-  //phong->set_texture(0, Texture::from_file("data/textures/grass_01_v1.tga"));
+  //phong->set_texture(0, Texture::from_file(g_datadir + "/textures/grass_01_v1.tga"));
   //phong->set_uniform("diffuse", glm::vec4(1.0f, 0.0f, 1.0f, 1.0f));
   //phong->set_uniform("diffuse_texture", 0);
 
@@ -163,10 +164,10 @@ MaterialFactory::create_phong(const glm::vec3& diffuse,
                                 }));
   phong->set_texture(0, g_shadowmap->get_depth_texture());
   phong->set_uniform("ShadowMap", 0);
-  phong->set_texture(1, Texture::cubemap_from_file("data/textures/miramar/"));
+  phong->set_texture(1, Texture::cubemap_from_file(g_datadir + "/textures/miramar/"));
   //phong->set_uniform("LightMap", 1);
-  phong->set_program(Program::create(Shader::from_file(GL_VERTEX_SHADER, "src/glsl/phong.vert"),
-                                              Shader::from_file(GL_FRAGMENT_SHADER, "src/glsl/phong.frag")));
+  phong->set_program(Program::create(Shader::from_file(GL_VERTEX_SHADER, g_datadir + "/glsl/phong.vert"),
+                                              Shader::from_file(GL_FRAGMENT_SHADER, g_datadir + "/glsl/phong.frag")));
   return phong;
 }
 
@@ -179,12 +180,12 @@ MaterialFactory::create_skybox()
   material->enable(GL_BLEND);
   material->enable(GL_CULL_FACE);
   material->enable(GL_DEPTH_TEST);
-  material->set_texture(0, Texture::cubemap_from_file("data/textures/miramar/"));
+  material->set_texture(0, Texture::cubemap_from_file(g_datadir + "/textures/miramar/"));
   material->set_uniform("diffuse", glm::vec4(1.0f, 1.0f, 1.0f, 1.0f));
   material->set_uniform("diffuse_texture", 0);
   material->set_uniform("MVP", UniformSymbol::ModelViewProjectionMatrix);
-  material->set_program(Program::create(Shader::from_file(GL_VERTEX_SHADER, "src/glsl/cubemap.vert"),
-                                        Shader::from_file(GL_FRAGMENT_SHADER, "src/glsl/cubemap.frag")));
+  material->set_program(Program::create(Shader::from_file(GL_VERTEX_SHADER, g_datadir + "/glsl/cubemap.vert"),
+                                        Shader::from_file(GL_FRAGMENT_SHADER, g_datadir + "/glsl/cubemap.frag")));
 
   return material;
 }
@@ -197,11 +198,11 @@ MaterialFactory::create_textured()
   material->enable(GL_CULL_FACE);
   material->enable(GL_DEPTH_TEST);
 
-  material->set_program(Program::create(Shader::from_file(GL_VERTEX_SHADER, "src/glsl/textured.vert"),
-                                        Shader::from_file(GL_FRAGMENT_SHADER, "src/glsl/textured.frag")));
+  material->set_program(Program::create(Shader::from_file(GL_VERTEX_SHADER, g_datadir + "/glsl/textured.vert"),
+                                        Shader::from_file(GL_FRAGMENT_SHADER, g_datadir + "/glsl/textured.frag")));
 
-  material->set_texture(0, Texture::from_file("data/textures/uvtest.png"));
-  material->set_texture(1, Texture::from_file("data/textures/uvtest.png"));
+  material->set_texture(0, Texture::from_file(g_datadir + "/textures/uvtest.png"));
+  material->set_texture(1, Texture::from_file(g_datadir + "/textures/uvtest.png"));
   material->set_uniform("texture_diff", 0);
   material->set_uniform("texture_spec", 1);
 

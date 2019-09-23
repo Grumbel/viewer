@@ -32,6 +32,7 @@ struct VideoOptions
 
 struct Options
 {
+  std::string datadir = "data";
   bool wiimote = false;
   VideoOptions video;
   std::vector<std::string> models = {};

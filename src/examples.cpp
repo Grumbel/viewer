@@ -1,5 +1,6 @@
 #if 0
 #include "examples.hpp"
+#include "globals.hpp"
 
 void make_pose()
 {
@@ -85,19 +86,19 @@ void make_spheres_in_a_line()
 void make_wiimode()
 {
   {
-    auto node = Scene::from_file("data/wiimote.mod");
+    auto node = Scene::from_file(g_datadir + "/wiimote.mod");
     m_wiimote_gyro_node = node.get();
     m_scene_manager->get_world()->attach_child(std::move(node));
   }
 
   {
-    auto node = Scene::from_file("data/wiimote.mod");
+    auto node = Scene::from_file(g_datadir + "/wiimote.mod");
     m_wiimote_node = node.get();
     m_scene_manager->get_world()->attach_child(std::move(node));
   }
 
   {
-    auto node = Scene::from_file("data/wiimote.mod");
+    auto node = Scene::from_file(g_datadir + "/wiimote.mod");
     m_wiimote_accel_node = node.get();
     m_scene_manager->get_world()->attach_child(std::move(node));
   }
@@ -117,8 +118,8 @@ void make_lightcone()
   material->set_uniform("diffuse_texture", 0);
   material->set_uniform("ModelViewMatrix", UniformSymbol::ModelViewMatrix);
   material->set_uniform("MVP", UniformSymbol::ModelViewProjectionMatrix);
-  material->set_program(Program::create(Shader::from_file(GL_VERTEX_SHADER, "src/glsl/lightcone.vert"),
-                                        Shader::from_file(GL_FRAGMENT_SHADER, "src/glsl/lightcone.frag")));
+  material->set_program(Program::create(Shader::from_file(GL_VERTEX_SHADER, g_datadir + "/glsl/lightcone.vert"),
+                                        Shader::from_file(GL_FRAGMENT_SHADER, g_datadir + "/glsl/lightcone.frag")));
 
   auto mesh = std::make_unique<Mesh>(GL_POINTS);
   // generate light cone mesh

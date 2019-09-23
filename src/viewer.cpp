@@ -31,6 +31,7 @@
 #include <glm/gtx/io.hpp>
 #include <glm/gtx/rotate_vector.hpp>
 
+#include "globals.hpp"
 #include "assert_gl.hpp"
 #include "compositor.hpp"
 #include "log.hpp"
@@ -266,8 +267,8 @@ Viewer::init_scene(std::vector<std::string> const& model_filenames)
     material->enable(GL_CULL_FACE);
     material->enable(GL_DEPTH_TEST);
     material->set_uniform("MVP", UniformSymbol::ModelViewProjectionMatrix);
-    material->set_program(Program::create(Shader::from_file(GL_VERTEX_SHADER, "src/glsl/shadowmap.vert"),
-                                          Shader::from_file(GL_FRAGMENT_SHADER, "src/glsl/shadowmap.frag")));
+    material->set_program(Program::create(Shader::from_file(GL_VERTEX_SHADER, g_datadir + "/glsl/shadowmap.vert"),
+                                          Shader::from_file(GL_FRAGMENT_SHADER, g_datadir + "/glsl/shadowmap.frag")));
     m_scene_manager->set_override_material(material);
   }
 #endif
@@ -306,7 +307,7 @@ Viewer::init_scene(std::vector<std::string> const& model_filenames)
 void
 Viewer::init_video_player(VideoOptions const& cfg)
 {
-  MaterialPtr video_material = MaterialFactory::get().from_file("data/room/video.material");
+  MaterialPtr video_material = MaterialFactory::get().from_file(g_datadir + "/room/video.material");
 
   if (cfg.flat_canvas)
   {
@@ -851,7 +852,11 @@ Viewer::parse_args(int argc, char** argv, Options& opts)
   {
     if (argv[i][0] == '-')
     {
-      if (strcmp("--wiimote", argv[i]) == 0)
+      if (strcmp("--datadir", argv[i]) == 0)
+      {
+        opts.datadir = argv[i+1];
+      }
+      else if (strcmp("--wiimote", argv[i]) == 0)
       {
         opts.wiimote = true;
       }
@@ -885,6 +890,7 @@ Viewer::parse_args(int argc, char** argv, Options& opts)
         std::cout << "Usage: " << argv[0] << " [OPTIONS]\n"
                   << "\n"
                   << "Options:\n"
+                  << "  --datadir DIR      Search for data in DIR\n"
                   << "  --wiimote          Enable Wiimote support\n"
                   << "  --video FILE       Play video\n"
                   << "  --video3d FILE     Play 3D video\n"
@@ -908,6 +914,8 @@ Viewer::main(int argc, char** argv)
 {
   Options opts;
   parse_args(argc, argv, opts);
+
+  g_datadir = opts.datadir;
 
   System system = System::create();
   Window window = system.create_gl_window("OpenGL Viewer", m_screen_w, m_screen_h, false, 0);

@@ -6,6 +6,7 @@
 #include <fstream>
 #include <iostream>
 
+#include "globals.hpp"
 #include "opengl.hpp"
 #include "tokenize.hpp"
 #include "assert_gl.hpp"
@@ -93,8 +94,8 @@ MaterialParser::parse(std::istream& in)
   bool has_specular_texture = false;
   bool has_reflection_texture = false;
   int current_texture_unit = 0;
-  std::string program_vertex   = "src/glsl/default.vert";
-  std::string program_fragment = "src/glsl/default.frag";
+  std::string program_vertex   = g_datadir + "/glsl/default.vert";
+  std::string program_fragment = g_datadir + "/glsl/default.frag";
   std::vector<std::string> program_vertex_defines;
   std::vector<std::string> program_fragment_defines;
 
