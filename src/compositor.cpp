@@ -1,5 +1,7 @@
 #include "compositor.hpp"
 
+#include <glm/gtx/rotate_vector.hpp>
+
 #include "camera.hpp"
 #include "framebuffer.hpp"
 #include "material.hpp"

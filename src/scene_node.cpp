@@ -16,6 +16,8 @@
 
 #include "scene_node.hpp"
 
+#include <glm/gtx/transform.hpp>
+
 SceneNode::SceneNode(const std::string& name) :
   m_name(name),
   m_position(0.0f, 0.0f, 0.0f),

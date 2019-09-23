@@ -2,6 +2,7 @@
 
 #define GLM_FORCE_RADIANS
 #include <glm/ext.hpp>
+#include <glm/gtx/transform.hpp>
 
 #include "scene_manager.hpp"
 #include "scene_node.hpp"

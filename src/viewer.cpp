@@ -29,6 +29,7 @@
 #include <vector>
 #include <thread>
 #include <glm/gtx/io.hpp>
+#include <glm/gtx/rotate_vector.hpp>
 
 #include "assert_gl.hpp"
 #include "compositor.hpp"
